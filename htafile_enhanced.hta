@@ -1846,6 +1846,7 @@ function rpBuildSheets() {
   }
   function annualRows(year){
     var out=[],totals=[],i,j,empRows=[],mat="",sumRaw=[],sumDisp=[],totalTemplate=null,has=false;
+    function annualDateFmt(d){return rpPad(d.getDate())+"/"+rpPad(d.getMonth()+1)+"/"+d.getFullYear();}
     function closeEmp(){
       if(has&&totalTemplate){
         var tr=totalTemplate.slice(0);tr.raw=sumRaw.slice(0);
@@ -1868,7 +1869,7 @@ function rpBuildSheets() {
       var ya=new Date(year,0,1),yb=new Date(year,11,31),a=rg.a>ya?rg.a:ya,b=rg.b<yb?rg.b:yb;
       if(a>b)continue;
       var originalDays=annualDays30(rg.a,rg.b),partDays=annualDays30(a,b),factor=originalDays>0?partDays/originalDays:0;
-      var cp=src.slice(0);cp.raw=(src.raw||[]).slice(0);cp[4]=dateFmt(a)+" - "+dateFmt(b);cp[5]="I"+partDays;
+      var cp=src.slice(0);cp.raw=(src.raw||[]).slice(0);cp[4]=annualDateFmt(a)+" - "+annualDateFmt(b);cp[5]="I"+partDays;
       if(kind==="RAPPEL"){
         for(j=0;j<cp.raw.length;j++)cp.raw[j]=r2(cp.raw[j]*factor);
         for(j=7;j<cp.length;j++)if(rt(cp[j])==="N")cp[j]="N"+r2((parseFloat(rv(cp[j]))||0)*factor);
