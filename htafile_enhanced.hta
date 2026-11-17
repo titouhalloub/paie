@@ -1844,45 +1844,59 @@ function rpBuildSheets() {
     while(y<ly||(y===ly&&m<=lm)){var first=(y===a.getFullYear()&&m===a.getMonth())?ad(a):1,last=(y===ly&&m===lm)?ad(b):30;total+=Math.max(0,last-first+1);m++;if(m>11){m=0;y++;}}
     return total;
   }
-  function annualRows(year){
-    var out=[],totals=[],i,j,empRows=[],mat="",sumRaw=[],sumDisp=[],totalTemplate=null,has=false;
+  function annualRows(year,fromRappelStart){
+    var out=[],totals=[],i,j,group=[],totalTemplate=null;
     function annualDateFmt(d){return rpPad(d.getDate())+"/"+rpPad(d.getMonth()+1)+"/"+d.getFullYear();}
-    function closeEmp(){
-      if(has&&totalTemplate){
-        var tr=totalTemplate.slice(0);tr.raw=sumRaw.slice(0);
-        for(j=7;j<tr.length;j++)tr[j]="N"+r2(sumDisp[j]||0);
-        out.push(tr);totals.push({mat:mat,name:rv(tr[1]),tot:sumRaw.slice(0)});
-      }
-      empRows=[];sumRaw=[];sumDisp=[];totalTemplate=null;has=false;
-    }
     function parseRange(row){
       var m=/^(\d{2})\/(\d{2})\/(\d{4}) - (\d{2})\/(\d{2})\/(\d{4})$/.exec(rv(row[4]));
       if(!m)return null;
       return {a:new Date(+m[3],+m[2]-1,+m[1]),b:new Date(+m[6],+m[5]-1,+m[4])};
     }
+    function closeEmp(){
+      var rappelStart=null,mat="",sumRaw=[],sumDisp=[],has=false,rows=[],k,src,kind,rg,a,b,originalDays,partDays,factor,cp,jj,tr;
+      for(k=0;k<group.length;k++){
+        src=group[k];if(rv(src[2])!=="RAPPEL")continue;
+        rg=parseRange(src);if(rg&&(!rappelStart||rg.a<rappelStart))rappelStart=rg.a;
+      }
+      if(fromRappelStart&&!rappelStart){group=[];totalTemplate=null;return;}
+      var periodStart=fromRappelStart?rappelStart:new Date(year,0,1);
+      var periodEnd=new Date(year,11,31);
+      for(k=0;k<group.length;k++){
+        src=group[k];kind=rv(src[2]);
+        if(kind!=="ANCIEN SALAIRE"&&kind!=="NOUVEAU SALAIRE"&&kind!=="RAPPEL")continue;
+        rg=parseRange(src);if(!rg)continue;
+        a=rg.a>periodStart?rg.a:periodStart;b=rg.b<periodEnd?rg.b:periodEnd;
+        if(a>b)continue;
+        originalDays=annualDays30(rg.a,rg.b);partDays=annualDays30(a,b);factor=originalDays>0?partDays/originalDays:0;
+        cp=src.slice(0);cp.raw=(src.raw||[]).slice(0);
+        cp[4]=annualDateFmt(a)+" - "+annualDateFmt(b);cp[5]="I"+partDays;
+        if(kind==="RAPPEL"){
+          for(jj=0;jj<cp.raw.length;jj++)cp.raw[jj]=r2(cp.raw[jj]*factor);
+          for(jj=7;jj<cp.length;jj++)if(rt(cp[jj])==="N")cp[jj]="N"+r2((parseFloat(rv(cp[jj]))||0)*factor);
+          if(!has){mat=rv(src[0]);for(jj=0;jj<cp.raw.length;jj++)sumRaw[jj]=0;for(jj=7;jj<cp.length;jj++)sumDisp[jj]=0;has=true;}
+          for(jj=0;jj<cp.raw.length;jj++)sumRaw[jj]=r2((sumRaw[jj]||0)+cp.raw[jj]);
+          for(jj=7;jj<cp.length;jj++)sumDisp[jj]=r2((sumDisp[jj]||0)+(parseFloat(rv(cp[jj]))||0));
+        }
+        rows.push(cp);
+      }
+      if(has&&totalTemplate){
+        tr=totalTemplate.slice(0);tr.raw=sumRaw.slice(0);
+        for(jj=7;jj<tr.length;jj++)tr[jj]="N"+r2(sumDisp[jj]||0);
+        rows.push(tr);totals.push({mat:mat,name:rv(tr[1]),tot:sumRaw.slice(0)});
+        for(k=0;k<rows.length;k++)out.push(rows[k]);
+      }
+      group=[];totalTemplate=null;
+    }
     for(i=0;i<srcRows.length;i++){
       var src=srcRows[i],kind=rv(src[2]);
       if(src.info)continue;
       if(kind==="TOTAL EMPLOYE"){totalTemplate=src;closeEmp();continue;}
-      if(kind!=="ANCIEN SALAIRE"&&kind!=="NOUVEAU SALAIRE"&&kind!=="RAPPEL")continue;
-      var rg=parseRange(src);if(!rg)continue;
-      var ya=new Date(year,0,1),yb=new Date(year,11,31),a=rg.a>ya?rg.a:ya,b=rg.b<yb?rg.b:yb;
-      if(a>b)continue;
-      var originalDays=annualDays30(rg.a,rg.b),partDays=annualDays30(a,b),factor=originalDays>0?partDays/originalDays:0;
-      var cp=src.slice(0);cp.raw=(src.raw||[]).slice(0);cp[4]=annualDateFmt(a)+" - "+annualDateFmt(b);cp[5]="I"+partDays;
-      if(kind==="RAPPEL"){
-        for(j=0;j<cp.raw.length;j++)cp.raw[j]=r2(cp.raw[j]*factor);
-        for(j=7;j<cp.length;j++)if(rt(cp[j])==="N")cp[j]="N"+r2((parseFloat(rv(cp[j]))||0)*factor);
-        if(!has){mat=rv(src[0]);for(j=0;j<cp.raw.length;j++)sumRaw[j]=0;for(j=7;j<cp.length;j++)sumDisp[j]=0;has=true;}
-        for(j=0;j<cp.raw.length;j++)sumRaw[j]=r2((sumRaw[j]||0)+cp.raw[j]);
-        for(j=7;j<cp.length;j++)sumDisp[j]=r2((sumDisp[j]||0)+(parseFloat(rv(cp[j]))||0));
-      }
-      out.push(cp);empRows.push(cp);
+      if(kind==="ANCIEN SALAIRE"||kind==="NOUVEAU SALAIRE"||kind==="RAPPEL")group.push(src);
     }
     closeEmp();
     return {rows:out,empTotals:totals};
   }
-  function annualPeriod(year){return "الفترة من 01/01/"+year+" الى 31/12/"+year;}
+  function annualPeriod(year,fromRappelStart){return fromRappelStart?"الفترة من تاريخ بداية التذكير الفعلي لكل موظف إلى 31/12/"+year:"الفترة من 01/01/"+year+" إلى 31/12/"+year;}
   function famSheet(sheetName,corner,defs,source,periodLabel){
     var useRows=source?source.rows:srcRows;
     var n=11+defs.length+1,ww=[58,115,100,112,62,62,62,62,62,62,62],q,z,gl=[],cur=[],sums=[],t0,v,rw0,cells,tt;
@@ -1923,12 +1937,12 @@ function rpBuildSheets() {
   var d2=defsFor("lead",false),d3=defsFor("gain",true),d4=defsFor("af",false);
   function allIdx(defs){var o5=[],q,z;for(q=0;q<defs.length;q++)for(z=0;z<defs[q].idx.length;z++)o5.push(defs[q].idx[z]);return o5;}
   function paperNo(nn){return "\u0627\u0644\u0648\u0631\u0642\u0629 \u0631\u0642\u0645 "+nn;}
-  var prevData=annualRows(previousYear),currData=annualRows(currentYear);
+  var prevData=annualRows(previousYear,true),currData=annualRows(currentYear,false);
   var allDefs=[{label:"Total F2",idx:allIdx(d2)},{label:"Total F3",idx:allIdx(d3)},{label:"Total F4",idx:allIdx(d4)}];
-  var s2=famSheet("Feuille 2",paperNo(2),d2,prevData,annualPeriod(previousYear));
-  var s3=famSheet("Feuille 3",paperNo(3),d3,prevData,annualPeriod(previousYear));
-  var s4=famSheet("Feuille 4",paperNo(4),d4,prevData,annualPeriod(previousYear));
-  var s5=famSheet("Feuille 5",paperNo(5),allDefs,prevData,annualPeriod(previousYear));
+  var s2=famSheet("Feuille 2",paperNo(2),d2,prevData,annualPeriod(previousYear,true));
+  var s3=famSheet("Feuille 3",paperNo(3),d3,prevData,annualPeriod(previousYear,true));
+  var s4=famSheet("Feuille 4",paperNo(4),d4,prevData,annualPeriod(previousYear,true));
+  var s5=famSheet("Feuille 5",paperNo(5),allDefs,prevData,annualPeriod(previousYear,true));
   /* Feuille 6 = full كشف التذكير for the current year, with every salary rubrique. */
   function annualJournalSheet(source,year){
     var jgroups=[],jcur=[],jtot=[],q,z,rr,bb,sc,pgj,jbreaks=[],ki,tv;
@@ -1961,7 +1975,7 @@ function rpBuildSheets() {
     for(z=0;z<nc;z++){ki=keep[z];annualFoot.push(ki<0?X("E","","bf"):xr(jtot[ki]||"E",rt(jtot[ki]||"E")==="N"?"bn":"bf"));}
     annualFoot.h=FOOTH;sc=scaleFor(w);
     pgj=rpPaged(jgroups,{capH:PH/(sc/100),topH:TOPH,hdrH:HDRH,totH:TOTH,footH:FOOTH,pageTotal:annualPageTotal,foot:annualFoot});
-    var jo=[];headBlock(nc,title,jo,null,annualPeriod(year));
+    var jo=[];headBlock(nc,title,jo,null,annualPeriod(year,false));
     var jh=[];for(z=0;z<nc;z++)jh.push(X("S",keep[z]<0?T(IXK[-keep[z]-1]):hdrT(d.cols[keep[z]]),"h"));jh.h=HDRH;jo.push(jh);
     var jhead=jo.length,joff=jo.length;
     for(q=0;q<pgj.rows.length;q++)jo.push(pgj.rows[q]);
@@ -1979,6 +1993,12 @@ function rpExport() {
   var oldLang=LANG;LANG="ar";
   try{
     var b=rpBuildSheets();if(!b)return;
+    var si,fi,fr;
+    for(si=0;si<b.sheets.length;si++){
+      b.sheets[si].rows.push([]);
+      fr=rpSignoffRows(b.sheets[si].w.length);
+      for(fi=0;fi<fr.length;fi++)b.sheets[si].rows.push(fr[fi]);
+    }
     exportXls(b.sheets,b.fbase,"rpMsg");
     $("rpMsg").innerHTML+='<br><span class="muted">'+b.info+'</span>';
   }finally{LANG=oldLang;}
@@ -2218,14 +2238,30 @@ function rpDeleteProject(){
   }catch(e){$("rpProjMsg").innerHTML='<span class="err">Suppression impossible : '+esc(errText(e))+'</span>';}
 }
 /* ---------- printable version (HTML, opens in the default browser: A3 landscape, one agent never split, page totals) ---------- */
-function rpPrintSignoffHtml() {
+function rpSignoffData() {
   var net=0,i,v,dt=new Date();
   if(curR&&curR.recap)for(i=0;i<curR.recap.length;i++){v=parseFloat(rv(curR.recap[i][11]));if(!isNaN(v))net+=v;}
-  var date=rpPad(dt.getDate())+" / "+rpPad(dt.getMonth()+1)+" / "+dt.getFullYear();
+  return {net:net,words:engNumAr(net),date:rpPad(dt.getDate())+" / "+rpPad(dt.getMonth()+1)+" / "+dt.getFullYear()};
+}
+function rpSignoffRows(colCount) {
+  var d=rpSignoffData(),lines=[
+    "المبلغ بالأرقام: "+fmtNum(d.net)+" دج",
+    "المبلغ بالحروف: "+d.words,
+    "مسعد في: "+d.date,
+    "المدير: (الإمضاء والختم)"
+  ],rows=[],i,c;
+  for(i=0;i<lines.length;i++){
+    c=X("S",lines[i],"bf",Math.max(0,colCount-1),1);
+    rows.push([c]);
+  }
+  return rows;
+}
+function rpPrintSignoffHtml() {
+  var d=rpSignoffData();
   return '<div class="signoff">' +
-    '<div><b>المبلغ بالأرقام:</b> '+esc(fmtNum(net))+' دج</div>' +
-    '<div class="wide"><b>المبلغ بالحروف:</b> '+esc(engNumAr(net))+'</div>' +
-    '<div><b>مسعد في:</b> '+date+'</div>' +
+    '<div><b>المبلغ بالأرقام:</b> '+esc(fmtNum(d.net))+' دج</div>' +
+    '<div class="wide"><b>المبلغ بالحروف:</b> '+esc(d.words)+'</div>' +
+    '<div><b>مسعد في:</b> '+d.date+'</div>' +
     '<div class="manager"><b>المدير:</b> (الإمضاء والختم)</div>' +
     '</div>';
 }
@@ -2258,7 +2294,7 @@ function sheetsToHtml(sheets) {
       t.push(trHtml(rows[hi],true));
       for(ri=bounds[pi];ri<bounds[pi+1];ri++)t.push(trHtml(rows[ri]));
       t.push('</table></div>');
-      if(si===sheets.length-1&&pi===bounds.length-2)t.push(rpPrintSignoffHtml());
+      if(pi===bounds.length-2)t.push(rpPrintSignoffHtml());
       t.push('</div>');o.push(t.join(""));
     }
   }
