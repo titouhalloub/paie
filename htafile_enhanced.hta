@@ -883,8 +883,7 @@ function buildXls(sheets) {
       if (!sh1.entete && sh1.footer) o.push('<Footer x:Margin="0.2" x:Data="&amp;C' + xmlEsc(T("Page")) + ' &amp;P / &amp;N"/>');
       if (sh1.land) o.push('<PageMargins x:Bottom="0.35" x:Left="0.25" x:Right="0.25" x:Top="' + (sh1.top || "0.6") + '" x:Header="0.15" x:Footer="0.15"/>');
       o.push('</PageSetup>');
-      if (sh1.plan) o.push('<Print><ValidPrinterInfo/><PaperSizeIndex>8</PaperSizeIndex><Scale>' + sh1.plan.scale + '</Scale><HorizontalResolution>600</HorizontalResolution><VerticalResolution>600</VerticalResolution></Print>');
-      else if (sh1.land) o.push('<FitToPage/><Print><FitWidth>1</FitWidth><FitHeight>0</FitHeight></Print>');
+      if (sh1.land) o.push('<FitToPage/><Print><ValidPrinterInfo/><PaperSizeIndex>8</PaperSizeIndex><FitWidth>1</FitWidth><FitHeight>0</FitHeight><HorizontalResolution>600</HorizontalResolution><VerticalResolution>600</VerticalResolution></Print>');
       o.push('</WorksheetOptions>');
       if (sh1.plan && sh1.plan.breaks.length) {
         o.push('<PageBreaks xmlns="urn:schemas-microsoft-com:office:excel"><RowBreaks>');
@@ -1871,7 +1870,7 @@ function rpBuildSheets() {
         if(a>b)continue;
         originalDays=annualDays30(rg.a,rg.b);partDays=annualDays30(a,b);factor=originalDays>0?partDays/originalDays:0;
         cp=src.slice(0);cp.raw=(src.raw||[]).slice(0);
-        cp[4]=annualDateFmt(a)+" - "+annualDateFmt(b);cp[5]="I"+partDays;
+        cp[4]=annualDateFmt(a)+" - "+annualDateFmt(b);cp[5]="I"+partDays;cp.ixc=(src.ixc||[]).slice(0);
         if(kind==="RAPPEL"){
           for(jj=0;jj<cp.raw.length;jj++)cp.raw[jj]=r2(cp.raw[jj]*factor);
           for(jj=7;jj<cp.length;jj++)if(rt(cp[jj])==="N")cp[jj]="N"+r2((parseFloat(rv(cp[jj]))||0)*factor);
@@ -1882,7 +1881,7 @@ function rpBuildSheets() {
         rows.push(cp);
       }
       if(has&&totalTemplate){
-        tr=totalTemplate.slice(0);tr.raw=sumRaw.slice(0);
+        tr=totalTemplate.slice(0);tr.raw=sumRaw.slice(0);tr.ixc=(group.length&&group[0].ixc)?group[0].ixc.slice(0):[];
         for(jj=7;jj<tr.length;jj++)tr[jj]="N"+r2(sumDisp[jj]||0);
         rows.push(tr);totals.push({mat:mat,name:rv(tr[1]),tot:sumRaw.slice(0)});
         for(k=0;k<rows.length;k++)out.push(rows[k]);
@@ -1998,19 +1997,19 @@ function rpReadLayoutSettings(){
   var f=parseFloat(trim($("rpFontSize")?$("rpFontSize").value:"10").replace(",",".")),
       l=parseFloat(trim($("rpLineSpacing")?$("rpLineSpacing").value:"1").replace(",",".")),
       c=parseFloat(trim($("rpColSpacing")?$("rpColSpacing").value:"1").replace(",","."));
-  if(isNaN(f)||f<7||f>16)f=10;
-  if(isNaN(l)||l<0.8||l>1.5)l=1;
-  if(isNaN(c)||c<0.8||c>1.5)c=1;
+  if(isNaN(f)||f<6||f>18)f=10;
+  if(isNaN(l)||l<0.5||l>2)l=1;
+  if(isNaN(c)||c<0.5||c>2)c=1;
   RP_FONT_SIZE=f;
   return {font:f,line:l,col:c};
 }
 function rpApplyLayoutSettings(sheets){
-  var v=rpReadLayoutSettings(),factor=Math.max(v.font/10,v.line,v.col),i,j,sh,row;
+  var v=rpReadLayoutSettings(),factor=Math.max(v.font/10,v.col),i,j,sh,row;
   for(i=0;i<sheets.length;i++){
     sh=sheets[i];
     for(j=0;j<sh.w.length;j++)sh.w[j]=r2(sh.w[j]*v.col);
     for(j=0;j<sh.rows.length;j++){row=sh.rows[j];if(row.h)row.h=r2(row.h*v.line);}
-    if(sh.plan)sh.plan.scale=Math.max(25,Math.min(100,Math.round(sh.plan.scale/factor)));
+    if(sh.plan)sh.plan.scale=Math.max(20,Math.min(100,Math.round(sh.plan.scale/factor)));
   }
 }
 function rpExport() {
@@ -3527,9 +3526,9 @@ function init() {
   &nbsp; Forcer CALCULEES (codes): <input type="text" id="rpCalc" size="16">
   <label><input type="checkbox" id="rpInt"> afficher les rubriques intermediaires</label>
   &nbsp; <button onclick="rpRun()">Calculer le rappel</button>
-  تنسيق الجداول / Mise en forme: حجم الخط <input type="text" id="rpFontSize" size="3" value="10" title="7 à 16 pt"> pt
-  تباعد الأسطر <input type="text" id="rpLineSpacing" size="4" value="1.0" title="0.8 à 1.5">
-  تباعد الأعمدة <input type="text" id="rpColSpacing" size="4" value="1.0" title="0.8 à 1.5"> &nbsp;
+   تنسيق الجداول / Mise en forme: حجم الخط <input type="text" id="rpFontSize" size="3" value="10" title="6 à 18 pt"> pt
+   ارتفاع الصفوف <input type="text" id="rpLineSpacing" size="4" value="1.0" title="0.5 إلى 2.0؛ 1.0 = عادي">
+   عرض الأعمدة <input type="text" id="rpColSpacing" size="4" value="1.0" title="0.5 إلى 2.0؛ 1.0 = عادي"> &nbsp;
   Rendement: taux max % <input type="text" id="rpRendRate" size="4" title="vide = automatique selon le corps (35 / 30)"> note /40 <input type="text" id="rpRendNote" size="3" value="40"> &nbsp; Titre de l’etat (optionnel): <input type="text" id="rpTitle" size="46" dir="auto"> <button onclick="rpExport()">Exporter Excel 2003 (.xls)</button> <button onclick="rpPrint()">Imprimer / PDF (A3)</button> <span id="rpMsg"></span>
   <p class="muted"><b>Regles appliquees (promotion d echelon) :</b> seule l IEP change (points d echelon x 45 DA). Le Salaire de Base (indice minimum x 45 DA) est INCHANGE — son rappel vaut toujours 0. Chaque indemnite calculee est refaite avec SON POURCENTAGE de (base + IEP), le taux etant lu sur le bulletin de reference de la MEME grille que la periode ; les rubriques fixes et I.Cont restent inchangees (rappel 0). Prorata en jours (30 jours par mois). Le bulletin de reference de chaque periode est choisi automatiquement parmi TOUTES les bases ajoutees : un bulletin d une autre grille (2022 pour 2023) est ecarte, sinon avertissement. Sauvegarde de projet : un fichier .json par projet (filtres, agents coches, echelons, dates, parametres) dans le dossier projets ; « Ouvrir le projet » recharge toute l’interface pour poursuivre le travail. Export Excel A3 paysage. Les dates d’application des grilles doivent etre confirmees avec les textes officiels avant validation comptable. La base Access est en lecture seule.</p>
   </div>
