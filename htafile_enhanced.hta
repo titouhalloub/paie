@@ -2128,6 +2128,17 @@ function rpDeleteProject(){
   }catch(e){$("rpProjMsg").innerHTML='<span class="err">Suppression impossible : '+esc(errText(e))+'</span>';}
 }
 /* ---------- printable version (HTML, opens in the default browser: A3 landscape, one agent never split, page totals) ---------- */
+function rpPrintSignoffHtml() {
+  var net=0,i,v,dt=new Date();
+  if(curR&&curR.recap)for(i=0;i<curR.recap.length;i++){v=parseFloat(rv(curR.recap[i][11]));if(!isNaN(v))net+=v;}
+  var date=rpPad(dt.getDate())+" / "+rpPad(dt.getMonth()+1)+" / "+dt.getFullYear();
+  return '<div class="signoff">' +
+    '<div><b>المبلغ بالأرقام:</b> '+esc(fmtNum(net))+' دج</div>' +
+    '<div class="wide"><b>المبلغ بالحروف:</b> '+esc(engNumAr(net))+'</div>' +
+    '<div><b>مسعد في:</b> '+date+'</div>' +
+    '<div class="manager"><b>المدير:</b> (الإمضاء والختم)</div>' +
+    '</div>';
+}
 function sheetsToHtml(sheets) {
   var o=['<!DOCTYPE html><html'+(LANG==="ar"?' dir="rtl"':'')+'><head><meta charset="utf-8"><title>Rappel d’echelon</title><style>@page{size:A3 landscape;margin:8mm}body{font-family:Arial,sans-serif;margin:0}.bar{padding:8px 12px;background:#dfe6f0;font-size:13px}table{border-collapse:collapse;table-layout:fixed}td{font-size:8pt;padding:1px 3px;white-space:nowrap;overflow:hidden;border:1px solid #000;vertical-align:middle}td.nb{border:0}.s_h{background:#dce6f1;font-weight:bold;text-align:center;white-space:normal}.s_bf,.s_bn,.s_b{background:#eef3fa;font-weight:bold}.num{text-align:right}.s_e1{font-size:20pt;font-weight:bold;text-align:center}.s_e2,.s_e4{font-size:13pt;font-weight:bold;text-align:center}.s_e3{font-size:14pt;font-weight:bold;text-align:right}.s_e5,.s_t{font-size:13pt;font-weight:bold}.s_e6{font-size:14pt;font-weight:bold;text-align:left}.s_e7{font-size:15pt;font-weight:bold;text-align:center}.s_cxa{background:#f7f7f2}.pg{page-break-after:always;padding:4px}.signoff{margin:14px 4px 2px;padding:10px 14px;border-top:2px solid #26384f;display:grid;grid-template-columns:1fr 1fr;gap:8px 24px;font-size:12pt;direction:rtl}.signoff .wide{grid-column:1 / -1}.signoff .manager{text-align:left;margin-top:12px;min-height:24mm}@media print{.bar{display:none}}</style></head><body><div class="bar"><button onclick="window.print()" style="font-size:14px;padding:4px 14px">Imprimer</button> &nbsp; Choisissez le format A3 et l’orientation paysage dans la fenetre d’impression (ou &laquo; Enregistrer en PDF &raquo;).</div>'];
   var si,pi,ri,ci;
