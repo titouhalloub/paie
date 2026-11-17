@@ -1946,19 +1946,21 @@ function rpBuildSheets() {
   var s5=famSheet("Feuille 5",paperNo(5),allDefs,prevData,annualPeriod(previousYear,true));
   /* Feuille 6 = full كشف التذكير for the current year, with every salary rubrique. */
   function annualJournalSheet(source,year){
-    var jgroups=[],jcur=[],jtot=[],q,z,rr,bb,sc,pgj,jbreaks=[],ki,tv;
+    var p6keep=[0,1,2,4,5,-4,-3,-2,-1],p6w=[58,115,100,112,62,82,82,58,58],p6nc,q,z,rr,bb,sc,pgj,jbreaks=[],ki,tv;
+    for(z=7;z<d.cols.length;z++){p6keep.push(z);p6w.push(62);}
+    p6nc=p6keep.length;
     for(q=0;q<source.rows.length;q++){
       rr=source.rows[q];bb=(rv(rr[4])==="TOTAL EMPLOYE");var cells=[];
-      for(z=0;z<nc;z++){
-        var original=keep[z]>=0?rr[keep[z]]:((rr.ixc||[])[-keep[z]-1]||"E");
+      for(z=0;z<p6nc;z++){
+        var pk=p6keep[z],original=pk>=0?rr[pk]:((rr.ixc||[])[-pk-1]||"E");
         cells.push(xr(original,bb?(rt(original)==="N"?"bn":"bf"):undefined));
       }
       cells.h=ROWH;jcur.push(cells);
       if(bb){jgroups.push({rows:jcur,tot:rr,h:jcur.length*ROWH});jcur=[];}
     }
     if(jcur.length)jgroups.push({rows:jcur,tot:jcur[jcur.length-1],h:jcur.length*ROWH});
-    for(z=0;z<nc;z++){
-      ki=keep[z];var sv=0;
+    for(z=0;z<p6nc;z++){
+      ki=p6keep[z];var sv=0;
       if(ki>=7){for(q=0;q<jgroups.length;q++){tv=jgroups[q].tot[ki];if(tv&&rt(tv)==="N")sv+=parseFloat(rv(tv))||0;}jtot[ki]="N"+r2(sv);}
       else jtot[ki]=ki<0?"E":(d.foot[ki]||"E");
     }
@@ -1973,15 +1975,16 @@ function rpBuildSheets() {
       ar.h=TOTH;return ar;
     }
     var annualFoot=[];
-    for(z=0;z<nc;z++){ki=keep[z];annualFoot.push(ki<0?X("E","","bf"):xr(jtot[ki]||"E",rt(jtot[ki]||"E")==="N"?"bn":"bf"));}
-    annualFoot.h=FOOTH;sc=scaleFor(w);
+    for(z=0;z<p6nc;z++){ki=p6keep[z];annualFoot.push(ki<0?X("E","","bf"):xr(jtot[ki]||"E",rt(jtot[ki]||"E")==="N"?"bn":"bf"));}
+    annualFoot.h=FOOTH;sc=scaleFor(p6w);
     pgj=rpPaged(jgroups,{capH:PH/(sc/100),topH:TOPH,hdrH:HDRH,totH:TOTH,footH:FOOTH,pageTotal:annualPageTotal,foot:annualFoot});
-    var jo=[];headBlock(nc,title,jo,null,annualPeriod(year,false));
-    var jh=[];for(z=0;z<nc;z++)jh.push(X("S",keep[z]<0?T(IXK[-keep[z]-1]):hdrT(d.cols[keep[z]]),"h"));jh.h=HDRH;jo.push(jh);
+    var jo=[];headBlock(p6nc,title,jo,null,annualPeriod(year,false));
+    var p6Labels=["الرقم الاستدلالي للدرجة","الرقم الاستدلالي للصنف","الدرجة","الصنف"];
+    var jh=[];for(z=0;z<p6nc;z++){ki=p6keep[z];jh.push(X("S",ki<0?p6Labels[-ki-1]:hdrT(d.cols[ki]),"h"));}jh.h=HDRH;jo.push(jh);
     var jhead=jo.length,joff=jo.length;
     for(q=0;q<pgj.rows.length;q++)jo.push(pgj.rows[q]);
     for(q=0;q<pgj.breaks.length;q++)jbreaks.push(joff+pgj.breaks[q]);
-    return {rtl:true,name:T("Feuille 6"),w:w,rows:jo,land:true,top:"0.35",footer:true,printRow:jhead,plan:{scale:sc,breaks:jbreaks}};
+    return {rtl:true,name:T("Feuille 6"),w:p6w,rows:jo,land:true,top:"0.35",footer:true,printRow:jhead,plan:{scale:sc,breaks:jbreaks}};
   }
   var s6=annualJournalSheet(currData,currentYear);
   var sheets=[{rtl:true,name:T("Journal rappel"),w:w,rows:out,land:true,top:"0.35",footer:true,printRow:headRow,plan:{scale:sc1,breaks:br1}},
