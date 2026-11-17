@@ -826,9 +826,10 @@ function mirrorRows(rows, n) {
   }
   return out;
 }
+var RP_FONT_SIZE=10;
 function buildXls(sheets) {
   var o = [], i, j, k, bd = '<Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/></Borders>';
-  var f = '<Font ss:FontName="Arial" ss:Size="10"';
+  var f = '<Font ss:FontName="Arial" ss:Size="'+RP_FONT_SIZE+'"';
   o.push('<?xml version="1.0" encoding="UTF-8"?>\r\n<?mso-application progid="Excel.Sheet"?>\r\n');
   o.push('<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet" xmlns:html="http://www.w3.org/TR/REC-html40">\r\n');
   o.push('<Styles>');
@@ -1993,10 +1994,30 @@ function rpBuildSheets() {
               {rtl:true,name:T("Recap agents"),w:recapW,rows:r2s,land:true,top:"0.35",footer:true,printRow:rcHead,plan:{scale:scaleFor(recapW),breaks:[]}}];
   return {sheets:sheets,fbase:fbase,info:"A3: journal "+pg.pages+" page(s) (echelle "+sc1+"%), rendement "+pr.pages+" page(s). Chaque page se termine par son TOTAL PAGE; aucun agent n’est coupe entre deux pages."};
 }
+function rpReadLayoutSettings(){
+  var f=parseFloat(trim($("rpFontSize")?$("rpFontSize").value:"10").replace(",",".")),
+      l=parseFloat(trim($("rpLineSpacing")?$("rpLineSpacing").value:"1").replace(",",".")),
+      c=parseFloat(trim($("rpColSpacing")?$("rpColSpacing").value:"1").replace(",","."));
+  if(isNaN(f)||f<7||f>16)f=10;
+  if(isNaN(l)||l<0.8||l>1.5)l=1;
+  if(isNaN(c)||c<0.8||c>1.5)c=1;
+  RP_FONT_SIZE=f;
+  return {font:f,line:l,col:c};
+}
+function rpApplyLayoutSettings(sheets){
+  var v=rpReadLayoutSettings(),factor=Math.max(v.font/10,v.line,v.col),i,j,sh,row;
+  for(i=0;i<sheets.length;i++){
+    sh=sheets[i];
+    for(j=0;j<sh.w.length;j++)sh.w[j]=r2(sh.w[j]*v.col);
+    for(j=0;j<sh.rows.length;j++){row=sh.rows[j];if(row.h)row.h=r2(row.h*v.line);}
+    if(sh.plan)sh.plan.scale=Math.max(25,Math.min(100,Math.round(sh.plan.scale/factor)));
+  }
+}
 function rpExport() {
   var oldLang=LANG;LANG="ar";
   try{
     var b=rpBuildSheets();if(!b)return;
+    rpApplyLayoutSettings(b.sheets);
     var si,fi,fr;
     for(si=0;si<b.sheets.length;si++){
       b.sheets[si].rows.push([]);
@@ -2280,7 +2301,7 @@ function sheetsToHtml(sheets) {
       if(cell.m)sp=cell.m+1;
       cls="s_"+(st||"cx")+((cell.t==="N"||cell.t==="I")?" num":"")+(nb?" nb":"");
       if(cell.t==="E")txt="";else if(cell.t==="N")txt=esc(fmtNum(parseFloat(cell.v)));else if(cell.t==="I")txt=esc(cell.v);else txt=esc(cell.v);
-      h.push('<td class="'+cls+'"'+(sp>1?' colspan="'+sp+'"':'')+' dir="auto">'+txt+'</td>');
+      h.push('<td class="'+cls+'"'+(sp>1?' colspan="'+sp+'"':'')+' dir="auto" style="font-size:'+RP_FONT_SIZE+'pt">'+txt+'</td>');
       col+=sp;k+=sp;
     }
     h.push('</tr>');return h.join("");
@@ -2308,6 +2329,7 @@ function rpPrint() {
 }
 function rpPrintInner() {
   var b=rpBuildSheets();if(!b)return;
+  rpApplyLayoutSettings(b.sheets);
   try{
     var dt=new Date(),stamp=dt.getFullYear()+rpPad(dt.getMonth()+1)+rpPad(dt.getDate())+"-"+rpPad(dt.getHours())+rpPad(dt.getMinutes())+rpPad(dt.getSeconds());
     var path=saveFile(String(b.fbase).replace(/[\\/:*?"<>|\s]+/g,"_")+"_impression_"+stamp+".html",sheetsToHtml(b.sheets));
@@ -3505,6 +3527,9 @@ function init() {
   &nbsp; Forcer CALCULEES (codes): <input type="text" id="rpCalc" size="16">
   <label><input type="checkbox" id="rpInt"> afficher les rubriques intermediaires</label>
   &nbsp; <button onclick="rpRun()">Calculer le rappel</button>
+  تنسيق الجداول / Mise en forme: حجم الخط <input type="text" id="rpFontSize" size="3" value="10" title="7 à 16 pt"> pt
+  تباعد الأسطر <input type="text" id="rpLineSpacing" size="4" value="1.0" title="0.8 à 1.5">
+  تباعد الأعمدة <input type="text" id="rpColSpacing" size="4" value="1.0" title="0.8 à 1.5"> &nbsp;
   Rendement: taux max % <input type="text" id="rpRendRate" size="4" title="vide = automatique selon le corps (35 / 30)"> note /40 <input type="text" id="rpRendNote" size="3" value="40"> &nbsp; Titre de l’etat (optionnel): <input type="text" id="rpTitle" size="46" dir="auto"> <button onclick="rpExport()">Exporter Excel 2003 (.xls)</button> <button onclick="rpPrint()">Imprimer / PDF (A3)</button> <span id="rpMsg"></span>
   <p class="muted"><b>Regles appliquees (promotion d echelon) :</b> seule l IEP change (points d echelon x 45 DA). Le Salaire de Base (indice minimum x 45 DA) est INCHANGE — son rappel vaut toujours 0. Chaque indemnite calculee est refaite avec SON POURCENTAGE de (base + IEP), le taux etant lu sur le bulletin de reference de la MEME grille que la periode ; les rubriques fixes et I.Cont restent inchangees (rappel 0). Prorata en jours (30 jours par mois). Le bulletin de reference de chaque periode est choisi automatiquement parmi TOUTES les bases ajoutees : un bulletin d une autre grille (2022 pour 2023) est ecarte, sinon avertissement. Sauvegarde de projet : un fichier .json par projet (filtres, agents coches, echelons, dates, parametres) dans le dossier projets ; « Ouvrir le projet » recharge toute l’interface pour poursuivre le travail. Export Excel A3 paysage. Les dates d’application des grilles doivent etre confirmees avec les textes officiels avant validation comptable. La base Access est en lecture seule.</p>
   </div>
