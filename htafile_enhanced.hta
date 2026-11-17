@@ -1837,7 +1837,7 @@ function rpBuildSheets() {
     return v;
   }
   /* feuilles 2-5: same rows as the journal (ANCIEN / NOUVEAU / RAPPEL per period + TOTAL EMPLOYE), restricted to one family of rubriques */
-  var srcRows=(d.rows&&d.rows.length&&d.rows[0].raw)?d.rows:d.detailRows;
+  var srcRows=(d.detailRows&&d.detailRows.length)?d.detailRows:(d.rows||[]);
   var currentYear=(new Date()).getFullYear(),previousYear=currentYear-1;
   function annualDays30(a,b){
     function ad(x){var last=new Date(x.getFullYear(),x.getMonth()+1,0).getDate();return x.getDate()===last?30:Math.min(30,x.getDate());}
