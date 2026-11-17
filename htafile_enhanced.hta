@@ -838,9 +838,9 @@ function buildXls(sheets) {
   o.push('<Style ss:ID="h">' + f + ' ss:Bold="1"/><Interior ss:Color="#DCE6F1" ss:Pattern="Solid"/><Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"' + (LANG === "ar" ? ' ss:ReadingOrder="RightToLeft"' : '') + '/>' + bd + '</Style>');
   o.push('<Style ss:ID="b">' + f + ' ss:Bold="1"/>' + bd + '</Style>');
   o.push('<Style ss:ID="bf">' + f + ' ss:Bold="1"/><Interior ss:Color="#EEF3FA" ss:Pattern="Solid"/>' + bd + '</Style>');
-  o.push('<Style ss:ID="t"><Font ss:FontName="Arial" ss:Size="14" ss:Bold="1"/></Style>');
-  o.push('<Style ss:ID="et1"><Font ss:FontName="Arial" ss:Size="14" ss:Bold="1"/><Alignment ss:Horizontal="Center"/></Style>');
-  o.push('<Style ss:ID="et2"><Font ss:FontName="Arial" ss:Size="12" ss:Bold="1"/><Alignment ss:Horizontal="Center"/></Style>');
+  o.push('<Style ss:ID="t"><Font ss:FontName="Arial" ss:Size="' +(RP_FONT_SIZE+4)+'" ss:Bold="1"/></Style>');
+  o.push('<Style ss:ID="et1"><Font ss:FontName="Arial" ss:Size="' +(RP_FONT_SIZE+4)+'" ss:Bold="1"/><Alignment ss:Horizontal="Center"/></Style>');
+  o.push('<Style ss:ID="et2"><Font ss:FontName="Arial" ss:Size="' +(RP_FONT_SIZE+2)+'" ss:Bold="1"/><Alignment ss:Horizontal="Center"/></Style>');
   o.push('<Style ss:ID="n">' + f + '/><NumberFormat ss:Format="#,##0.00"/>' + bd + '</Style>');
   o.push('<Style ss:ID="bn">' + f + ' ss:Bold="1"/><Interior ss:Color="#EEF3FA" ss:Pattern="Solid"/><NumberFormat ss:Format="#,##0.00"/>' + bd + '</Style>');
   o.push('<Style ss:ID="d">' + f + '/><NumberFormat ss:Format="yyyy\\-mm\\-dd"/>' + bd + '</Style>');
@@ -848,13 +848,13 @@ function buildXls(sheets) {
   var ae = '<Font ss:FontName="Arabic Transparent" x:CharSet="178" ss:Size=';
   o.push('<Style ss:ID="x6"><Alignment ss:Vertical="Bottom"/>' + f + '/><NumberFormat ss:Format="0.000000"/>' + bd + '</Style>');
   o.push('<Style ss:ID="cxa"><Alignment ss:Vertical="Center"' + (LANG === "ar" ? ' ss:ReadingOrder="RightToLeft"' : '') + '/>' + f + '/><Interior ss:Color="#F7F7F2" ss:Pattern="Solid"/>' + bd + '</Style>');
-  o.push('<Style ss:ID="e7"><Alignment ss:Horizontal="CenterAcrossSelection" ss:Vertical="Bottom"/>' + ae + '"20" ss:Bold="1"/>' + nb + '</Style>');
-  o.push('<Style ss:ID="e6"><Alignment ss:Horizontal="Left" ss:Vertical="Center"/>' + ae + '"16" ss:Bold="1"/>' + nb + '</Style>');
-  o.push('<Style ss:ID="e5"><Font ss:FontName="Arial" ss:Size="14" ss:Bold="1"/>' + nb + '</Style>');
-  o.push('<Style ss:ID="e1"><Alignment ss:Horizontal="CenterAcrossSelection" ss:Vertical="Bottom"/>' + ae + '"22" ss:Bold="1"/>' + nb + '</Style>');
-  o.push('<Style ss:ID="e2"><Alignment ss:Horizontal="CenterAcrossSelection" ss:Vertical="Bottom"/>' + ae + '"18" ss:Bold="1"/>' + nb + '</Style>');
-  o.push('<Style ss:ID="e3"><Alignment ss:Horizontal="Right" ss:Vertical="Bottom"/>' + ae + '"20" ss:Bold="1"/>' + nb + '</Style>');
-  o.push('<Style ss:ID="e4"><Alignment ss:Horizontal="CenterAcrossSelection" ss:Vertical="Bottom"/>' + ae + '"18" ss:Bold="1"/>' + nb + '</Style>');
+  o.push('<Style ss:ID="e7"><Alignment ss:Horizontal="CenterAcrossSelection" ss:Vertical="Bottom"/>' + ae + '"' +(RP_FONT_SIZE+10)+'" ss:Bold="1"/>' + nb + '</Style>');
+  o.push('<Style ss:ID="e6"><Alignment ss:Horizontal="Left" ss:Vertical="Center"/>' + ae + '"' +(RP_FONT_SIZE+6)+'" ss:Bold="1"/>' + nb + '</Style>');
+  o.push('<Style ss:ID="e5"><Font ss:FontName="Arial" ss:Size="' +(RP_FONT_SIZE+4)+'" ss:Bold="1"/>' + nb + '</Style>');
+  o.push('<Style ss:ID="e1"><Alignment ss:Horizontal="CenterAcrossSelection" ss:Vertical="Bottom"/>' + ae + '"' +(RP_FONT_SIZE+12)+'" ss:Bold="1"/>' + nb + '</Style>');
+  o.push('<Style ss:ID="e2"><Alignment ss:Horizontal="CenterAcrossSelection" ss:Vertical="Bottom"/>' + ae + '"' +(RP_FONT_SIZE+8)+'" ss:Bold="1"/>' + nb + '</Style>');
+  o.push('<Style ss:ID="e3"><Alignment ss:Horizontal="Right" ss:Vertical="Bottom"/>' + ae + '"' +(RP_FONT_SIZE+10)+'" ss:Bold="1"/>' + nb + '</Style>');
+  o.push('<Style ss:ID="e4"><Alignment ss:Horizontal="CenterAcrossSelection" ss:Vertical="Bottom"/>' + ae + '"' +(RP_FONT_SIZE+8)+'" ss:Bold="1"/>' + nb + '</Style>');
   o.push('</Styles>\r\n');
   for (i = 0; i < sheets.length; i++) {
     var sh1 = sheets[i];
