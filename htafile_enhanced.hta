@@ -1980,7 +1980,7 @@ function rpBuildSheets() {
     annualFoot.h=FOOTH;sc=scaleFor(p6w);
     pgj=rpPaged(jgroups,{capH:PH/(sc/100),topH:TOPH,hdrH:HDRH,totH:TOTH,footH:FOOTH,pageTotal:annualPageTotal,foot:annualFoot});
     var jo=[];headBlock(p6nc,title,jo,null,annualPeriod(year,false));
-    var p6Labels=["الرقم الاستدلالي للدرجة","الرقم الاستدلالي للصنف","الدرجة","الصنف"];
+    var p6Labels=["الصنف","الدرجة","الرقم الاستدلالي للصنف","الرقم الاستدلالي للدرجة"];
     var jh=[];for(z=0;z<p6nc;z++){ki=p6keep[z];jh.push(X("S",ki<0?p6Labels[-ki-1]:hdrT(d.cols[ki]),"h"));}jh.h=HDRH;jo.push(jh);
     var jhead=jo.length,joff=jo.length;
     for(q=0;q<pgj.rows.length;q++)jo.push(pgj.rows[q]);
