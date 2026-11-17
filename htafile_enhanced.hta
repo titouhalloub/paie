@@ -1947,7 +1947,7 @@ function rpBuildSheets() {
   var s5=famSheet("Feuille 5",paperNo(5),allDefs,prevData,annualPeriod(previousYear,true));
   /* Feuille 6 = full كشف التذكير for the current year, with every salary rubrique. */
   function annualJournalSheet(source,year){
-    var p6keep=[0,1,2,4,5,-4,-3,-2,-1],p6w=[58,115,100,112,62,82,82,58,58],p6nc,q,z,rr,bb,sc,pgj,jbreaks=[],ki,tv;
+    var p6keep=[0,1,2,4,5,-4,-3,-2,-1],p6w=[58,115,100,112,62,82,82,58,58],p6nc,q,z,rr,bb,sc,pgj,jbreaks=[],ki,tv,jcur=[],jgroups=[],jtot={};
     for(z=7;z<d.cols.length;z++){p6keep.push(z);p6w.push(62);}
     p6nc=p6keep.length;
     for(q=0;q<source.rows.length;q++){
@@ -1967,7 +1967,7 @@ function rpBuildSheets() {
     }
     function annualPageTotal(list,no,cnt){
       var ar=[],q2,k2;
-      for(q2=0;q2<nc;q2++){k2=keep[q2];
+      for(q2=0;q2<p6nc;q2++){k2=p6keep[q2];
         if(k2===0)ar.push(X("S",T("TOTAL PAGE"),"bf"));
         else if(k2===2)ar.push(X("S",no+" / "+cnt,"bf"));
         else if(k2<7)ar.push(X("E","","bf"));
