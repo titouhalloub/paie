@@ -2211,7 +2211,10 @@ function rpAddRefDbPath(v){
   var ext=String(v).substring(String(v).lastIndexOf(".")+1).toLowerCase(),item,p,c,m;
   if(ext==="json"){
     m=rpJsonReadFile(v);
-    if(!m||m.type!=="paie-access-json-db"||m.version!==1||!m.tables)throw new Error("Fichier JSON non reconnu. Choisissez le manifeste exporte par cet onglet.");
+    if(!m||m.type!=="paie-access-json-db"||m.version!==1||!m.tables||!m.detailFiles)throw new Error("Fichier JSON non reconnu. Choisissez le manifeste exporte par cet onglet.");
+    var hasArchive=false,hasArchiveDetail=false,ti;
+    for(ti=0;ti<m.tables.length;ti++){if(String(m.tables[ti].name).toLowerCase()==="archive")hasArchive=true;if(String(m.tables[ti].name).toLowerCase()==="archive_detail")hasArchiveDetail=true;}
+    if(!hasArchive||!hasArchiveDetail)throw new Error("Cette base JSON ne contient pas les tables Archive et Archive_Detail requises pour les calculs.");
     m.__path=v;item={kind:"json",manifest:m,label:fso.GetFileName(v),archive:rpJsonTable(m,"Archive")};
   }else{p=localCopy(v);c=openConn(p);item={kind:"access",conn:c,label:fso.GetFileName(v)};}
   refDbs.push(item);refDbPaths.push(v);
