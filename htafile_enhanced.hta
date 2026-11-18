@@ -576,7 +576,7 @@ var TR = {
   "Matricule":"الرقم التعريفي","Nom et prenom":"الاسم واللقب","Grille":"الشبكة","Periode couverte":"الفترة المشمولة",
   "Jours rappel (base 30j)":"أيام التذكير (أساس 30 يوماً)","Bulletin salaire de reference":"وصل الراتب المرجعي",
   "ANCIEN SALAIRE":"الراتب القديم","NOUVEAU SALAIRE":"الراتب الجديد","RAPPEL":"التذكير","TOTAL EMPLOYE":"مجموع الموظف","TOTAL GENERAL":"المجموع العام",
-  "TOTAL GAINS HORS A.F":"مجموع المنح باستثناء المنح العائلية","TOTAL GAINS HORS A.F ET LOGEMENT":"مجموع المنح باستثناء المنح العائلية والسكن","TOTAL RETENUES":"مجموع الاقتطاعات","NET (GAINS - RETENUES)":"الصافي (المنح - الاقتطاعات)","NET RAPPEL":"صافي التذكير",
+  "TOTAL GAINS":"مجموع المنح","TOTAL GAINS HORS A.F":"مجموع المنح باستثناء المنح العائلية","TOTAL GAINS HORS A.F ET LOGEMENT":"مجموع المنح باستثناء المنح العائلية والسكن","TOTAL RETENUES":"مجموع الاقتطاعات","NET (GAINS - RETENUES)":"الصافي (المنح - الاقتطاعات)","NET RAPPEL":"صافي التذكير",
   "Nom Prenom":"الاسم واللقب","Cat.":"الصنف","Ech. ancien":"الدرجة القديمة","Ech. nouveau":"الدرجة الجديدة",
   "Date effet":"تاريخ النفاذ","Fin rappel":"نهاية التذكير","Bulletin base":"وصل الراتب الأساس","Grilles appliquees":"الشبكات المطبّقة",
   "Rappel gains":"تذكير المنح","Rappel retenues":"تذكير الاقتطاعات","Rappel net":"صافي التذكير",
@@ -1437,6 +1437,7 @@ function doRappel() {
   function isIrgRubrique(it) { var c=nrm(it.code),l=nrm(it.lib); return /impotsurlerevenu/.test(l)||c==="irg"||/^irg/.test(l); }
   /* imposable = (salaire de base + IEP + all indemnites, except I.ZONE and IND.LOG) - cotisation sociale */
   function isZoneOrLog(it) { var l=nrm(it.lib),c=nrm(it.code); return /^izone/.test(l)||/^izone/.test(c)||/^indlog/.test(l)||/^indlog/.test(c)||/^indemnitelogement/.test(l); }
+  function isHousingRubrique(it) { var l=nrm(it.lib),c=nrm(it.code); return /^indlog/.test(l)||/^indlog/.test(c)||/^indemnitelogement/.test(l)||/^indemnitelogement/.test(c)||/^logement/.test(l)||/^logement/.test(c); }
   function isCotSocRubrique(it) { return /cotisationsoci/.test(nrm(it.lib)); }
   /* IRG 2022: faithful JScript port of CalculerIRG2022 (VBA).
      Taxable gross is truncated to the lower 10 DA; progressive brackets,
@@ -1494,10 +1495,10 @@ function doRappel() {
   for(i=0;i<rubs.length;i++)rubKinds.push(i>=nG?"ret":(leadRank(rubs[i])>=0?"lead":(isAFRubrique(rubs[i])?"af":"gain")));
   var cols=["Matricule","Nom et prenom","Nature","Grille","Periode couverte","Jours rappel (base 30j)","Bulletin salaire de reference"];
   for(i=0;i<dispMap.length;i++)cols.push(dispMap[i].type==="cont"?"I.Cont (Sec2 + Sec1/3 + Sec3/3)":(dispMap[i].type==="af"?"Total A.F":rubs[dispMap[i].idx].lib));
-  cols.push("TOTAL GAINS","TOTAL RETENUES","NET RAPPEL");
+  cols.push("TOTAL GAINS HORS A.F","TOTAL GAINS HORS A.F ET LOGEMENT","TOTAL RETENUES","NET RAPPEL");
   function infoRow(mat,nm,label,text,per,basePeriod) {
     var row=["S"+mat,"S"+nm,"S"+label,"S"+text,"S"+per,"E","S"+(basePeriod||"")],jj;
-    for(jj=0;jj<dispMap.length+3;jj++)row.push("E");
+    for(jj=0;jj<dispMap.length+5;jj++)row.push("E");
     row.info=text;return row;
   }
   var PTV=45;   /* official point value (DA) */
@@ -1505,15 +1506,15 @@ function doRappel() {
     return "\u0627\u0644\u0635\u0646\u0641 "+cat+" - \u0627\u0644\u062f\u0631\u062c\u0629 "+ech+" : \u0627\u0644\u0631\u0642\u0645 \u0627\u0644\u0627\u0633\u062a\u062f\u0644\u0627\u0644\u064a \u0627\u0644\u0623\u062f\u0646\u0649 "+ix.min+" + \u0646\u0642\u0627\u0637 \u0627\u0644\u062f\u0631\u062c\u0629 "+ix.pts+" = "+ix.total+"  (\u00d7 "+PTV+" \u062f\u062c = "+fmtNum(r2(ix.total*PTV))+" \u062f\u062c)";
   }
   function lineRow(mat,nm,label,grid,per,days,basePeriod,arr) {
-    var row=["S"+mat,"S"+nm,"S"+label,"S"+grid,"S"+per,days===null?"E":"I"+days,"S"+(basePeriod||"")],sg=0,sr=0,jj,v,ci;
-    for(jj=0;jj<rubs.length;jj++){v=arr[jj]||0;if(jj<nG)sg+=v;else if(jj<nG+nR)sr+=v;}
+    var row=["S"+mat,"S"+nm,"S"+label,"S"+grid,"S"+per,days===null?"E":"I"+days,"S"+(basePeriod||"")],sg=0,sgNoAF=0,sgNoAFNoHousing=0,sr=0,jj,v,ci;
+    for(jj=0;jj<rubs.length;jj++){v=arr[jj]||0;if(jj<nG){sg+=v;if(!isAFRubrique(rubs[jj])){sgNoAF+=v;if(!isHousingRubrique(rubs[jj]))sgNoAFNoHousing+=v;}}else if(jj<nG+nR)sr+=v;}
     for(jj=0;jj<dispMap.length;jj++){
       if(dispMap[jj].type==="cont"){v=0;for(ci=0;ci<contIdx.length;ci++)v+=arr[contIdx[ci]]||0;}
       else if(dispMap[jj].type==="af"){v=0;for(ci=0;ci<afIdx.length;ci++)v+=arr[afIdx[ci]]||0;}
       else v=arr[dispMap[jj].idx]||0;
       row.push("N"+r2(v));
     }
-    row.push("N"+r2(sg));row.push("N"+r2(sr));row.push("N"+r2(sg-sr));row.raw=arr.slice(0);return row;
+    row.push("N"+r2(sgNoAF));row.push("N"+r2(sgNoAFNoHousing));row.push("N"+r2(sr));row.push("N"+r2(sg-sr));row.raw=arr.slice(0);return row;
   }
   function gridStartDate(gridKey) {
     if(gridKey==="2007")return new Date(2008,0,1);
