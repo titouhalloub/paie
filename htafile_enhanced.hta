@@ -576,7 +576,7 @@ var TR = {
   "Matricule":"الرقم التعريفي","Nom et prenom":"الاسم واللقب","Grille":"الشبكة","Periode couverte":"الفترة المشمولة",
   "Jours rappel (base 30j)":"أيام التذكير (أساس 30 يوماً)","Bulletin salaire de reference":"وصل الراتب المرجعي",
   "ANCIEN SALAIRE":"الراتب القديم","NOUVEAU SALAIRE":"الراتب الجديد","RAPPEL":"التذكير","TOTAL EMPLOYE":"مجموع الموظف","TOTAL GENERAL":"المجموع العام",
-  "TOTAL GAINS":"مجموع المنح","TOTAL RETENUES":"مجموع الاقتطاعات","NET RAPPEL":"صافي التذكير",
+  "TOTAL GAINS HORS A.F":"مجموع المنح باستثناء المنح العائلية","TOTAL GAINS HORS A.F ET LOGEMENT":"مجموع المنح باستثناء المنح العائلية والسكن","TOTAL RETENUES":"مجموع الاقتطاعات","NET (GAINS - RETENUES)":"الصافي (المنح - الاقتطاعات)","NET RAPPEL":"صافي التذكير",
   "Nom Prenom":"الاسم واللقب","Cat.":"الصنف","Ech. ancien":"الدرجة القديمة","Ech. nouveau":"الدرجة الجديدة",
   "Date effet":"تاريخ النفاذ","Fin rappel":"نهاية التذكير","Bulletin base":"وصل الراتب الأساس","Grilles appliquees":"الشبكات المطبّقة",
   "Rappel gains":"تذكير المنح","Rappel retenues":"تذكير الاقتطاعات","Rappel net":"صافي التذكير",
@@ -1073,9 +1073,13 @@ function doJournal(per, corps) {
   for (k in seen) { if (seen.hasOwnProperty(k) && !known[k]) ints.push({ key: k, lib: k.substring(1) }); }
   var inclInt = $("jInt").checked;
 
+  function journalNorm(t) { return String(t||"").toLowerCase().replace(/[éèêë]/g,"e").replace(/[àâä]/g,"a").replace(/['’`]/g,"").replace(/[\s._\-\/()]+/g,""); }
+  function journalIsAF(it) { var c=journalNorm(String(it.key||"").replace(/^k/,"")),l=journalNorm(it.lib); return /allocationfamil/.test(c)||/allocationfamil/.test(l)||/^mifr$/.test(c)||/^mifr/.test(l)||/^salaireunique/.test(c)||/salaireunique/.test(l); }
+  function journalIsHousing(it) { var c=journalNorm(String(it.key||"").replace(/^k/,"")),l=journalNorm(it.lib); return /^indlog/.test(c)||/^indlog/.test(l)||/indemnitelogement/.test(c)||/indemnitelogement/.test(l)||/^logement/.test(c)||/^logement/.test(l); }
   var cols = ["N", "Matricule", "Nom", "Prenom", "Grade"];
   for (i = 0; i < gains.length; i++) cols.push(gains[i].lib);
-  cols.push("TOTAL GAINS");
+  cols.push("TOTAL GAINS HORS A.F");
+  cols.push("TOTAL GAINS HORS A.F ET LOGEMENT");
   for (i = 0; i < rets.length; i++) cols.push(rets[i].lib);
   cols.push("TOTAL RETENUES"); cols.push("NET (GAINS - RETENUES)");
   if (inclInt) for (i = 0; i < ints.length; i++) cols.push(ints[i].lib);
@@ -1084,10 +1088,15 @@ function doJournal(per, corps) {
   for (j = 0; j < cols.length; j++) tot.push(0);
   for (i = 0; i < emps.rows.length; i++) {
     e = emps.rows[i];
-    var vals = V["k" + lc(rv(e[0]))] || {}, sg = 0, sr = 0, v;
+    var vals = V["k" + lc(rv(e[0]))] || {}, sg = 0, sgNoAF = 0, sgNoAFNoHousing = 0, sr = 0, v;
     var row = ["I" + (i + 1), e[0], "S" + (rv(e[3]) || rv(e[1])), "S" + (rv(e[4]) || rv(e[2])), e[5]];
-    for (j = 0; j < gains.length; j++) { v = vals[gains[j].key] || 0; sg += v; row.push(v ? "N" + r2(v) : "E"); }
-    row.push("N" + r2(sg));
+    for (j = 0; j < gains.length; j++) {
+      v = vals[gains[j].key] || 0; sg += v;
+      if (!journalIsAF(gains[j])) { sgNoAF += v; if (!journalIsHousing(gains[j])) sgNoAFNoHousing += v; }
+      row.push(v ? "N" + r2(v) : "E");
+    }
+    row.push("N" + r2(sgNoAF));
+    row.push("N" + r2(sgNoAFNoHousing));
     for (j = 0; j < rets.length; j++) { v = vals[rets[j].key] || 0; sr += v; row.push(v ? "N" + r2(v) : "E"); }
     row.push("N" + r2(sr)); row.push("N" + r2(sg - sr));
     if (inclInt) for (j = 0; j < ints.length; j++) { v = vals[ints[j].key] || 0; row.push(v ? "N" + r2(v) : "E"); }
@@ -1096,10 +1105,10 @@ function doJournal(per, corps) {
   }
   var foot = ["STOTAL", "S" + emps.rows.length + " agents", "E", "E", "E"];
   for (j = 5; j < cols.length; j++) foot.push("N" + r2(tot[j]));
-  var gi = 5 + gains.length, ri = gi + 1 + rets.length, ni = ri + 1;
+  var gi = 5 + gains.length, g2i = gi + 1, ri = g2i + 1 + rets.length, ni = ri + 1;
   curJ = { cols: cols, rows: rows, foot: foot, per: per, perLabel: selText("perJ"), corpsLabel: corps ? selText("corpsSel") : "Tous les corps", corpsCode: corps };
-  $("jOut").innerHTML = '<p><b>' + esc(curJ.corpsLabel) + ' &mdash; ' + esc(curJ.perLabel) + '</b><br>' + emps.rows.length + ' agents &nbsp; Gains: ' + fmtNum(tot[gi]) +
-    ' &nbsp; Retenues: ' + fmtNum(tot[ri]) + ' &nbsp; Net: ' + fmtNum(tot[ni]) + '</p><div id="jGrid"></div>';
+  $("jOut").innerHTML = '<p><b>' + esc(curJ.corpsLabel) + ' &mdash; ' + esc(curJ.perLabel) + '</b><br>' + emps.rows.length + ' agents &nbsp; Gains hors A.F: ' + fmtNum(tot[gi]) +
+    ' &nbsp; Gains hors A.F et logement: ' + fmtNum(tot[g2i]) + ' &nbsp; Retenues: ' + fmtNum(tot[ri]) + ' &nbsp; Net (avec A.F): ' + fmtNum(tot[ni]) + '</p><div id="jGrid"></div>';
   memTable("jGrid", cols, rows, 1, 50, foot);
 }
 function exportJournal() {
@@ -1442,7 +1451,7 @@ function doRappel() {
   function calculerIRG2022(brutImposable) {
     var mo=Math.floor(Number(brutImposable)/10)*10;
     var irgBrut,abat,irg;
-    if(mo<=30000)return 0;
+    if(mo<=20000)return 0;
     if(mo<=40000)irgBrut=(mo-20000)*0.23;
     else if(mo<=80000)irgBrut=4600+(mo-40000)*0.27;
     else if(mo<=160000)irgBrut=15400+(mo-80000)*0.30;
@@ -1635,7 +1644,7 @@ function doRappel() {
       if(irgIdx>=0) {
         /* taxable base = imposable gains - cotisation sociale; IRG 2022 normal on the monthly base, for old and new salary */
         var oBase=0,nBase=0,qq,oIrg,nIrg,aIrg;
-        for(qq=0;qq<nG;qq++)if(!isZoneOrLog(rubs[qq])){oBase+=oldSalary[qq];nBase+=newSalary[qq];}
+        for(qq=0;qq<nG;qq++)if(!isZoneOrLog(rubs[qq])&&!isAFRubrique(rubs[qq])){oBase+=oldSalary[qq];nBase+=newSalary[qq];}
         if(cotIdx>=0){oBase-=oldSalary[cotIdx];nBase-=newSalary[cotIdx];}
         oIrg=calculerIRG2022(oBase);nIrg=calculerIRG2022(nBase);aIrg=r2((nIrg-oIrg)*days/30);
         oldSalary[irgIdx]=r2(oIrg);newSalary[irgIdx]=r2(nIrg);periodRecall[irgIdx]=aIrg;
