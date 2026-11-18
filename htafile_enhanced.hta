@@ -604,7 +604,7 @@ TR["Total F2"] = "\u0645\u062c\u0645\u0648\u0639 \u0627\u0644\u0648\u0631\u0642\
 TR["Total F3"] = "\u0645\u062c\u0645\u0648\u0639 \u0627\u0644\u0648\u0631\u0642\u0629 3";
 TR["Total F4"] = "\u0645\u062c\u0645\u0648\u0639 \u0627\u0644\u0648\u0631\u0642\u0629 4";
 TR["Retenue C.S 9%"] = "\u0627\u0642\u062a\u0637\u0627\u0639 \u0627\u0644\u0636\u0645\u0627\u0646 \u0627\u0644\u0627\u062c\u062a\u0645\u0627\u0639\u064a 9%";
-TR["IRG"] = "\u0627\u0644\u0636\u0631\u064a\u0628\u0629 IRG";
+TR["IRG 10%"] = "\u0627\u0644\u0636\u0631\u064a\u0628\u0629 IRG 10%";
 TR["Net a payer"] = "\u0627\u0644\u0635\u0627\u0641\u064a \u0644\u0644\u062f\u0641\u0639";
 
 /* ===== Arabic names of the rubriques: 1) Rubrique.Libelle_Arab from the database, 2) this dictionary, 3) generic fallback.
@@ -1773,7 +1773,7 @@ function rpBuildSheets() {
   for(i=0;i<pg.rows.length;i++)out.push(pg.rows[i]);
   var br1=[];for(i=0;i<pg.breaks.length;i++)br1.push(off+pg.breaks[i]);
 
-  /* ---------- rendement sheet: brut = rate x note/40 x (Base + IEP); C.S 9%; IRG 2022 progressive schedule on (brut - C.S) ---------- */
+  /* ---------- rendement sheet: brut = rate x note/40 x (Base + IEP); C.S 9%; fixed IRG 10% on (brut - C.S) ---------- */
   var ib=-1,ie=-1;
   for(j=7;j<d.cols.length;j++){var nl=rpNrm(d.cols[j]);if(nl==="salairedebase"&&ib<0)ib=j;if(/^indemnitedexperience/.test(nl)&&ie<0)ie=j;}
   var rateIn=trim($("rpRendRate")?$("rpRendRate").value:"").replace(",","."),noteIn=trim($("rpRendNote")?$("rpRendNote").value:"").replace(",",".");
@@ -1786,9 +1786,9 @@ function rpBuildSheets() {
   }
   function cellN(v,st){return X("N",""+r2(v),st);}
   var rw=[58,135,100,112,50,95,55,45,55,95,85,85,95],rnc=rw.length,rg=[],curRows=[],acc=[0,0,0,0,0];
-  var rcols=["Matricule","Nom et prenom","Nature","Periode couverte","Jours rappel (base 30j)","Salaire principal (Base + IEP)","Taux max %","Note /40","Taux effectif %","Prime de rendement","Retenue C.S 9%","IRG","Net a payer"];
+  var rcols=["Matricule","Nom et prenom","Nature","Periode couverte","Jours rappel (base 30j)","Salaire principal (Base + IEP)","Taux max %","Note /40","Taux effectif %","Prime de rendement","Retenue C.S 9%","IRG 10%","Net a payer"];
   function pv(r){var s1=0;if(ib>=0)s1+=parseFloat(rv(r[ib]))||0;if(ie>=0)s1+=parseFloat(rv(r[ie]))||0;return s1;}
-  function amounts(brut){var cs=r2(brut*0.09),irg=calculerIRG2022(brut-cs);return {cs:cs,irg:irg,net:r2(brut-cs-irg)};}
+  function amounts(brut){var cs=r2(brut*0.09),irg=r2((brut-cs)*0.10);return {cs:cs,irg:irg,net:r2(brut-cs-irg)};}
   function rendTot(l1,l2,v,st){
     var r=[X("S",l1,"bf"),X("E","","bf"),X("S",l2,"bf"),X("E","","bf"),X("E","","bf"),cellN(v[0],"bn"),X("E","","bf"),X("E","","bf"),X("E","","bf"),cellN(v[1],"bn"),cellN(v[2],"bn"),cellN(v[3],"bn"),cellN(v[4],"bn")];
     r.h=ROWH;return r;
