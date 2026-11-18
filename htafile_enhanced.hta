@@ -1405,9 +1405,7 @@ function doRappel() {
   rpStage="preparation des matricules selectionnes";
   var mats=[];for(i=0;i<selected.length;i++)mats.push("'"+sq(selected[i].mat)+"'");
   rpStage="recherche des bulletins de reference (Archive)";
-  var heads=qr("SELECT a.Matricule,a.Cle_Archive,a.Code_Periode_Exercice FROM Archive a WHERE CStr(a.Code_Traitement)='0' AND CStr(a.Matricule) IN ("+mats.join(",")+")");
-  /* candidats de reference dans TOUTES les bases ouvertes (base principale + bases
-     supplementaires). Chaque candidat garde la connexion et la grille de son bulletin. */
+  /* Recherche dans la base principale et toutes les bases Access/JSON supplementaires. */
   var refConns=[{kind:"access",conn:conn}],candByMat={},rdi,rci,matSet={};
   for(i=0;i<selected.length;i++)matSet["k"+lc(selected[i].mat)]=true;
   for(rdi=0;rdi<refDbs.length;rdi++)refConns.push(refDbs[rdi]);
@@ -1444,32 +1442,56 @@ function doRappel() {
     }
   }
   rpStage="analyse des bulletins trouves";
-  var chosen={},archiveIds=[],perMap={},prefWarn=[],prefGlobal=trim($('rpBaseGlobal')?$('rpBaseGlobal').value:"");
-  for(i=0;i<heads.rows.length;i++) {
-    r=heads.rows[i];var mat=rv(r[0]),per=rpParsePer(rv(r[2]));
-    if(!per||per.m<1||per.m>12)continue;
-    var serial=per.y*12+per.m,aid=parseFloat(rv(r[1])),plab=per.y+"/"+rpPad(per.m),entry={serial:serial,aid:aid,period:plab,cle:rv(r[1])},mk0="k"+lc(mat);
-    if(!perMap[mk0])perMap[mk0]={};
-    if(!perMap[mk0][plab]||aid>perMap[mk0][plab].aid)perMap[mk0][plab]=entry;
-    if(!chosen[mk0]||serial>chosen[mk0].serial||(serial===chosen[mk0].serial&&aid>chosen[mk0].aid))chosen[mk0]=entry;
+  var chosen={},perMap={},prefWarn=[],prefGlobal=trim($('rpBaseGlobal')?$('rpBaseGlobal').value:""),mk0,li,ci,entry,oldEntry;
+  for(mk0 in candByMat)if(candByMat.hasOwnProperty(mk0)){
+    var list0=candByMat[mk0];
+    for(li=0;li<list0.length;li++){
+      ci=list0[li];entry={serial:ci.serial,aid:ci.aid,period:ci.period,cle:ci.aid,dbi:ci.dbi};
+      if(!perMap[mk0])perMap[mk0]={};
+      oldEntry=perMap[mk0][ci.period];
+      if(!oldEntry||ci.dbi<oldEntry.dbi||(ci.dbi===oldEntry.dbi&&Number(ci.aid)>Number(oldEntry.aid)))perMap[mk0][ci.period]=entry;
+      oldEntry=chosen[mk0];
+      if(!oldEntry||ci.serial>oldEntry.serial||(ci.serial===oldEntry.serial&&(ci.dbi<oldEntry.dbi||(ci.dbi===oldEntry.dbi&&Number(ci.aid)>Number(oldEntry.aid)))))chosen[mk0]=entry;
+    }
   }
-  /* explicit choice: per-agent value first, then the global value, otherwise the latest archived payslip */
-  for(i=0;i<selected.length;i++) {
+  for(i=0;i<selected.length;i++){
     var mk1="k"+lc(selected[i].mat),pref=selected[i].basePref||prefGlobal;
     if(pref){
       if(perMap[mk1]&&perMap[mk1][pref])chosen[mk1]=perMap[mk1][pref];
       else prefWarn.push(selected[i].mat+" "+selected[i].name+": bulletin "+pref.substring(5)+"/"+pref.substring(0,4)+" introuvable, dernier bulletin utilise.");
     }
   }
-  for(i=0;i<selected.length;i++) {
-    var ch=chosen["k"+lc(selected[i].mat)];
-    if(ch)archiveIds.push(ch.cle);
+  var hasReference=false,baseVals={},seen={},baseValCache={};
+  for(i=0;i<selected.length;i++){
+    var empKey="k"+lc(selected[i].mat),baseMeta0=chosen[empKey],baseMap={};
+    if(!baseMeta0)continue;
+    hasReference=true;
+    var refSource=refConns[baseMeta0.dbi],cacheKey=baseMeta0.dbi+":"+baseMeta0.aid;
+    if(baseValCache[cacheKey])baseMap=baseValCache[cacheKey];
+    else try{
+      if(refSource.kind==="json"){
+        var detailPath=refSource.manifest.detailFiles?refSource.manifest.detailFiles[String(baseMeta0.aid)]:null;
+        if(!detailPath)throw new Error("Archive_Detail absent pour le bulletin "+baseMeta0.aid);
+        var detailRows=rpJsonReadFile(fso.BuildPath(fso.GetParentFolderName(refSource.manifest.__path),detailPath)),di0,codeRub0,valRub0;
+        for(di0=0;di0<detailRows.length;di0++){
+          codeRub0=rpJsonGet(detailRows[di0],"Code_Rubrique");valRub0=rpJsonGet(detailRows[di0],"Valeur");
+          if(valRub0!==null&&!isNaN(parseFloat(String(valRub0)))){var rk0="k"+lc(String(codeRub0));baseMap[rk0]=(baseMap[rk0]||0)+parseFloat(String(valRub0));}
+        }
+      }else{
+        var rsBase=refSource.conn.Execute("SELECT Code_Rubrique,Valeur FROM Archive_Detail WHERE CStr(Cle_Archive)='"+sq(baseMeta0.aid)+"'");
+        while(!rsBase.EOF){
+          var vb=rsBase.Fields(1).Value;
+          if(vb!==null&&!isNaN(parseFloat(String(vb)))){var rb="k"+lc(String(rsBase.Fields(0).Value));baseMap[rb]=(baseMap[rb]||0)+parseFloat(String(vb));}
+          rsBase.MoveNext();
+        }
+        rsBase.Close();
+      }
+      baseValCache[cacheKey]=baseMap;
+    }catch(exBase){prefWarn.push("Lecture du bulletin de reference "+baseMeta0.aid+" impossible ("+errText(exBase)+").");}
+    baseVals[empKey]=baseMap;
+    for(var seenKey in baseMap)if(baseMap.hasOwnProperty(seenKey))seen[seenKey]=true;
   }
-  if(!archiveIds.length){rpFail("Aucun bulletin archive exploitable pour les agents selectionnes : impossible de definir le salaire reel de reference.");return;}
-  rpStage="preparation des identifiants de bulletins";
-  var idSql=[];for(i=0;i<archiveIds.length;i++)idSql.push("'"+sq(archiveIds[i])+"'");
-  rpStage="lecture des rubriques des bulletins de reference (Archive_Detail)";
-  var vr=qr("SELECT a.Matricule,a.Cle_Archive,d.Code_Rubrique,d.Valeur FROM (Archive a INNER JOIN Archive_Detail d ON d.Cle_Archive=a.Cle_Archive) WHERE CStr(a.Code_Traitement)='0' AND CStr(a.Cle_Archive) IN ("+idSql.join(",")+")");
+  if(!hasReference){rpFail("Aucun bulletin archive exploitable pour les agents selectionnes : impossible de definir le salaire reel de reference.");return;}
   rpStage="lecture du catalogue des rubriques";
   /* Only rubriques actually used by the corps of the selected agents are kept. */
   rpStage="lecture des rubriques propres au corps";
@@ -1488,12 +1510,6 @@ function doRappel() {
   for(i=0;i<fxList.length;i++)forceFixed["k"+lc(fxList[i])]=true;
   for(i=0;i<clList.length;i++)forceCalc["k"+lc(clList[i])]=true;
   rpStage="classement des rubriques du bulletin de reference";
-  var baseVals={},seen={};
-  for(i=0;i<vr.rows.length;i++) {
-    r=vr.rows[i];var mk="k"+lc(rv(r[0])),ck="k"+lc(rv(r[2]));
-    if(!baseVals[mk])baseVals[mk]={};
-    baseVals[mk][ck]=(baseVals[mk][ck]||0)+rnum(r[3]);seen[ck]=true;
-  }
   rpStage="preparation du journal de rappel";
   var gains=[],rets=[],ints=[],known={};
   for(i=0;i<meta.rows.length;i++) {
@@ -1642,7 +1658,6 @@ function doRappel() {
   var rows=[],recap=[],warns=prefWarn.slice(0),gsum=[],empTotals=[];for(j=0;j<rubs.length;j++)gsum.push(0);
   /* ---- bulletins de reference multi-bases : un bulletin ne sert que pour les
      periodes de SA propre grille (un bulletin 2022 ne corrige pas une periode 2023) ---- */
-  var baseValCache={};
   function rpReadBaseVals(aid,dbi){
     var ck=dbi+":"+aid;if(baseValCache[ck])return baseValCache[ck];
     var m={};
