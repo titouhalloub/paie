@@ -337,7 +337,11 @@ function pickFile() { var v = $("fileIn").value; if (v) connectTo(v); }
 function switchDb() { var s = $("dbSel"); if (s.value) connectTo(s.value); }
 
 /* ---------- Access -> JSON database export (table-by-table) ---------- */
-function jsonSafeFileName(name){return String(name).replace(/[:*?"<>|]/g,"_").replace(/\\\\/g,"_").replace(/\\//g,"_").replace(/[. ]+$/g,"");}
+function jsonSafeFileName(name){
+  var src=String(name),out="",i,ch;
+  for(i=0;i<src.length;i++){ch=src.charAt(i);if(ch===":"||ch==="*"||ch==="?"||ch==='"'||ch==="<"||ch===">"||ch==="|"||ch.charCodeAt(0)===92||ch.charCodeAt(0)===47)ch="_";out+=ch;}
+  return out.replace(/[. ]+$/g,"");
+}
 function jsonWriteUtf8(path,txt){
   var st=new ActiveXObject("ADODB.Stream");st.Type=2;st.Charset="utf-8";st.Open();
   try{st.WriteText(txt);st.Position=0;st.Type=1;st.Position=3;var out=new ActiveXObject("ADODB.Stream");out.Type=1;out.Open();try{st.CopyTo(out);out.SaveToFile(path,2);}finally{out.Close();}}finally{st.Close();}
