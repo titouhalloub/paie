@@ -1283,8 +1283,10 @@ function rpLoadEmployees() {
     /* archived (normal) payslip periods of the loaded agents: per-agent choice + global choice */
     var perByMat = {}, perAll = {}, loaded = {}, pq, pr, pper, plab, pser, pk;
     for(i=0;i<q.rows.length;i++) loaded["k"+lc(rv(q.rows[i][0]))] = true;
-    function addRefPeriod(mv,pv){
-      var pk0="k"+lc(rv(mv)),pp=rpParsePer(rv(pv)),pl0,ps0;
+    function addRefPeriod(mv,pv,isRaw){
+      if(mv===null||mv===undefined||pv===null||pv===undefined)return;
+      if(isRaw){mv=String(mv);pv=String(pv);}else{mv=rv(mv);pv=rv(pv);}
+      var pk0="k"+lc(mv),pp=rpParsePer(pv),pl0,ps0;
       if(!loaded[pk0]||!pp||pp.m<1||pp.m>12)return;
       pl0=pp.y+"/"+rpPad(pp.m);ps0=pp.y*12+pp.m;
       if(!perByMat[pk0])perByMat[pk0]={};
@@ -1292,7 +1294,7 @@ function rpLoadEmployees() {
     }
     try {
       pq = qr("SELECT a.Matricule, a.Code_Periode_Exercice FROM Archive a WHERE CStr(a.Code_Traitement)='0'");
-      for(i=0;i<pq.rows.length;i++){pr=pq.rows[i];addRefPeriod(pr[0],pr[1]);}
+      for(i=0;i<pq.rows.length;i++){pr=pq.rows[i];addRefPeriod(pr[0],pr[1],false);}
     } catch(eP) {}
     /* Include archived periods from the supplemental Access and JSON reference databases too. */
     var refi,refSrc,refArchive,refRow,refRs,refAi;
@@ -1302,12 +1304,12 @@ function rpLoadEmployees() {
         refArchive=refSrc.archive;
         for(refAi=0;refAi<refArchive.length;refAi++){
           refRow=refArchive[refAi];
-          if(String(rpJsonGet(refRow,"Code_Traitement"))==="0")addRefPeriod(rpJsonGet(refRow,"Matricule"),rpJsonGet(refRow,"Code_Periode_Exercice"));
+          if(String(rpJsonGet(refRow,"Code_Traitement"))==="0")addRefPeriod(rpJsonGet(refRow,"Matricule"),rpJsonGet(refRow,"Code_Periode_Exercice"),true);
         }
       }else{
         try{
           refRs=refSrc.conn.Execute("SELECT Matricule,Code_Periode_Exercice FROM Archive WHERE CStr(Code_Traitement)='0'");
-          while(!refRs.EOF){addRefPeriod(refRs.Fields(0).Value,refRs.Fields(1).Value);refRs.MoveNext();}
+          while(!refRs.EOF){addRefPeriod(refRs.Fields(0).Value,refRs.Fields(1).Value,true);refRs.MoveNext();}
           refRs.Close();
         }catch(eRefPeriod){}
       }
