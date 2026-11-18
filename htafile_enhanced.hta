@@ -604,7 +604,7 @@ TR["Total F2"] = "\u0645\u062c\u0645\u0648\u0639 \u0627\u0644\u0648\u0631\u0642\
 TR["Total F3"] = "\u0645\u062c\u0645\u0648\u0639 \u0627\u0644\u0648\u0631\u0642\u0629 3";
 TR["Total F4"] = "\u0645\u062c\u0645\u0648\u0639 \u0627\u0644\u0648\u0631\u0642\u0629 4";
 TR["Retenue C.S 9%"] = "\u0627\u0642\u062a\u0637\u0627\u0639 \u0627\u0644\u0636\u0645\u0627\u0646 \u0627\u0644\u0627\u062c\u062a\u0645\u0627\u0639\u064a 9%";
-TR["IRG 10%"] = "\u0627\u0644\u0636\u0631\u064a\u0628\u0629 IRG 10%";
+TR["IRG"] = "\u0627\u0644\u0636\u0631\u064a\u0628\u0629 IRG";
 TR["Net a payer"] = "\u0627\u0644\u0635\u0627\u0641\u064a \u0644\u0644\u062f\u0641\u0639";
 
 /* ===== Arabic names of the rubriques: 1) Rubrique.Libelle_Arab from the database, 2) this dictionary, 3) generic fallback.
@@ -1429,21 +1429,32 @@ function doRappel() {
   /* imposable = (salaire de base + IEP + all indemnites, except I.ZONE and IND.LOG) - cotisation sociale */
   function isZoneOrLog(it) { var l=nrm(it.lib),c=nrm(it.code); return /^izone/.test(l)||/^izone/.test(c)||/^indlog/.test(l)||/^indlog/.test(c)||/^indemnitelogement/.test(l); }
   function isCotSocRubrique(it) { return /cotisationsoci/.test(nrm(it.lib)); }
-  /* IRG 2022 (Boussaid Mustafa), TypeIRG 1 = normal, 2 = handicape */
-  function irg2022(typeIrg,mo) {
-    var r,abat;
-    mo=Math.floor(mo/10)*10;
+  /* IRG 2022: faithful JScript port of CalculerIRG2022 (VBA).
+     Taxable gross is truncated to the lower 10 DA; progressive brackets,
+     40% relief (minimum 1,000 DA, maximum 1,500 DA), the 30k-35k
+     proportional correction, zero floor and 2-decimal VBA-style rounding. */
+  function irgRoundVba2(value) {
+    var scaled=value*100, lower=Math.floor(scaled), fraction=scaled-lower;
+    if(fraction>0.500000001) lower++;
+    else if(Math.abs(fraction-0.5)<=0.00000001 && (lower%2)!==0) lower++;
+    return lower/100;
+  }
+  function calculerIRG2022(brutImposable) {
+    var mo=Math.floor(Number(brutImposable)/10)*10;
+    var irgBrut,abat,irg;
     if(mo<=30000)return 0;
-    if(mo<=40000)r=(mo-20000)*0.23;
-    else if(mo<=80000)r=4600+(mo-40000)*0.27;
-    else if(mo<=160000)r=15400+(mo-80000)*0.3;
-    else if(mo<=320000)r=39400+(mo-160000)*0.33;
-    else r=92200+(mo-320000)*0.35;
-    abat=r*0.4;if(abat<1000)abat=1000;if(abat>1500)abat=1500;
-    r=r-abat;
-    if(typeIrg===1){if(mo<=35000)r=(r*137/51)-(27925/8);}
-    else if(typeIrg===2){if(mo<42500)r=(r*93/61)-(81213/41);}
-    return Math.round(r*10)/10;
+    if(mo<=40000)irgBrut=(mo-20000)*0.23;
+    else if(mo<=80000)irgBrut=4600+(mo-40000)*0.27;
+    else if(mo<=160000)irgBrut=15400+(mo-80000)*0.30;
+    else if(mo<=320000)irgBrut=39400+(mo-160000)*0.33;
+    else irgBrut=92200+(mo-320000)*0.35;
+    abat=irgBrut*0.40;
+    if(abat<1000)abat=1000;
+    if(abat>1500)abat=1500;
+    irg=irgBrut-abat;
+    if(mo>30000 && mo<=35000)irg=irg*((mo-30000)/5000);
+    if(irg<0)irg=0;
+    return irgRoundVba2(irg);
   }
   function isAdminsCorps(emp) {
     var n=String(emp.corpsName||"").toLowerCase();
@@ -1626,7 +1637,7 @@ function doRappel() {
         var oBase=0,nBase=0,qq,oIrg,nIrg,aIrg;
         for(qq=0;qq<nG;qq++)if(!isZoneOrLog(rubs[qq])){oBase+=oldSalary[qq];nBase+=newSalary[qq];}
         if(cotIdx>=0){oBase-=oldSalary[cotIdx];nBase-=newSalary[cotIdx];}
-        oIrg=irg2022(1,oBase);nIrg=irg2022(1,nBase);aIrg=r2((nIrg-oIrg)*days/30);
+        oIrg=calculerIRG2022(oBase);nIrg=calculerIRG2022(nBase);aIrg=r2((nIrg-oIrg)*days/30);
         oldSalary[irgIdx]=r2(oIrg);newSalary[irgIdx]=r2(nIrg);periodRecall[irgIdx]=aIrg;
         tot[irgIdx]+=aIrg;gsum[irgIdx]+=aIrg;
       }
@@ -1762,7 +1773,7 @@ function rpBuildSheets() {
   for(i=0;i<pg.rows.length;i++)out.push(pg.rows[i]);
   var br1=[];for(i=0;i<pg.breaks.length;i++)br1.push(off+pg.breaks[i]);
 
-  /* ---------- rendement sheet: brut = rate x note/40 x (Base + IEP); C.S 9%; IRG 10% on (brut - C.S); net = brut - C.S - IRG ---------- */
+  /* ---------- rendement sheet: brut = rate x note/40 x (Base + IEP); C.S 9%; IRG 2022 progressive schedule on (brut - C.S) ---------- */
   var ib=-1,ie=-1;
   for(j=7;j<d.cols.length;j++){var nl=rpNrm(d.cols[j]);if(nl==="salairedebase"&&ib<0)ib=j;if(/^indemnitedexperience/.test(nl)&&ie<0)ie=j;}
   var rateIn=trim($("rpRendRate")?$("rpRendRate").value:"").replace(",","."),noteIn=trim($("rpRendNote")?$("rpRendNote").value:"").replace(",",".");
@@ -1775,9 +1786,9 @@ function rpBuildSheets() {
   }
   function cellN(v,st){return X("N",""+r2(v),st);}
   var rw=[58,135,100,112,50,95,55,45,55,95,85,85,95],rnc=rw.length,rg=[],curRows=[],acc=[0,0,0,0,0];
-  var rcols=["Matricule","Nom et prenom","Nature","Periode couverte","Jours rappel (base 30j)","Salaire principal (Base + IEP)","Taux max %","Note /40","Taux effectif %","Prime de rendement","Retenue C.S 9%","IRG 10%","Net a payer"];
+  var rcols=["Matricule","Nom et prenom","Nature","Periode couverte","Jours rappel (base 30j)","Salaire principal (Base + IEP)","Taux max %","Note /40","Taux effectif %","Prime de rendement","Retenue C.S 9%","IRG","Net a payer"];
   function pv(r){var s1=0;if(ib>=0)s1+=parseFloat(rv(r[ib]))||0;if(ie>=0)s1+=parseFloat(rv(r[ie]))||0;return s1;}
-  function amounts(brut){var cs=r2(brut*0.09),irg=r2((brut-cs)*0.10);return {cs:cs,irg:irg,net:r2(brut-cs-irg)};}
+  function amounts(brut){var cs=r2(brut*0.09),irg=calculerIRG2022(brut-cs);return {cs:cs,irg:irg,net:r2(brut-cs-irg)};}
   function rendTot(l1,l2,v,st){
     var r=[X("S",l1,"bf"),X("E","","bf"),X("S",l2,"bf"),X("E","","bf"),X("E","","bf"),cellN(v[0],"bn"),X("E","","bf"),X("E","","bf"),X("E","","bf"),cellN(v[1],"bn"),cellN(v[2],"bn"),cellN(v[3],"bn"),cellN(v[4],"bn")];
     r.h=ROWH;return r;
