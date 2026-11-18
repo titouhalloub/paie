@@ -336,6 +336,56 @@ function findDbs(folder) {
 function pickFile() { var v = $("fileIn").value; if (v) connectTo(v); }
 function switchDb() { var s = $("dbSel"); if (s.value) connectTo(s.value); }
 
+/* ---------- Access -> JSON database export (table-by-table) ---------- */
+function jsonSafeFileName(name){return String(name).replace(/[\\/:*?"<>|]/g,"_").replace(/[. ]+$/g,"");}
+function jsonWriteUtf8(path,txt){
+  var st=new ActiveXObject("ADODB.Stream");st.Type=2;st.Charset="utf-8";st.Open();
+  try{st.WriteText(txt);st.Position=0;st.Type=1;st.Position=3;var out=new ActiveXObject("ADODB.Stream");out.Type=1;out.Open();try{st.CopyTo(out);out.SaveToFile(path,2);}finally{out.Close();}}finally{st.Close();}
+}
+function jsonValue(v,typ){
+  if(v===null||v===undefined)return null;
+  if(typ===11)return !!v;
+  if(typ===7||typ===133||typ===135){try{var d=new Date(v);if(!isNaN(d.getTime()))return d.getFullYear()+"-"+rpPad(d.getMonth()+1)+"-"+rpPad(d.getDate())+"T"+rpPad(d.getHours())+":"+rpPad(d.getMinutes())+":"+rpPad(d.getSeconds());}catch(x){}return String(v);}
+  if(typ===6||typ===14||typ===131||typ===4||typ===5||typ===2||typ===3||typ===16||typ===17||typ===18||typ===19||typ===20||typ===21){var n=Number(v);return isNaN(n)?String(v):n;}
+  if(v&&typeof v==="object"&&typeof v.length==="number")return null;
+  return String(v);
+}
+function jsonBrowseFolder(title){var f=sh.BrowseForFolder(0,title,0,0);if(!f)return "";return String(f.Self.Path);}
+function jsonConvertOne(dbFile,outRoot){
+  var c=null,cat0=null,dbName=fso.GetBaseName(dbFile),outDir=fso.BuildPath(outRoot,jsonSafeFileName(dbName)),tables=[],i,t,rs,fields,j,row,rowsPath,tableFile,rowCount=0,errors=[];
+  if(!fso.FolderExists(outDir))fso.CreateFolder(outDir);
+  c=openConn(localCopy(dbFile));cat0=new ActiveXObject("ADOX.Catalog");cat0.ActiveConnection=c;
+  try{
+    for(i=0;i<cat0.Tables.Count;i++){
+      t=cat0.Tables.Item(i);if((t.Type!=="TABLE"&&t.Type!=="LINK")||/^MSys/i.test(String(t.Name)))continue;rs=null;
+      try{
+        rs=new ActiveXObject("ADODB.Recordset");rs.CursorLocation=3;rs.Open("SELECT * FROM ["+String(t.Name).replace(/]/g,"]]")+"]",c,0,1);
+        fields=[];for(j=0;j<rs.Fields.Count;j++)fields.push({name:String(rs.Fields(j).Name),type:Number(rs.Fields(j).Type)});
+        tableFile="table_"+("0000"+(tables.length+1)).slice(-4)+".json";rowsPath=fso.BuildPath(outDir,tableFile);
+        var stream=new ActiveXObject("ADODB.Stream");stream.Type=2;stream.Charset="utf-8";stream.Open();stream.WriteText("[");var first=true;
+        while(!rs.EOF){row={};for(j=0;j<rs.Fields.Count;j++)row[String(rs.Fields(j).Name)]=jsonValue(rs.Fields(j).Value,Number(rs.Fields(j).Type));if(!first)stream.WriteText(",");stream.WriteText(JSON.stringify(row));first=false;rowCount++;rs.MoveNext();}
+        stream.WriteText("]");stream.Position=0;stream.Type=1;stream.Position=3;var bin=new ActiveXObject("ADODB.Stream");bin.Type=1;bin.Open();
+        try{stream.CopyTo(bin);bin.SaveToFile(rowsPath,2);}finally{bin.Close();stream.Close();rs.Close();rs=null;}
+        tables.push({name:String(t.Name),file:tableFile,fields:fields});
+      }catch(te){errors.push(String(t.Name)+": "+errText(te));try{if(rs)rs.Close();}catch(xc){}}
+    }
+    var manifest={type:"paie-access-json-db",version:1,name:dbName,source:fso.GetFileName(dbFile),created:new Date().toISOString(),tables:tables};
+    jsonWriteUtf8(fso.BuildPath(outDir,"manifest.json"),JSON.stringify(manifest,null,2));
+    return {name:dbName,dir:outDir,tables:tables.length,rows:rowCount,errors:errors};
+  }finally{try{if(cat0)cat0.ActiveConnection=null;}catch(x1){}try{if(c)c.Close();}catch(x2){}}
+}
+function jsonConvertFolder(){
+  var src=jsonBrowseFolder("Choisissez le dossier contenant les bases Access (.mdb / .accdb)");if(!src)return;
+  var dest=jsonBrowseFolder("Choisissez le dossier de destination des fichiers JSON");if(!dest)return;
+  var files=findDbs(src),i,res=[],ok=0,fail=0,txt;
+  if(!files.length){$("jsonOut").innerHTML='<p class="err">Aucune base .mdb ou .accdb trouvee dans ce dossier.</p>';return;}
+  $("jsonOut").innerHTML='<p>Conversion en cours... ne fermez pas l application.</p>';
+  for(i=0;i<files.length;i++){try{var r=jsonConvertOne(files[i],dest);res.push(r);ok++;}catch(e){res.push({name:fso.GetFileName(files[i]),error:errText(e)});fail++;}$("jsonOut").innerHTML='<p>Progression: '+(i+1)+' / '+files.length+' bases traitees...</p>';}
+  txt='<h3>Conversion terminee</h3><p class="ok">'+ok+' base(s) convertie(s), '+fail+' echec(s).</p><table><tr><th>Base</th><th>Tables</th><th>Lignes</th><th>Dossier / resultat</th></tr>';
+  for(i=0;i<res.length;i++)txt+='<tr><td>'+esc(res[i].name)+'</td><td>'+(res[i].tables===undefined?"-":res[i].tables)+'</td><td>'+(res[i].rows===undefined?"-":res[i].rows)+'</td><td>'+(res[i].dir?esc(res[i].dir):'<span class="err">'+esc(res[i].error)+'</span>')+(res[i].errors&&res[i].errors.length?'<br><span class="err">Tables ignorees: '+esc(res[i].errors.join(" | "))+'</span>':'')+'</td></tr>';
+  txt+='</table><p class="muted">Chaque base produit un dossier avec manifest.json et un fichier JSON independant par table. Les champs binaires sont exportes comme null.</p>';$("jsonOut").innerHTML=txt;
+}
+
 /* ---------- generic paged grid ---------- */
 function gridHtml(target, sql, page, clickFn) {
   var rs = new ActiveXObject("ADODB.Recordset");
@@ -387,7 +437,7 @@ function scalar(sql) {
 
 /* ---------- tabs ---------- */
 function showTab(name) {
-  var ids = ["slip", "journal", "rappel", "eng", "tables", "emp", "queries", "schema"];
+  var ids = ["slip", "journal", "rappel", "eng", "json", "tables", "emp", "queries", "schema"];
   for (var i = 0; i < ids.length; i++) {
     $("pane_" + ids[i]).className = "pane" + (ids[i] == name ? " on" : "");
     $("tab_" + ids[i]).className = (ids[i] == name ? "on" : "");
@@ -562,28 +612,28 @@ var LANG = "fr";
 var ENTETE1 = "مديريــة الصحــة لولايـــة الجلفـــة";
 var ENTETE2 = "المؤسســـة العمـوميــة الإستشفائيـة بمسعــــد";
 var TR = {
-  "Bulletin employe":"مشهد راتب الموظف","Journal par corps":"كشف مجمّع حسب الهيئة","Rappel echelon":"التذكير بالدرجة",
+  "Bulletin employe":"مشهد راتب الموظف","Journal par corps":"كشف مجمّع حسب الهيئة","Rappel echelon":"الاستدراك بالدرجة",
   "Tables":"الجداول","Employes / Bulletins":"الموظفون / الوصولات","Requetes":"الاستعلامات","Schema":"مخطط القاعدة",
   "Page":"صفحة",
-  "Journal des rappels d’echelon":"كشف التذكير بالدرجة","agent(s)":"موظف(ين)",
-  "Affichage detaille : ancien salaire, nouveau salaire et rappel pour chaque periode de grille. Desactivez l’option pour retrouver l’affichage compact precedent (rappel uniquement). Les rubriques du catalogue sont toutes affichees, y compris celles dont le montant calcule est nul.":"العرض المفصّل: الراتب القديم والراتب الجديد والتذكير لكل فترة شبكة. ألغِ الخيار للعودة إلى العرض المختصر (التذكير فقط). جميع رموز الكتالوج معروضة، حتى تلك ذات المبلغ المحسوب الصفري.",
+  "Journal des rappels d’echelon":"كشف الاستدراك بالدرجة","agent(s)":"موظف(ين)",
+  "Affichage detaille : ancien salaire, nouveau salaire et rappel pour chaque periode de grille. Desactivez l’option pour retrouver l’affichage compact precedent (rappel uniquement). Les rubriques du catalogue sont toutes affichees, y compris celles dont le montant calcule est nul.":"العرض المفصّل: الراتب القديم والراتب الجديد والاستدراك لكل فترة شبكة. ألغِ الخيار للعودة إلى العرض المختصر (الاستدراك فقط). جميع رموز الكتالوج معروضة، حتى تلك ذات المبلغ المحسوب الصفري.",
   "Afficher ancien salaire + nouveau salaire (mode detaille)":"إظهار الراتب القديم + الراتب الجديد (العرض المفصّل)",
   "Avertissements":"تنبيهات","Recapitulatif par agent":"الملخّص حسب الموظف",
-  "Journal horizontal des rappels par rubrique":"كشف التذكير الأفقي حسب الرموز",
+  "Journal horizontal des rappels par rubrique":"كشف الاستدراك الأفقي حسب الرموز",
   "Afficher / masquer la classification des rubriques (calculee ou fixe)":"إظهار / إخفاء تصنيف الرموز (محسوبة أو ثابتة)",
   "Code":"الرمز","Libelle":"التسمية","Nature":"الطبيعة","Mode calcul":"طريقة الحساب","Automatique":"تلقائي","Bareme":"السلّم","Base":"الأساس","Nombre / taux":"العدد / النسبة",
   "fixe (I.Cont)":"ثابتة (I.Cont)","calculee":"محسوبة","fixe":"ثابتة",
   "Matricule":"الرقم التعريفي","Nom et prenom":"الاسم واللقب","Grille":"الشبكة","Periode couverte":"الفترة المشمولة",
-  "Jours rappel (base 30j)":"أيام التذكير (أساس 30 يوماً)","Bulletin salaire de reference":"وصل الراتب المرجعي",
-  "ANCIEN SALAIRE":"الراتب القديم","NOUVEAU SALAIRE":"الراتب الجديد","RAPPEL":"التذكير","TOTAL EMPLOYE":"مجموع الموظف","TOTAL GENERAL":"المجموع العام",
-  "TOTAL GAINS":"مجموع المنح","TOTAL GAINS HORS A.F":"مجموع المنح باستثناء المنح العائلية","TOTAL GAINS HORS A.F ET LOGEMENT":"مجموع المنح باستثناء المنح العائلية والسكن","TOTAL RETENUES":"مجموع الاقتطاعات","NET (GAINS - RETENUES)":"الصافي (المنح - الاقتطاعات)","NET RAPPEL":"صافي التذكير",
+  "Jours rappel (base 30j)":"أيام الاستدراك (أساس 30 يوماً)","Bulletin salaire de reference":"وصل الراتب المرجعي",
+  "ANCIEN SALAIRE":"الراتب القديم","NOUVEAU SALAIRE":"الراتب الجديد","RAPPEL":"الاستدراك","TOTAL EMPLOYE":"مجموع الموظف","TOTAL GENERAL":"المجموع العام",
+  "TOTAL GAINS":"مجموع المنح","TOTAL GAINS HORS A.F":"مجموع المنح باستثناء المنح العائلية","TOTAL GAINS HORS A.F ET LOGEMENT":"مجموع المنح باستثناء المنح العائلية والسكن","TOTAL RETENUES":"مجموع الاقتطاعات","NET (GAINS - RETENUES)":"الصافي (المنح - الاقتطاعات)","NET RAPPEL":"صافي الاستدراك",
   "Nom Prenom":"الاسم واللقب","Cat.":"الصنف","Ech. ancien":"الدرجة القديمة","Ech. nouveau":"الدرجة الجديدة",
-  "Date effet":"تاريخ النفاذ","Fin rappel":"نهاية التذكير","Bulletin base":"وصل الراتب الأساس","Grilles appliquees":"الشبكات المطبّقة",
-  "Rappel gains":"تذكير المنح","Rappel retenues":"تذكير الاقتطاعات","Rappel net":"صافي التذكير",
+  "Date effet":"تاريخ النفاذ","Fin rappel":"نهاية الاستدراك","Bulletin base":"وصل الراتب الأساس","Grilles appliquees":"الشبكات المطبّقة",
+  "Rappel gains":"استدراك المنح","Rappel retenues":"استدراك الاقتطاعات","Rappel net":"صافي الاستدراك",
   "I.Cont (Sec2 + Sec1/3 + Sec3/3)":"تعويض العدوى I.Cont (مجموع Sec2 + Sec1/3 + Sec3/3)",
   "Inclure":"إدراج","Ancien ech.":"الدرجة القديمة","Nouvel ech.":"الدرجة الجديدة","Fin (MM/AAAA)":"النهاية (شش/سسسس)",
   "Tout selectionner":"تحديد الكل","Tout deselectionner":"إلغاء التحديد",
-  "Journal rappel":"كشف التذكير","Recap agents":"ملخّص الموظفين","Journal":"الكشف","Bulletin":"الوصل",
+  "Journal rappel":"كشف الاستدراك","Recap agents":"ملخّص الموظفين","Journal":"الكشف","Bulletin":"الوصل",
   "Categorie":"الصنف","Echelon":"الدرجة","Indice min":"الرقم الاستدلالي الأدنى","Points echelon":"نقاط الدرجة","Indice total":"الرقم الاستدلالي","Coefficient":"معامل التحيين",
   "Bulletin de paie":"وصل راتب","Journal de paie":"كشف الرواتب","NET (GAINS - RETENUES)":"الصافي (المنح - الاقتطاعات)"
 };
@@ -635,7 +685,7 @@ var RUB_WORDS = [[/indemnit[eé]s?/gi,"تعويض"],[/primes?/gi,"منحة"],[/r
   [/salaire/gi,"الأجر"],[/familiale?/gi,"العائلية"],[/\bde la\b|\bdu\b|\bde l'|\bdes\b|\bde\b|\bd'/gi,""],[/forfaitaire/gi,"جزافي"],
   [/compl[eé]mentaire/gi,"تكميلي"],[/sp[eé]ciale?/gi,"خاص"],[/exceptionnelle?/gi,"استثنائي"],[/travail/gi,"العمل"],
   [/nuit/gi,"الليل"],[/transport/gi,"النقل"],[/panier/gi,"السلة"],[/responsabilit[eé]/gi,"المسؤولية"],
-  [/sujetion/gi,"الإلزام"],[/mission/gi,"المهمة"],[/rappel/gi,"تذكير"],[/total/gi,"مجموع"]];
+  [/sujetion/gi,"الإلزام"],[/mission/gi,"المهمة"],[/rappel/gi,"استدراك"],[/total/gi,"مجموع"]];
 function rubNormKey(s) { return String(s || "").toLowerCase().replace(/[éèêë]/g, "e").replace(/[àâä]/g, "a").replace(/[\s._\-\/()%'’`0-9]+/g, ""); }
 var rubArabic = function (code, lib, isRet) {
   var k1 = rubNormKey(lib), k2 = rubNormKey(code), q, t, w, out, base;
@@ -1326,24 +1376,40 @@ function doRappel() {
   var heads=qr("SELECT a.Matricule,a.Cle_Archive,a.Code_Periode_Exercice FROM Archive a WHERE CStr(a.Code_Traitement)='0' AND CStr(a.Matricule) IN ("+mats.join(",")+")");
   /* candidats de reference dans TOUTES les bases ouvertes (base principale + bases
      supplementaires). Chaque candidat garde la connexion et la grille de son bulletin. */
-  var refConns=[conn],candByMat={},rdi,rci;
+  var refConns=[{kind:"access",conn:conn}],candByMat={},rdi,rci,matSet={};
+  for(i=0;i<selected.length;i++)matSet["k"+lc(selected[i].mat)]=true;
   for(rdi=0;rdi<refDbs.length;rdi++)refConns.push(refDbs[rdi]);
   for(rci=0;rci<refConns.length;rci++){
-    var hrs;
-    try{hrs=refConns[rci].Execute("SELECT Matricule,Cle_Archive,Code_Periode_Exercice FROM Archive WHERE CStr(Code_Traitement)='0' AND CStr(Matricule) IN ("+mats.join(",")+")");}
-    catch(exC){continue;}
-    while(!hrs.EOF){
-      if(hrs.Fields(0).Value!==null&&hrs.Fields(1).Value!==null&&hrs.Fields(2).Value!==null){
-        var cmat=String(hrs.Fields(0).Value),cper=rpParsePer(String(hrs.Fields(2).Value));
-        if(cper&&cper.m>=1&&cper.m<=12){
-          var mkc="k"+lc(cmat),cser=cper.y*12+cper.m;
-          if(!candByMat[mkc])candByMat[mkc]=[];
-          candByMat[mkc].push({serial:cser,gk:rpGridAt(cper.y,cper.m),aid:String(hrs.Fields(1).Value),period:cper.y+"/"+rpPad(cper.m),dbi:rci});
+    var source=refConns[rci],hrs;
+    if(source.kind==="json"){
+      var ar=source.archive,ai,cmat0,aid0,per0,code0;
+      for(ai=0;ai<ar.length;ai++){
+        cmat0=rpJsonGet(ar[ai],"Matricule");aid0=rpJsonGet(ar[ai],"Cle_Archive");
+        per0=rpJsonGet(ar[ai],"Code_Periode_Exercice");code0=rpJsonGet(ar[ai],"Code_Traitement");
+        if(cmat0===null||aid0===null||per0===null||String(code0)!=="0"||!matSet["k"+lc(cmat0)])continue;
+        var cpj=rpParsePer(String(per0));
+        if(cpj&&cpj.m>=1&&cpj.m<=12){
+          var mkj="k"+lc(cmat0),csj=cpj.y*12+cpj.m;
+          if(!candByMat[mkj])candByMat[mkj]=[];
+          candByMat[mkj].push({serial:csj,gk:rpGridAt(cpj.y,cpj.m),aid:String(aid0),period:cpj.y+"/"+rpPad(cpj.m),dbi:rci});
         }
       }
-      hrs.MoveNext();
+    }else{
+      try{hrs=source.conn.Execute("SELECT Matricule,Cle_Archive,Code_Periode_Exercice FROM Archive WHERE CStr(Code_Traitement)='0' AND CStr(Matricule) IN ("+mats.join(",")+")");}
+      catch(exC){continue;}
+      while(!hrs.EOF){
+        if(hrs.Fields(0).Value!==null&&hrs.Fields(1).Value!==null&&hrs.Fields(2).Value!==null){
+          var cmat=String(hrs.Fields(0).Value),cper=rpParsePer(String(hrs.Fields(2).Value));
+          if(cper&&cper.m>=1&&cper.m<=12){
+            var mkc="k"+lc(cmat),cser=cper.y*12+cper.m;
+            if(!candByMat[mkc])candByMat[mkc]=[];
+            candByMat[mkc].push({serial:cser,gk:rpGridAt(cper.y,cper.m),aid:String(hrs.Fields(1).Value),period:cper.y+"/"+rpPad(cper.m),dbi:rci});
+          }
+        }
+        hrs.MoveNext();
+      }
+      hrs.Close();
     }
-    hrs.Close();
   }
   rpStage="analyse des bulletins trouves";
   var chosen={},archiveIds=[],perMap={},prefWarn=[],prefGlobal=trim($('rpBaseGlobal')?$('rpBaseGlobal').value:"");
@@ -1549,13 +1615,23 @@ function doRappel() {
     var ck=dbi+":"+aid;if(baseValCache[ck])return baseValCache[ck];
     var m={};
     try{
-      var rs2=refConns[dbi].Execute("SELECT Code_Rubrique,Valeur FROM Archive_Detail WHERE CStr(Cle_Archive)='"+sq(aid)+"'");
-      while(!rs2.EOF){
-        var v2=rs2.Fields(1).Value;
-        if(v2!==null&&!isNaN(parseFloat(String(v2)))){var k2="k"+lc(String(rs2.Fields(0).Value));m[k2]=(m[k2]||0)+parseFloat(String(v2));}
-        rs2.MoveNext();
+      var source=refConns[dbi];
+      if(source.kind==="json"){
+        var ds=source.details,di,da,dv,dc;
+        for(di=0;di<ds.length;di++){
+          da=rpJsonGet(ds[di],"Cle_Archive");if(String(da)!==String(aid))continue;
+          dc=rpJsonGet(ds[di],"Code_Rubrique");dv=rpJsonGet(ds[di],"Valeur");
+          if(dv!==null&&!isNaN(parseFloat(String(dv)))){var kj="k"+lc(String(dc));m[kj]=(m[kj]||0)+parseFloat(String(dv));}
+        }
+      }else{
+        var rs2=source.conn.Execute("SELECT Code_Rubrique,Valeur FROM Archive_Detail WHERE CStr(Cle_Archive)='"+sq(aid)+"'");
+        while(!rs2.EOF){
+          var v2=rs2.Fields(1).Value;
+          if(v2!==null&&!isNaN(parseFloat(String(v2)))){var k2="k"+lc(String(rs2.Fields(0).Value));m[k2]=(m[k2]||0)+parseFloat(String(v2));}
+          rs2.MoveNext();
+        }
+        rs2.Close();
       }
-      rs2.Close();
     }catch(exD){warns.push("Lecture du bulletin "+aid+" impossible ("+errText(exD)+").");}
     baseValCache[ck]=m;return m;
   }
@@ -1918,7 +1994,7 @@ function rpBuildSheets() {
     closeEmp();
     return {rows:out,empTotals:totals};
   }
-  function annualPeriod(year,fromRappelStart){return fromRappelStart?"الفترة من تاريخ بداية التذكير الفعلي لكل موظف إلى 31/12/"+year:"الفترة من 01/01/"+year+" إلى 31/12/"+year;}
+  function annualPeriod(year,fromRappelStart){return fromRappelStart?"الفترة من تاريخ بداية الاستدراك الفعلي لكل موظف إلى 31/12/"+year:"الفترة من 01/01/"+year+" إلى 31/12/"+year;}
   function famSheet(sheetName,corner,defs,source,periodLabel){
     var useRows=source?source.rows:srcRows;
     var n=11+defs.length+1,ww=[58,115,100,112,62,62,62,62,62,62,62],q,z,gl=[],cur=[],sums=[],t0,v,rw0,cells,tt;
@@ -1965,7 +2041,7 @@ function rpBuildSheets() {
   var s3=famSheet("Feuille 3",paperNo(3),d3,prevData,annualPeriod(previousYear,true));
   var s4=famSheet("Feuille 4",paperNo(4),d4,prevData,annualPeriod(previousYear,true));
   var s5=famSheet("Feuille 5",paperNo(5),allDefs,prevData,annualPeriod(previousYear,true));
-  /* Feuille 6 = full كشف التذكير for the current year, with every salary rubrique. */
+  /* Feuille 6 = full كشف الاستدراك for the current year, with every salary rubrique. */
   function annualJournalSheet(source,year){
     var p6keep=[0,1,2,4,5,-4,-3,-2,-1],p6w=[58,115,100,112,62,82,82,58,58],p6nc,q,z,rr,bb,sc,pgj,jbreaks=[],ki,tv,jcur=[],jgroups=[],jtot={};
     for(z=7;z<d.cols.length;z++){p6keep.push(z);p6w.push(62);}
@@ -2050,21 +2126,39 @@ function rpExport() {
 }
 /* ===================== Bases de reference supplementaires ===================== */
 var refDbs=[],refDbPaths=[];
+function rpJsonReadFile(path){
+  var st=new ActiveXObject("ADODB.Stream"),txt;st.Type=2;st.Charset="utf-8";st.Open();
+  try{st.LoadFromFile(path);txt=st.ReadText();}finally{st.Close();}
+  return JSON.parse(String(txt).replace(/^\uFEFF/,""));
+}
+function rpJsonTable(manifest,tableName){
+  var i,t;
+  for(i=0;i<manifest.tables.length;i++){t=manifest.tables[i];if(String(t.name).toLowerCase()===String(tableName).toLowerCase())return rpJsonReadFile(fso.BuildPath(fso.GetParentFolderName(manifest.__path),t.file));}
+  throw new Error("Table "+tableName+" absente du manifeste JSON.");
+}
+function rpJsonGet(row,name){
+  var k;if(row[name]!==undefined)return row[name];
+  for(k in row)if(row.hasOwnProperty(k)&&String(k).toLowerCase()===String(name).toLowerCase())return row[k];
+  return null;
+}
 function rpAddRefDbPath(v){
-  var p=localCopy(v),c=openConn(p);
-  refDbs.push(c);refDbPaths.push(v);
-  $("rpRefList").innerHTML+=(refDbs.length)+": "+esc(v.split("\\").pop())+" &nbsp; ";
+  var ext=String(v).substring(String(v).lastIndexOf(".")+1).toLowerCase(),item,p,c,m;
+  if(ext==="json"){
+    m=rpJsonReadFile(v);
+    if(!m||m.type!=="paie-access-json-db"||m.version!==1||!m.tables)throw new Error("Fichier JSON non reconnu. Choisissez le manifeste exporte par cet onglet.");
+    m.__path=v;item={kind:"json",manifest:m,label:fso.GetFileName(v),archive:rpJsonTable(m,"Archive"),details:rpJsonTable(m,"Archive_Detail")};
+  }else{p=localCopy(v);c=openConn(p);item={kind:"access",conn:c,label:fso.GetFileName(v)};}
+  refDbs.push(item);refDbPaths.push(v);
+  $("rpRefList").innerHTML+=(refDbs.length)+": "+esc(item.label)+" ("+(item.kind==="json"?"JSON":"Access")+") &nbsp; ";
   $("rpRefCount").innerHTML=refDbs.length+" base(s) ajoutee(s).";
 }
 function rpAddRefDb(){
   var v=$("rpRefFile").value;if(!v)return;
-  try{rpAddRefDbPath(v);$("rpRefFile").value="";}
-  catch(e){alert("Impossible d ouvrir cette base: "+errText(e));}
+  try{rpAddRefDbPath(v);$("rpRefFile").value="";}catch(e){alert("Impossible de charger cette base de reference: "+errText(e));}
 }
 function rpResetRefDbs(){
-  for(var i=0;i<refDbs.length;i++){try{refDbs[i].Close();}catch(x){}}
-  refDbs=[];refDbPaths=[];
-  $("rpRefList").innerHTML="";$("rpRefCount").innerHTML="0 base(s) ajoutee(s).";
+  for(var i=0;i<refDbs.length;i++){try{if(refDbs[i].kind==="access")refDbs[i].conn.Close();}catch(x){}}
+  refDbs=[];refDbPaths=[];$("rpRefList").innerHTML="";$("rpRefCount").innerHTML="0 base(s) ajoutee(s).";
 }
 
 /* ===================== Projets de rappel : fichiers JSON uniquement =====================
@@ -2617,7 +2711,7 @@ function engCardHtml(op,printDate){
   o.push('<p class="b" style="margin:6px 0">موضوع الالتزام : &nbsp;&nbsp; <span class="bx2">'+(op.type==="economie"?'&nbsp;':'X')+'</span> نفقـــــــة &nbsp;&nbsp;&nbsp; <span class="bx2">'+(op.type==="economie"?'X':'&nbsp;')+'</span> إقتصاد'+(typeLab?' &nbsp;&nbsp;&nbsp; '+typeLab:'')+'</p>');
   o.push('<div class="objet">'+esc(op.objet||"").replace(/\n/g,'<br>'));
   if(op.allocations&&op.allocations.length){
-    o.push('<table class="t" style="margin-top:8px"><tr class="b"><td>المشروع</td><td>الجسم</td><td class="num">المبلغ</td></tr>');
+    o.push('<table class="t" style="margin-top:8px"><tr class="b"><td>المشروع</td><td>السلك</td><td class="num">المبلغ</td></tr>');
     for(i=0;i<op.allocations.length;i++){
       l=op.allocations[i];anyM=true;total+=Number(l.amount)||0;
       o.push('<tr><td>'+esc((l.projectNo||"")+(l.projectTitle?' - '+l.projectTitle:''))+'</td><td>'+esc(l.corpsLabel||"")+'</td><td class="num">'+engFmt(Number(l.amount)||0)+'</td></tr>');
@@ -3230,7 +3324,7 @@ function engRenderDrafts(){
     h.push('<div class="muted">Dossier : '+(d.dossier?esc(d.dossier+" - "+(d.dossierTitre||"")):"(aucun)")+'</div>');
     if(!d.auto)h.push('<div>Montant : <input size="14" style="text-align:right" value="'+esc(String(d.I))+'" onchange="engDraftSet('+i+',\'I\',this.value)"></div>');
     h.push('<div>Objet :<br><textarea rows="3" cols="95" dir="rtl" onchange="engDraftSet('+i+',\'objet\',this.value)">'+esc(d.objet||"")+'</textarea></div>');
-    h.push('<table dir="rtl"><tr><th>المشروع</th><th>الجسم</th><th>المبلغ</th><th></th></tr>');
+    h.push('<table dir="rtl"><tr><th>المشروع</th><th>السلك</th><th>المبلغ</th><th></th></tr>');
     for(j=0;j<d.lignes.length;j++){
       l=d.lignes[j];
       if(l.projectNo!==undefined)h.push('<tr><td>'+esc(l.projectNo+(l.projectTitle?' - '+l.projectTitle:''))+'</td><td>'+esc(l.corpsLabel||l.l)+'</td><td style="text-align:right">'+engFmt(l.m||0)+'</td><td></td></tr>');
@@ -3496,6 +3590,7 @@ function init() {
   <a id="tab_journal" href="#" onclick="showTab('journal');return false;">Journal par corps</a>
   <a id="tab_rappel" href="#" onclick="showTab('rappel');return false;">Rappel echelon</a>
   <a id="tab_eng" href="#" onclick="showTab('eng');return false;">Cartes d'engagement</a>
+  <a id="tab_json" href="#" onclick="showTab('json');return false;">Conversion JSON</a>
   <a id="tab_tables" href="#" onclick="showTab('tables');return false;">Tables</a>
   <a id="tab_emp" href="#" onclick="showTab('emp');if(conn)searchEmp();return false;">Employes / Bulletins</a>
   <a id="tab_queries" href="#" onclick="showTab('queries');return false;">Requetes</a>
@@ -3603,6 +3698,16 @@ Lignes (une par ligne, <code>texte ; montant</code>, montant facultatif) :<br><t
 <p><button onclick="engRenderState()">Actualiser</button> <button onclick="engExportExcel()">Exporter Excel</button></p>
 <div id="engStateOut"></div>
 </div>
+</div>
+
+<div id="pane_json" class="pane">
+  <div class="box">
+    <h3>Conversion des bases Access vers JSON</h3>
+    <p>Choisissez un dossier contenant plusieurs bases .mdb / .accdb, puis un dossier de destination. L'application cree un dossier par base, un manifeste et un fichier JSON par table.</p>
+    <button onclick="jsonConvertFolder()">Choisir les dossiers et convertir les bases</button>
+    <p class="muted">Les bases Access originales restent intactes. Les tables sont exportees separement pour eviter un unique fichier JSON geant. Les champs binaires sont exportes comme null. Pour utiliser une base convertie dans les calculs, selectionnez son fichier manifest.json dans « Bases supplementaires de reference » de l'onglet استدراك.</p>
+  </div>
+  <div id="jsonOut"></div>
 </div>
 
 <div id="pane_tables" class="pane"><div id="tl"></div><div id="tg"></div></div>
