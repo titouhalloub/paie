@@ -1435,7 +1435,7 @@ function doRappel() {
   /* Allocation familiale, M.I.F.R., Salaire unique: fixed amounts shown as ONE column "Total A.F" */
   function isAFRubrique(it) { var c=nrm(it.code),l=nrm(it.lib); return /allocationfamil/.test(l)||/^mifr/.test(l)||c==="mifr"||/salaireunique/.test(l); }
   function isIrgRubrique(it) { var c=nrm(it.code),l=nrm(it.lib); return /impotsurlerevenu/.test(l)||c==="irg"||/^irg/.test(l); }
-  /* imposable = (salaire de base + IEP + all indemnites, except I.ZONE and IND.LOG) - cotisation sociale */
+  /* IRG base = taxable gains excluding I.ZONE, IND.LOG and family-allowance rubriques, minus social-security contribution. */
   function isZoneOrLog(it) { var l=nrm(it.lib),c=nrm(it.code); return /^izone/.test(l)||/^izone/.test(c)||/^indlog/.test(l)||/^indlog/.test(c)||/^indemnitelogement/.test(l); }
   function isHousingRubrique(it) { var l=nrm(it.lib),c=nrm(it.code); return /^indlog/.test(l)||/^indlog/.test(c)||/^indemnitelogement/.test(l)||/^indemnitelogement/.test(c)||/^logement/.test(l)||/^logement/.test(c); }
   function isCotSocRubrique(it) { return /cotisationsoci/.test(nrm(it.lib)); }
@@ -1498,7 +1498,7 @@ function doRappel() {
   cols.push("TOTAL GAINS HORS A.F","TOTAL GAINS HORS A.F ET LOGEMENT","TOTAL RETENUES","NET RAPPEL");
   function infoRow(mat,nm,label,text,per,basePeriod) {
     var row=["S"+mat,"S"+nm,"S"+label,"S"+text,"S"+per,"E","S"+(basePeriod||"")],jj;
-    for(jj=0;jj<dispMap.length+5;jj++)row.push("E");
+    for(jj=0;jj<dispMap.length+4;jj++)row.push("E");
     row.info=text;return row;
   }
   var PTV=45;   /* official point value (DA) */
