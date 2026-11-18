@@ -354,7 +354,7 @@ function jsonValue(v,typ){
   if(v&&typeof v==="object"&&typeof v.length==="number")return null;
   return String(v);
 }
-function jsonBrowseFolder(title){var f=sh.BrowseForFolder(0,title,0,0);if(!f)return "";return String(f.Self.Path);}
+function jsonBrowseFolder(title){var app=new ActiveXObject("Shell.Application"),f=app.BrowseForFolder(0,title,0,0);if(!f)return "";return String(f.Self.Path);}
 function jsonSaveStreamUtf8(stream,path){
   stream.Position=0;stream.Type=1;stream.Position=3;
   var bin=new ActiveXObject("ADODB.Stream");bin.Type=1;bin.Open();
