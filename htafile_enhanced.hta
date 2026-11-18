@@ -357,7 +357,7 @@ function jsonSaveStreamUtf8(stream,path){
   try{stream.CopyTo(bin);bin.SaveToFile(path,2);}finally{bin.Close();stream.Close();}
 }
 function jsonExportArchiveDetails(c,outDir){
-  var rs=new ActiveXObject("ADODB.Recordset"),fields=[],i,idx=-1,row,j,id,lastId=null,stream=null,first=true,files={},count=0,detailDir=fso.BuildPath(outDir,"Archive_Detail"),fileName;
+  var rs=new ActiveXObject("ADODB.Recordset"),fields=[],i,idx=-1,row,j,id,lastId=null,stream=null,first=true,files={},count=0,detailRowCount=0,detailDir=fso.BuildPath(outDir,"Archive_Detail"),fileName;
   if(!fso.FolderExists(detailDir))fso.CreateFolder(detailDir);
   rs.CursorLocation=3;rs.Open("SELECT * FROM [Archive_Detail] ORDER BY [Cle_Archive]",c,0,1);
   for(i=0;i<rs.Fields.Count;i++){fields.push({name:String(rs.Fields(i).Name),type:Number(rs.Fields(i).Type)});if(String(rs.Fields(i).Name).toLowerCase()==="cle_archive")idx=i;}
@@ -372,11 +372,11 @@ function jsonExportArchiveDetails(c,outDir){
         stream=new ActiveXObject("ADODB.Stream");stream.Type=2;stream.Charset="utf-8";stream.Open();stream.WriteText("[");first=true;lastId=id;
       }
       row={};for(j=0;j<rs.Fields.Count;j++)row[String(rs.Fields(j).Name)]=jsonValue(rs.Fields(j).Value,Number(rs.Fields(j).Type));
-      if(!first)stream.WriteText(",");stream.WriteText(JSON.stringify(row));first=false;rs.MoveNext();
+      if(!first)stream.WriteText(",");stream.WriteText(JSON.stringify(row));first=false;detailRowCount++;rs.MoveNext();
     }
     if(stream){stream.WriteText("]");jsonSaveStreamUtf8(stream,fso.BuildPath(detailDir,fileName));stream=null;}
   }finally{if(stream)try{stream.Close();}catch(x){}rs.Close();}
-  return {fields:fields,files:files,groups:count};
+  return {fields:fields,files:files,groups:count,rows:detailRowCount};
 }
 function jsonConvertOne(dbFile,outRoot){
   var c=null,cat0=null,dbName=fso.GetBaseName(dbFile),outDir=fso.BuildPath(outRoot,jsonSafeFileName(dbName)),tables=[],i,t,rs,fields,j,row,rowsPath,tableFile,rowCount=0,errors=[],detailFiles={};
@@ -387,7 +387,7 @@ function jsonConvertOne(dbFile,outRoot){
       t=cat0.Tables.Item(i);if((t.Type!=="TABLE"&&t.Type!=="LINK")||/^MSys/i.test(String(t.Name)))continue;rs=null;
       try{
         if(String(t.Name).toLowerCase()==="archive_detail"){
-          var splitDetails=jsonExportArchiveDetails(c,outDir);detailFiles=splitDetails.files;
+          var splitDetails=jsonExportArchiveDetails(c,outDir);detailFiles=splitDetails.files;rowCount+=splitDetails.rows;
           tables.push({name:String(t.Name),splitBy:"Cle_Archive",groups:splitDetails.groups,fields:splitDetails.fields});
           continue;
         }
@@ -3661,7 +3661,7 @@ function init() {
   &nbsp; Fin par defaut: <select id="rpUntil"></select>
   &nbsp; Bulletin de reference (global): <select id="rpBaseGlobal"><option value="">Dernier bulletin archive (auto)</option></select>
   &nbsp; <button onclick="rpLoadEmployees()">Charger les agents</button><br><br>
-  <b>2a. Bases supplementaires de reference (facultatif)</b> — ajoutez autant de fichiers .mdb que necessaire (archives par annee par exemple). Le bulletin de reference de chaque periode est choisi AUTOMATIQUEMENT parmi toutes les bases : il doit appartenir a la meme grille que la periode calculee (un bulletin 2022 ne sert jamais pour une periode 2023). <span id="rpRefCount" class="muted">0 base(s) ajoutee(s).</span> <input type="file" id="rpRefFile" onchange="rpAddRefDb()" style="width:210px"> <span id="rpRefList"></span><br><br>
+  <b>2a. Bases supplementaires de reference (facultatif)</b> — ajoutez autant de fichiers .mdb, .accdb ou manifest.json que necessaire (archives par annee par exemple). Le bulletin de reference de chaque periode est choisi AUTOMATIQUEMENT parmi toutes les bases : il doit appartenir a la meme grille que la periode calculee (un bulletin 2022 ne sert jamais pour une periode 2023). <span id="rpRefCount" class="muted">0 base(s) ajoutee(s).</span> <input type="file" id="rpRefFile" onchange="rpAddRefDb()" style="width:210px"> <span id="rpRefList"></span><br><br>
   <b>2b. Projets de rappel</b> — Projet existant: <select id="rpProjSel" onchange="rpPickProject()" style="min-width:260px"></select> &nbsp; Numero de projet: <input type="text" id="rpProjNo" size="14" placeholder="ex. 2026-014"> <button onclick="rpSaveProject()">Enregistrer le projet</button> <button onclick="rpOpenProject()">Ouvrir le projet</button> <button onclick="rpDeleteProject()">Supprimer</button> <span id="rpProjMsg"></span> <span class="muted">(un fichier .json par projet dans le dossier "projets" a cote de l application, independant de la base Access ; choisir un projet dans la liste recharge toute l interface)</span><br><br>
   <b>2. Selection et parametres individuels</b> — cochez les agents et modifiez pour chacun le nouvel echelon, la date d’effet et le mois de fin.
   <div id="rpEmployees" class="box"><span class="muted">Chargez les agents pour afficher la liste de selection.</span></div>
