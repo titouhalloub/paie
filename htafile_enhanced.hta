@@ -351,14 +351,46 @@ function jsonValue(v,typ){
   return String(v);
 }
 function jsonBrowseFolder(title){var f=sh.BrowseForFolder(0,title,0,0);if(!f)return "";return String(f.Self.Path);}
+function jsonSaveStreamUtf8(stream,path){
+  stream.Position=0;stream.Type=1;stream.Position=3;
+  var bin=new ActiveXObject("ADODB.Stream");bin.Type=1;bin.Open();
+  try{stream.CopyTo(bin);bin.SaveToFile(path,2);}finally{bin.Close();stream.Close();}
+}
+function jsonExportArchiveDetails(c,outDir){
+  var rs=new ActiveXObject("ADODB.Recordset"),fields=[],i,idx=-1,row,j,id,lastId=null,stream=null,first=true,files={},count=0,detailDir=fso.BuildPath(outDir,"Archive_Detail"),fileName;
+  if(!fso.FolderExists(detailDir))fso.CreateFolder(detailDir);
+  rs.CursorLocation=3;rs.Open("SELECT * FROM [Archive_Detail] ORDER BY [Cle_Archive]",c,0,1);
+  for(i=0;i<rs.Fields.Count;i++){fields.push({name:String(rs.Fields(i).Name),type:Number(rs.Fields(i).Type)});if(String(rs.Fields(i).Name).toLowerCase()==="cle_archive")idx=i;}
+  if(idx<0){rs.Close();throw new Error("Archive_Detail ne contient pas Cle_Archive.");}
+  try{
+    while(!rs.EOF){
+      id=rs.Fields(idx).Value;id=(id===null||id===undefined)?"__NULL__":String(id);
+      if(lastId===null||id!==lastId){
+        if(stream){stream.WriteText("]");jsonSaveStreamUtf8(stream,fso.BuildPath(detailDir,fileName));}
+        count++;fileName="archive_"+("00000000"+count).slice(-8)+".json";
+        files[id]="Archive_Detail\\"+fileName;
+        stream=new ActiveXObject("ADODB.Stream");stream.Type=2;stream.Charset="utf-8";stream.Open();stream.WriteText("[");first=true;lastId=id;
+      }
+      row={};for(j=0;j<rs.Fields.Count;j++)row[String(rs.Fields(j).Name)]=jsonValue(rs.Fields(j).Value,Number(rs.Fields(j).Type));
+      if(!first)stream.WriteText(",");stream.WriteText(JSON.stringify(row));first=false;rs.MoveNext();
+    }
+    if(stream){stream.WriteText("]");jsonSaveStreamUtf8(stream,fso.BuildPath(detailDir,fileName));stream=null;}
+  }finally{if(stream)try{stream.Close();}catch(x){}rs.Close();}
+  return {fields:fields,files:files,groups:count};
+}
 function jsonConvertOne(dbFile,outRoot){
-  var c=null,cat0=null,dbName=fso.GetBaseName(dbFile),outDir=fso.BuildPath(outRoot,jsonSafeFileName(dbName)),tables=[],i,t,rs,fields,j,row,rowsPath,tableFile,rowCount=0,errors=[];
+  var c=null,cat0=null,dbName=fso.GetBaseName(dbFile),outDir=fso.BuildPath(outRoot,jsonSafeFileName(dbName)),tables=[],i,t,rs,fields,j,row,rowsPath,tableFile,rowCount=0,errors=[],detailFiles={};
   if(!fso.FolderExists(outDir))fso.CreateFolder(outDir);
   c=openConn(localCopy(dbFile));cat0=new ActiveXObject("ADOX.Catalog");cat0.ActiveConnection=c;
   try{
     for(i=0;i<cat0.Tables.Count;i++){
       t=cat0.Tables.Item(i);if((t.Type!=="TABLE"&&t.Type!=="LINK")||/^MSys/i.test(String(t.Name)))continue;rs=null;
       try{
+        if(String(t.Name).toLowerCase()==="archive_detail"){
+          var splitDetails=jsonExportArchiveDetails(c,outDir);detailFiles=splitDetails.files;
+          tables.push({name:String(t.Name),splitBy:"Cle_Archive",groups:splitDetails.groups,fields:splitDetails.fields});
+          continue;
+        }
         rs=new ActiveXObject("ADODB.Recordset");rs.CursorLocation=3;rs.Open("SELECT * FROM ["+String(t.Name).replace(/]/g,"]]")+"]",c,0,1);
         fields=[];for(j=0;j<rs.Fields.Count;j++)fields.push({name:String(rs.Fields(j).Name),type:Number(rs.Fields(j).Type)});
         tableFile="table_"+("0000"+(tables.length+1)).slice(-4)+".json";rowsPath=fso.BuildPath(outDir,tableFile);
@@ -369,7 +401,7 @@ function jsonConvertOne(dbFile,outRoot){
         tables.push({name:String(t.Name),file:tableFile,fields:fields});
       }catch(te){errors.push(String(t.Name)+": "+errText(te));try{if(rs)rs.Close();}catch(xc){}}
     }
-    var manifest={type:"paie-access-json-db",version:1,name:dbName,source:fso.GetFileName(dbFile),created:new Date().toISOString(),tables:tables};
+    var manifest={type:"paie-access-json-db",version:1,name:dbName,source:fso.GetFileName(dbFile),created:new Date().toISOString(),tables:tables,detailFiles:detailFiles};
     jsonWriteUtf8(fso.BuildPath(outDir,"manifest.json"),JSON.stringify(manifest,null,2));
     return {name:dbName,dir:outDir,tables:tables.length,rows:rowCount,errors:errors};
   }finally{try{if(cat0)cat0.ActiveConnection=null;}catch(x1){}try{if(c)c.Close();}catch(x2){}}
@@ -1617,9 +1649,10 @@ function doRappel() {
     try{
       var source=refConns[dbi];
       if(source.kind==="json"){
-        var ds=source.details,di,da,dv,dc;
+        var detailFile=source.manifest.detailFiles?source.manifest.detailFiles[String(aid)]:null;
+        if(!detailFile)throw new Error("Archive_Detail absent pour le bulletin "+aid);
+        var ds=rpJsonReadFile(fso.BuildPath(fso.GetParentFolderName(source.manifest.__path),detailFile)),di,dc,dv;
         for(di=0;di<ds.length;di++){
-          da=rpJsonGet(ds[di],"Cle_Archive");if(String(da)!==String(aid))continue;
           dc=rpJsonGet(ds[di],"Code_Rubrique");dv=rpJsonGet(ds[di],"Valeur");
           if(dv!==null&&!isNaN(parseFloat(String(dv)))){var kj="k"+lc(String(dc));m[kj]=(m[kj]||0)+parseFloat(String(dv));}
         }
@@ -2146,7 +2179,7 @@ function rpAddRefDbPath(v){
   if(ext==="json"){
     m=rpJsonReadFile(v);
     if(!m||m.type!=="paie-access-json-db"||m.version!==1||!m.tables)throw new Error("Fichier JSON non reconnu. Choisissez le manifeste exporte par cet onglet.");
-    m.__path=v;item={kind:"json",manifest:m,label:fso.GetFileName(v),archive:rpJsonTable(m,"Archive"),details:rpJsonTable(m,"Archive_Detail")};
+    m.__path=v;item={kind:"json",manifest:m,label:fso.GetFileName(v),archive:rpJsonTable(m,"Archive")};
   }else{p=localCopy(v);c=openConn(p);item={kind:"access",conn:c,label:fso.GetFileName(v)};}
   refDbs.push(item);refDbPaths.push(v);
   $("rpRefList").innerHTML+=(refDbs.length)+": "+esc(item.label)+" ("+(item.kind==="json"?"JSON":"Access")+") &nbsp; ";
