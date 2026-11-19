@@ -1029,7 +1029,7 @@ function buildXls(sheets) {
       if (!sh1.entete && sh1.footer) o.push('<Footer x:Margin="0.2" x:Data="&amp;C' + xmlEsc(T("Page")) + ' &amp;P / &amp;N"/>');
       if (sh1.land) o.push('<PageMargins x:Bottom="0.35" x:Left="0.25" x:Right="0.25" x:Top="' + (sh1.top || "0.6") + '" x:Header="0.15" x:Footer="0.15"/>');
       o.push('</PageSetup>');
-      if (sh1.land) o.push('<FitToPage/><Print><ValidPrinterInfo/><PaperSizeIndex>8</PaperSizeIndex><FitWidth>1</FitWidth><FitHeight>0</FitHeight><HorizontalResolution>600</HorizontalResolution><VerticalResolution>600</VerticalResolution></Print>');
+      if (sh1.land) o.push('<Print><ValidPrinterInfo/><PaperSizeIndex>8</PaperSizeIndex><Scale>100</Scale><HorizontalResolution>600</HorizontalResolution><VerticalResolution>600</VerticalResolution></Print>');
       o.push('</WorksheetOptions>');
       if (sh1.plan && sh1.plan.breaks.length) {
         o.push('<PageBreaks xmlns="urn:schemas-microsoft-com:office:excel"><RowBreaks>');
@@ -1923,7 +1923,7 @@ function rpBuildSheets() {
     rows.push(hr(23.25,span(ENTETE2,"e2",b2,RTLX?1:n-b2+1)));
   }
   var TOPH=27.75*2+23.25*2+26.25+23.25+15,HDRH=51,ROWH=15,TOTH=18,FOOTH=18,PH=740;
-  function scaleFor(w){var t=0,q;for(q=0;q<w.length;q++)t+=w[q];return Math.max(30,Math.min(100,Math.floor(1154/(t*1.15)*100)));}
+  function scaleFor(w){return 100;}
   /* period covered */
   var mn=null,mx=null,mm,pa,pb;
   for(i=0;i<d.rows.length;i++){
@@ -2233,12 +2233,12 @@ function rpReadLayoutSettings(){
   return {font:f,line:l,col:c};
 }
 function rpApplyLayoutSettings(sheets){
-  var v=rpReadLayoutSettings(),factor=Math.max(v.font/10,v.col),i,j,sh,row;
+  var v=rpReadLayoutSettings(),i,j,sh,row;
   for(i=0;i<sheets.length;i++){
     sh=sheets[i];
     for(j=0;j<sh.w.length;j++)sh.w[j]=r2(sh.w[j]*v.col);
     for(j=0;j<sh.rows.length;j++){row=sh.rows[j];if(row.h)row.h=r2(row.h*v.line);}
-    if(sh.plan)sh.plan.scale=Math.max(20,Math.min(100,Math.round(sh.plan.scale/factor)));
+    if(sh.plan)sh.plan.scale=100;
   }
 }
 function rpExport() {
@@ -2561,7 +2561,7 @@ function sheetsToHtml(sheets) {
     bounds.push(rows.length);
     for(ci=0;ci<sh2.w.length;ci++){tw+=sh2.w[ci];cols.push('<col style="width:'+sh2.w[ci]+'pt">');}
     for(pi=0;pi<bounds.length-1;pi++){
-      var t=['<div class="pg"><div style="zoom:'+(sh2.plan.scale/100)+'"><table'+(LANG==="ar"?' dir="rtl"':'')+' style="width:'+tw+'pt">'+cols.join("")];
+      var t=['<div class="pg"><div style="zoom:1"><table'+(LANG==="ar"?' dir="rtl"':'')+' style="width:'+tw+'pt">'+cols.join("")];
       if(pi===0)for(ri=0;ri<hi;ri++)t.push(trHtml(rows[ri]));
       t.push(trHtml(rows[hi],true));
       for(ri=bounds[pi];ri<bounds[pi+1];ri++)t.push(trHtml(rows[ri]));
