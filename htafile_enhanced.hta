@@ -1029,7 +1029,7 @@ function buildXls(sheets) {
       if (!sh1.entete && sh1.footer) o.push('<Footer x:Margin="0.2" x:Data="&amp;C' + xmlEsc(T("Page")) + ' &amp;P / &amp;N"/>');
       if (sh1.land) o.push(sh1.paperProfile==="listing" ? '<PageMargins x:Bottom="0.45" x:Left="0.85" x:Right="0.85" x:Top="0.45" x:Header="0.15" x:Footer="0.15"/>' : '<PageMargins x:Bottom="0.35" x:Left="0.25" x:Right="0.25" x:Top="' + (sh1.top || "0.35") + '" x:Header="0.15" x:Footer="0.15"/>');
       o.push('</PageSetup>');
-      if (sh1.land) o.push('<Print><ValidPrinterInfo/><PaperSizeIndex>' + (sh1.paperProfile==="listing" ? "256" : "8") + '</PaperSizeIndex><FitWidth>0</FitWidth><FitHeight>0</FitHeight><HorizontalResolution>600</HorizontalResolution><VerticalResolution>600</VerticalResolution></Print>');
+      if (sh1.land) o.push('<Print><ValidPrinterInfo/><PaperSizeIndex>' + (sh1.paperProfile==="listing" ? "256" : "8") + '</PaperSizeIndex><HorizontalResolution>600</HorizontalResolution><VerticalResolution>600</VerticalResolution></Print>');
       o.push('</WorksheetOptions>');
       if (sh1.plan && sh1.plan.breaks.length) {
         o.push('<PageBreaks xmlns="urn:schemas-microsoft-com:office:excel"><RowBreaks>');
@@ -2320,7 +2320,7 @@ function rpSliceRow(r,cols){
 }
 function rpCreatePrintPages(sheets,profile){
   var settings=rpReadLayoutSettings(),out=[],si,sh,bands,parts,headEnd,allGroups,bi,band,
-      pages,cur,used,pageH=profile==="listing"?690:740,topH=145,
+      pages,cur,used,pageH=profile==="listing"?690:740,topH=203,
       rowH=Math.max(15,15*settings.font/10*settings.line),
       hdrH=Math.max(44,51*settings.font/10*settings.line),pi,gi,g,gh,idx,cols,
       pageNo,bandLetter,headRows,headerRow,dataRows,rows,signRows,totals,pageSum,
@@ -2333,7 +2333,7 @@ function rpCreatePrintPages(sheets,profile){
       cols=bands[bi];cur=[];used=topH+hdrH+24;
       for(gi=0;gi<allGroups.length;gi++){
         g=allGroups[gi];gh=0;for(idx=0;idx<g.length;idx++)gh+=g[idx].h||rowH;
-        if(cur.length&&used+gh+42>pageH){pages.push({band:bi,groups:cur});cur=[];used=topH+hdrH+24;}
+        if(cur.length&&used+gh+90>pageH){pages.push({band:bi,groups:cur});cur=[];used=topH+hdrH+24;}
         cur.push(g);used+=gh;
       }
       if(cur.length)pages.push({band:bi,groups:cur});
@@ -2364,7 +2364,7 @@ function rpCreatePrintPages(sheets,profile){
         signRows=rpSignoffRows(cols.length);
         for(idx=0;idx<signRows.length;idx++)rows.push(rpSliceRow(signRows[idx],cols));
         name=String(sh.name).substring(0,14)+" G"+("0"+(pageNo+1)).slice(-2)+" "+bandLetter;
-        out.push({name:name,rtl:sh.rtl,w:cols.map(function(c){return rpColumnWidth(sh,c,settings.font,settings.col);}),rows:rows,land:true,footer:true,printRow:headRows.length-1,paperProfile:profile,plan:{scale:100,breaks:[]}});
+        out.push({name:name,rtl:sh.rtl,w:cols.map(function(c){return rpColumnWidth(sh,c,settings.font,settings.col);}),rows:rows,land:true,footer:true,printRow:headRows.length,paperProfile:profile,plan:{scale:100,breaks:[]}});
       }
     }
   }
@@ -3985,7 +3985,8 @@ Lignes (une par ligne, <code>texte ; montant</code>, montant facultatif) :<br><t
     <hr>
     <p><b>Option 2 — convertir toutes les bases d'un dossier :</b></p>
     <button onclick="jsonConvertFolder()">Choisir un dossier source et le dossier de destination</button>
-    <p class="muted">Les bases Access originales restent intactes. Les tables sont exportees separement pour eviter un unique fichier JSON geant. Les champs binaires sont exportes comme null. Pour utiliser une base convertie dans les calculs, selectionnez son fichier manifest.json dans « Bases supplementaires de reference » de l'onglet استدراك.</p>
+    <p class="muted">Listing : créez si nécessaire le formulaire papier personnalisé 37,8 × 27,9 cm dans les propriétés du serveur d’impression Windows, puis sélectionnez-le dans le pilote Epson. Vérifiez d’abord la feuille Calibration avant le tirage complet.</p>
+  <p class="muted">Les bases Access originales restent intactes. Les tables sont exportees separement pour eviter un unique fichier JSON geant. Les champs binaires sont exportes comme null. Pour utiliser une base convertie dans les calculs, selectionnez son fichier manifest.json dans « Bases supplementaires de reference » de l'onglet استدراك.</p>
   </div>
   <div id="jsonOut"></div>
 </div>
