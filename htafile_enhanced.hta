@@ -2240,7 +2240,9 @@ function rpFitSheetColumns(sh){
   var n=sh.w.length,mx=[],i,j,row,col,cell,sp,txt,sz;
   for(i=0;i<n;i++)mx[i]=5;
   for(i=0;i<sh.rows.length;i++){row=sh.rows[i];col=0;for(j=0;j<row.length&&col<n;j++){cell=row[j]||{};if(cell.ix&&cell.ix>col+1)col=cell.ix-1;sp=cell.m?cell.m+1:1;txt=(cell.v===undefined||cell.v===null)?"":String(cell.v);if(cell.t!=="E"&&!/^(e[1-7]|t)$/.test(cell.s||"")){sz=txt.length;if(sz>mx[col])mx[col]=sz;}col+=sp;}}
-  for(i=0;i<n;i++)sh.w[i]=Math.max(34,Math.min(sh.w[i],Math.max(38,Math.min(78,mx[i]*4.1+10))));
+  var total=0,ratio;
+  for(i=0;i<n;i++){sh.w[i]=Math.max(34,Math.min(sh.w[i],Math.max(38,Math.min(78,mx[i]*4.1+10))));total+=sh.w[i];}
+  if(total>1100){ratio=1100/total;for(i=0;i<n;i++)sh.w[i]=Math.max(24,r2(sh.w[i]*ratio));}
 }
 function rpApplyLayoutSettings(sheets){
   var v=rpReadLayoutSettings(),i,j,sh,row;
