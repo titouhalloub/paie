@@ -2310,7 +2310,7 @@ function rpMakeBandTotal(cols,label,groupLabel,values,numericStart){
   r.h=18;return r;
 }
 function rpSliceRow(r,cols){
-  var out=[],i,c;for(i=0;i<cols.length;i++){c=cols[i];out.push(r[c]?xCopy(r[c]):X("E","","cx"));}
+  var out=[],i,c,cp;for(i=0;i<cols.length;i++){c=cols[i];if(r[c]){cp=xCopy(r[c]);if(i===0&&cp.m)cp.m=cols.length-1;out.push(cp);}else out.push(X("E","","cx"));}
   out.h=r.h;return out;
 }
 function rpCreatePrintPages(sheets,profile){
