@@ -2226,7 +2226,7 @@ function rpReadLayoutSettings(){
   var f=parseFloat(trim($("rpFontSize")?$("rpFontSize").value:"10").replace(",",".")),
       l=parseFloat(trim($("rpLineSpacing")?$("rpLineSpacing").value:"1").replace(",",".")),
       c=parseFloat(trim($("rpColSpacing")?$("rpColSpacing").value:"1").replace(",","."));
-  if(isNaN(f)||f<6||f>18)f=10;
+  if(isNaN(f)||f<6||f>18)f=11;
   if(isNaN(l)||l<0.5||l>2)l=1;
   if(isNaN(c)||c<0.5||c>2)c=1;
   RP_FONT_SIZE=f;
@@ -2265,7 +2265,7 @@ function rpBandColumns(sheet,profile,settings){
   else if(sheet.name.indexOf("Feuille 6")>=0)baseCount=Math.min(n,9);
   else if(sheet.name.indexOf("Rendement")>=0)baseCount=Math.min(n,5);
   else if(sheet.name.indexOf("Recap")>=0)baseCount=Math.min(n,3);
-  else baseCount=Math.min(n,5);
+  else baseCount=Math.min(n,11);
   for(i=0;i<baseCount;i++){base.push(i);baseW+=rpColumnWidth(sheet,i,settings.font,settings.col);}
   for(i=baseCount;i<n;i++)widths[i]=rpColumnWidth(sheet,i,settings.font,settings.col);
   for(i=baseCount;i<n;){
@@ -2278,7 +2278,7 @@ function rpBandColumns(sheet,profile,settings){
   return bands;
 }
 function rpRowsAsEmployeeGroups(sheet,headEnd){
-  var groups=[],cur=[],rows=sheet.rows,i,r,grand=null,numericStart=sheet.name.indexOf("Recap")>=0?0:(sheet.name.indexOf("Rendement")>=0?5:(sheet.name.indexOf("Feuille 2")>=0||sheet.name.indexOf("Feuille 3")>=0||sheet.name.indexOf("Feuille 4")>=0||sheet.name.indexOf("Feuille 5")>=0?11:5));
+  var groups=[],cur=[],rows=sheet.rows,i,r,grand=null,numericStart=sheet.name.indexOf("Recap")>=0?9:(sheet.name.indexOf("Rendement")>=0?5:(sheet.name.indexOf("Feuille 6")>=0?9:11));
   for(i=headEnd;i<rows.length;i++){
     r=rows[i];if(!r||!r.length)continue;
     if(rpRowIsPageTotal(r))continue;
@@ -2326,7 +2326,7 @@ function rpCreatePrintPages(sheets,profile){
       pageNo,bandLetter,headRows,headerRow,dataRows,rows,signRows,totals,pageSum,
       allSum,numericStart,values,name,meta,grandCheck,checkSum,allPageSum;
   for(si=0;si<sheets.length;si++){
-    sh=sheets[si];headEnd=(sh.printRow||0)+1;
+    sh=sheets[si];headEnd=(sh.printRow||0);
     parts=rpRowsAsEmployeeGroups(sh,headEnd);allGroups=parts.groups;numericStart=parts.numericStart;
     bands=rpBandColumns(sh,profile,settings);pages=[];
     for(bi=0;bi<bands.length;bi++){
@@ -2353,13 +2353,13 @@ function rpCreatePrintPages(sheets,profile){
         rows=headRows.concat(dataRows);
         pageSum=rpSumGroups(bandPage.groups,cols,numericStart);
         values=pageSum.slice(0);
-        rows.push(rpMakeBandTotal(cols,"TOTAL PAGE","G"+(pageNo+1)+"/"+bandLetter,values,numericStart));
+        rows.push(rpMakeBandTotal(cols,T("TOTAL PAGE"),"G"+(pageNo+1)+"/"+bandLetter,values,numericStart));
         var lastBandPage=true;
         for(pi=0;pi<pages.length;pi++)if(pages[pi].band===bi){lastBandPage=(pages[pi]===bandPage);break;}
         var later=false;for(pi=0;pi<pages.length;pi++)if(pages[pi].band===bi&&pi>pages.indexOf(bandPage))later=true;
         if(!later){
           allSum=rpSumGroups(allGroups,cols,numericStart);
-          rows.push(rpMakeBandTotal(cols,"TOTAL GENERAL","",allSum,numericStart));
+          rows.push(rpMakeBandTotal(cols,T("TOTAL GENERAL"),"",allSum,numericStart));
         }
         signRows=rpSignoffRows(cols.length);
         for(idx=0;idx<signRows.length;idx++)rows.push(rpSliceRow(signRows[idx],cols));
@@ -2370,6 +2370,16 @@ function rpCreatePrintPages(sheets,profile){
   }
   return {sheets:out};
 }
+function rpCalibrationSheet(profile){
+  var width=profile==="listing"?950:1155,cols=12,w=[],rows=[],i,r;
+  for(i=0;i<cols;i++)w.push(r2(width/cols));
+  r=[];for(i=0;i<cols;i++)r.push(X("S",i===0?"CALIBRATION — "+(profile==="listing"?"LISTING 14 7/8 × 11 in":"A3 LANDSCAPE"):"","bf"));r.h=30;rows.push(r);
+  r=[];for(i=0;i<cols;i++)r.push(X("S",String(i+1),"bf"));r.h=24;rows.push(r);
+  r=[];for(i=0;i<cols;i++)r.push(X("S",i===0?"LEFT MARGIN":(i===cols-1?"RIGHT MARGIN":"|"),"bf"));r.h=24;rows.push(r);
+  r=[];for(i=0;i<cols;i++)r.push(X("S",i===0?"0":(i===cols-1?String(width)+" pt":String(Math.round(width*(i+1)/cols))+" pt"),"bf"));r.h=24;rows.push(r);
+  r=[];for(i=0;i<cols;i++)r.push(X("S",i===0?"Verify the printed frame against the paper edges.":"","bf"));r.h=30;rows.push(r);
+  return {name:"Calibration",w:w,rows:rows,land:true,footer:false,paperProfile:profile,plan:{scale:100,breaks:[]}};
+}
 function rpExport() {
   var oldLang=LANG;LANG="ar";
   try{
@@ -2378,9 +2388,10 @@ function rpExport() {
     var selected=$("rpPaper")?$("rpPaper").value:"both",profiles=selected==="both"?["listing","a3"]:[selected],p,printSet,info=[];
     for(p=0;p<profiles.length;p++){
       printSet=rpCreatePrintPages(b.sheets,profiles[p]);
+      printSet.sheets.unshift(rpCalibrationSheet(profiles[p]));
       if(!printSet.sheets.length)throw new Error("Aucune page a exporter.");
       exportXls(printSet.sheets,b.fbase+(profiles[p]==="listing"?"_Listing":"_A3"),"rpMsg");
-      info.push((profiles[p]==="listing"?"Listing":"A3")+": "+printSet.sheets.length+" pages a 100%.");
+      info.push((profiles[p]==="listing"?"Listing":"A3")+": "+(printSet.sheets.length-1)+" pages de donnees + 1 calibration, impression a 100%.");
     }
     $("rpMsg").innerHTML+='<br><span class="muted">'+b.info+'</span><br><span class="muted">'+esc(info.join(" || "))+'</span>';
   }finally{LANG=oldLang;}
