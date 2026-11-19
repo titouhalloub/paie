@@ -2246,7 +2246,7 @@ function rpCellNumber(c){
 }
 function rpCellText(c){return c?String(c.v===undefined?"":c.v):"";}
 function rpRowHasLabel(r,label){
-  var i,t;for(i=0;i<Math.min(r.length,5);i++){t=rpCellText(r[i]).toUpperCase();if(t===label)return true;}return false;
+  var i,t,translated=String(T(label)).toUpperCase();for(i=0;i<Math.min(r.length,5);i++){t=rpCellText(r[i]).toUpperCase();if(t===label||t===translated)return true;}return false;
 }
 function rpRowIsEmployeeTotal(r){return rpRowHasLabel(r,"TOTAL EMPLOYE");}
 function rpRowIsGrandTotal(r){return rpRowHasLabel(r,"TOTAL GENERAL");}
@@ -2324,7 +2324,7 @@ function rpCreatePrintPages(sheets,profile){
       rowH=Math.max(15,15*settings.font/10*settings.line),
       hdrH=Math.max(44,51*settings.font/10*settings.line),pi,gi,g,gh,idx,cols,
       pageNo,bandLetter,headRows,headerRow,dataRows,rows,signRows,totals,pageSum,
-      allSum,numericStart,values,name,meta,grandCheck,checkSum,allPageSum;
+      allSum,numericStart,values,name,meta,grandCheck,checkSum,allPageSum,warnings=[];
   for(si=0;si<sheets.length;si++){
     sh=sheets[si];headEnd=(sh.printRow||0);
     parts=rpRowsAsEmployeeGroups(sh,headEnd);allGroups=parts.groups;numericStart=parts.numericStart;
@@ -2334,10 +2334,18 @@ function rpCreatePrintPages(sheets,profile){
       for(gi=0;gi<allGroups.length;gi++){
         g=allGroups[gi];gh=0;for(idx=0;idx<g.length;idx++)gh+=g[idx].h||rowH;
         if(cur.length&&used+gh+90>pageH){pages.push({band:bi,groups:cur});cur=[];used=topH+hdrH+24;}
+        if(!cur.length&&used+gh+90>pageH)warnings.push(sh.name+": un bloc employe depasse la hauteur imprimable; bloc conserve entier.");
         cur.push(g);used+=gh;
       }
       if(cur.length)pages.push({band:bi,groups:cur});
       if(!allGroups.length)pages.push({band:bi,groups:[]});
+      var expected=rpSumGroups(allGroups,cols,numericStart),observed=[],pp,ss,cc;
+      for(cc=0;cc<cols.length;cc++)observed[cc]=0;
+      for(pp=0;pp<pages.length;pp++)if(pages[pp].band===bi){
+        ss=rpSumGroups(pages[pp].groups,cols,numericStart);
+        for(cc=0;cc<cols.length;cc++)observed[cc]=r2(observed[cc]+ss[cc]);
+      }
+      for(cc=0;cc<cols.length;cc++)if(Math.abs(r2(expected[cc]-observed[cc]))>0.01){warnings.push(sh.name+" bande "+String.fromCharCode(65+bi)+": ecart de total colonne "+(cols[cc]+1));break;}
     }
     var maxPage=0;for(bi=0;bi<bands.length;bi++){var cnt=0;for(pi=0;pi<pages.length;pi++)if(pages[pi].band===bi)cnt++;if(cnt>maxPage)maxPage=cnt;}
     for(pageNo=0;pageNo<maxPage;pageNo++){
@@ -2368,7 +2376,7 @@ function rpCreatePrintPages(sheets,profile){
       }
     }
   }
-  return {sheets:out};
+  return {sheets:out,warnings:warnings};
 }
 function rpCalibrationSheet(profile){
   var width=profile==="listing"?950:1155,cols=12,w=[],rows=[],i,r;
@@ -2391,7 +2399,7 @@ function rpExport() {
       printSet.sheets.unshift(rpCalibrationSheet(profiles[p]));
       if(!printSet.sheets.length)throw new Error("Aucune page a exporter.");
       exportXls(printSet.sheets,b.fbase+(profiles[p]==="listing"?"_Listing":"_A3"),"rpMsg");
-      info.push((profiles[p]==="listing"?"Listing":"A3")+": "+(printSet.sheets.length-1)+" pages de donnees + 1 calibration, impression a 100%.");
+      info.push((profiles[p]==="listing"?"Listing":"A3")+": "+(printSet.sheets.length-1)+" pages de donnees + 1 calibration, impression a 100%."+(printSet.warnings.length?" AVERTISSEMENTS: "+printSet.warnings.join("; "):" Totaux des pages verifies."));
     }
     $("rpMsg").innerHTML+='<br><span class="muted">'+b.info+'</span><br><span class="muted">'+esc(info.join(" || "))+'</span>';
   }finally{LANG=oldLang;}
