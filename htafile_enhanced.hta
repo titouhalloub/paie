@@ -2260,12 +2260,7 @@ function rpColumnWidth(sheet,col,font,pad){
 }
 function rpBandColumns(sheet,profile,settings){
   var n=sheet.w.length,base=[],bands=[],widths=[],i,cap=profile==="listing"?950:1155,
-      baseW=0,cur,curW,baseCount;
-  if(sheet.name.indexOf("Feuille 2")>=0||sheet.name.indexOf("Feuille 3")>=0||sheet.name.indexOf("Feuille 4")>=0||sheet.name.indexOf("Feuille 5")>=0)baseCount=Math.min(n,11);
-  else if(sheet.name.indexOf("Feuille 6")>=0)baseCount=Math.min(n,9);
-  else if(sheet.name.indexOf("Rendement")>=0)baseCount=Math.min(n,5);
-  else if(sheet.name.indexOf("Recap")>=0)baseCount=Math.min(n,3);
-  else baseCount=Math.min(n,11);
+      baseW=0,cur,curW,baseCount=Math.min(n,3);
   for(i=0;i<baseCount;i++){base.push(i);baseW+=rpColumnWidth(sheet,i,settings.font,settings.col);}
   for(i=baseCount;i<n;i++)widths[i]=rpColumnWidth(sheet,i,settings.font,settings.col);
   for(i=baseCount;i<n;){
