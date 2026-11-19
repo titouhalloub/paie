@@ -1892,12 +1892,14 @@ var RP_E1 = "\u0627\u0644\u062c\u0645\u0647\u0648\u0631\u064a\u0640\u0640\u0629 
 function rpNrm(t) { return String(t||"").toLowerCase().replace(/[\u00e9\u00e8\u00ea\u00eb]/g,"e").replace(/[\u00e0\u00e2\u00e4]/g,"a").replace(/['\u2019`]/g,"").replace(/[\s._\-\/]+/g,""); }
 /* Page layout: employee blocks remain intact. Heights are estimated after font/spacing/wrapping settings. */
 function rpMeasurePrintRow(row, widths, layout) {
-  var base=row.h||0, scaled=Math.max(base*layout.line,layout.font+6), col=0, i, c, start, span, w, txt, cap, lines, need;
+  var base=row.h||0, scaled=Math.max(base*layout.line,layout.font+6), col=0, i, c, start, span, w, txt, cap, lines, need, totalWidth=0, widthFactor=layout.col, q;
   if (!base) return 0;
   if (widths && widths.length) {
+    for(q=0;q<widths.length;q++) totalWidth+=widths[q];
+    if(totalWidth*widthFactor>1100) widthFactor=1100/totalWidth;
     for (i=0;i<row.length;i++) {
       c=row[i]||{}; start=(c.ix&&c.ix>0)?c.ix-1:col; span=c.m?c.m+1:1;
-      w=0; for (var q=start;q<start+span&&q<widths.length;q++) w+=widths[q];
+      w=0; for (q=start;q<start+span&&q<widths.length;q++) w+=widths[q]*widthFactor;
       txt=(c.t==="E"||c.v===undefined||c.v===null)?"":String(c.v);
       if (txt && w>0) {
         cap=Math.max(6,Math.floor(w*0.82*10/Math.max(8,layout.font)));
