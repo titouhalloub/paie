@@ -1926,7 +1926,7 @@ function rpBuildSheets() {
     rows.push(hr(23.25,span(ENTETE1,"e2",b1,RTLX?1:n-b1+1)));
     rows.push(hr(23.25,span(ENTETE2,"e2",b2,RTLX?1:n-b2+1)));
   }
-  var TOPH=27.75*2+23.25*2+26.25+23.25+15,HDRH=54,ROWH=18,TOTH=21,FOOTH=21,PH=680;
+  var TOPH=27.75*2+23.25*2+26.25+23.25+15,HDRH=54,ROWH=18,TOTH=21,FOOTH=90,PH=680;
   function scaleFor(w){return 100;}
   /* period covered */
   var mn=null,mx=null,mm,pa,pb;
@@ -2043,10 +2043,23 @@ function rpBuildSheets() {
   /* ---------- recap sheet ---------- */
   var rkeep=[0,1,2,3,4,5,6,9,11],r2s=[];
   entete(rkeep.length,r2s);
-  r2s.push(hr(21,[X("S",T("Recapitulatif par agent"),"e5")]));r2s.push(hr(10,[]));
+  r2s.push(hr(21,[X("S",T("Recapitulatif par agent"),"e5",rkeep.length-1)]));r2s.push(hr(10,[]));
   row=[];for(i=0;i<rkeep.length;i++)row.push(X("S",T(d.rcols[rkeep[i]]),"h"));row.h=30;r2s.push(row);
-  var rcHead=r2s.length;
-  for(i=0;i<d.recap.length;i++){row=[];for(j=0;j<rkeep.length;j++)row.push(xr(d.recap[i][rkeep[j]]));r2s.push(row);}
+  var rcHead=r2s.length,rcGroups=[],rcBreaks=[],rcOffset,rcPg,rcGrand=[0,0],rcVal;
+  for(i=0;i<d.recap.length;i++){
+    row=[];for(j=0;j<rkeep.length;j++)row.push(xr(d.recap[i][rkeep[j]]));
+    row.h=ROWH;rcGroups.push({rows:[row],tot:d.recap[i],h:ROWH});
+    rcGrand[0]+=parseFloat(rv(d.recap[i][9]))||0;rcGrand[1]+=parseFloat(rv(d.recap[i][11]))||0;
+  }
+  function rcTotal(list,no,cnt){
+    var a=[X("S",T("TOTAL PAGE"),"bf"),X("E","","bf"),X("S",no+" / "+cnt,"bf"),X("E","","bf"),X("E","","bf"),X("E","","bf"),X("E","","bf"),X("N","0","bn"),X("N","0","bn")],q,v0=0,v1=0;
+    for(q=0;q<list.length;q++){v0+=parseFloat(rv(list[q].tot[9]))||0;v1+=parseFloat(rv(list[q].tot[11]))||0;}
+    a[7]=X("N",""+r2(v0),"bn");a[8]=X("N",""+r2(v1),"bn");a.h=TOTH;return a;
+  }
+  var rcFoot=[X("S",T("TOTAL GENERAL"),"bf"),X("E","","bf"),X("E","","bf"),X("E","","bf"),X("E","","bf"),X("E","","bf"),X("E","","bf"),X("N",""+r2(rcGrand[0]),"bn"),X("N",""+r2(rcGrand[1]),"bn")];rcFoot.h=FOOTH;
+  rcPg=rpPaged(rcGroups,{capH:PH,topH:TOPH,hdrH:HDRH,totH:TOTH,footH:FOOTH,pageTotal:rcTotal,foot:rcFoot});
+  rcOffset=r2s.length;for(i=0;i<rcPg.rows.length;i++)r2s.push(rcPg.rows[i]);
+  for(i=0;i<rcPg.breaks.length;i++)rcBreaks.push(rcOffset+rcPg.breaks[i]);
   /* file name from the contents */
   var fcodes=[],fseen={};
   for(i=0;i<rpEmployees.length;i++){ee=rpEmployees[i];if(mats["k"+ee.mat]&&ee.corpsCode&&!fseen["k"+ee.corpsCode]){fseen["k"+ee.corpsCode]=true;fcodes.push(ee.corpsCode);}}
@@ -2223,7 +2236,7 @@ function rpBuildSheets() {
   var sheets=[{rtl:true,name:T("Journal rappel"),w:w,rows:out,land:true,top:"0.35",footer:true,printRow:headRow,plan:{scale:sc1,breaks:br1}},
               s2,s3,s4,s5,s6,
               {rtl:true,name:T("Rendement"),w:rw,rows:rout,land:true,top:"0.35",footer:true,printRow:rHead,plan:{scale:sc2,breaks:br2}},
-              {rtl:true,name:T("Recap agents"),w:recapW,rows:r2s,land:true,top:"0.35",footer:true,printRow:rcHead,plan:{scale:scaleFor(recapW),breaks:[]}}];
+              {rtl:true,name:T("Recap agents"),w:recapW,rows:r2s,land:true,top:"0.35",footer:true,printRow:rcHead,plan:{scale:scaleFor(recapW),breaks:rcBreaks}}];
   return {sheets:sheets,fbase:fbase,info:"A3: journal "+pg.pages+" page(s) (echelle "+sc1+"%), rendement "+pr.pages+" page(s). Chaque page se termine par son TOTAL PAGE; aucun agent n’est coupe entre deux pages."};
 }
 function rpReadLayoutSettings(){
