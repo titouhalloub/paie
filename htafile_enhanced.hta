@@ -963,16 +963,16 @@ function mirrorRows(rows, n) {
     st = r[0].s || "";
     if (st === "e1" || st === "e4" || st === "e7") { out.push(r); continue; }
     if (st === "e2") { rr = [xCopy(r[0], n - r.length + 1)].concat(r.slice(1)); }
-    else if (st === "e3") { rr = r.slice().reverse(); }
+    else if (st === "e3") { rr = [xCopy(r[0], 1)]; }
     else if (st === "e6") { rr = [xCopy(r[0], undefined)]; }
-    else if (st === "e5") { rr = [xCopy(r[0], n)]; }
+    else if (st === "e5") { rr = [xCopy(r[0], 1)]; }
     else if (r.length === n) { rr = r.slice().reverse(); }
     else { rr = r; }
     rr.h = r.h; out.push(rr);
   }
   return out;
 }
-var RP_FONT_SIZE=10;
+var RP_FONT_SIZE=12;
 function buildXls(sheets) {
   var o = [], i, j, k, bd = '<Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/></Borders>';
   var f = '<Font ss:FontName="Arial" ss:Size="'+RP_FONT_SIZE+'"';
@@ -980,26 +980,26 @@ function buildXls(sheets) {
   o.push('<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet" xmlns:html="http://www.w3.org/TR/REC-html40">\r\n');
   o.push('<Styles>');
   o.push('<Style ss:ID="Default" ss:Name="Normal"><Alignment ss:Vertical="Bottom"/>' + f + '/></Style>');
-  o.push('<Style ss:ID="cx"><Alignment ss:Vertical="Bottom"/>' + f + '/>' + bd + '</Style>');
+  o.push('<Style ss:ID="cx"><Alignment ss:Vertical="Center" ss:WrapText="1"/>' + f + '/>' + bd + '</Style>');
   o.push('<Style ss:ID="h">' + f + ' ss:Bold="1"/><Interior ss:Color="#DCE6F1" ss:Pattern="Solid"/><Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"' + (LANG === "ar" ? ' ss:ReadingOrder="RightToLeft"' : '') + '/>' + bd + '</Style>');
-  o.push('<Style ss:ID="b">' + f + ' ss:Bold="1"/>' + bd + '</Style>');
-  o.push('<Style ss:ID="bf">' + f + ' ss:Bold="1"/><Interior ss:Color="#EEF3FA" ss:Pattern="Solid"/>' + bd + '</Style>');
+  o.push('<Style ss:ID="b">' + f + ' ss:Bold="1"/><Alignment ss:Vertical="Center" ss:WrapText="1"/>' + bd + '</Style>');
+  o.push('<Style ss:ID="bf">' + f + ' ss:Bold="1"/><Alignment ss:Vertical="Center" ss:WrapText="1"/><Interior ss:Color="#EEF3FA" ss:Pattern="Solid"/>' + bd + '</Style>');
   o.push('<Style ss:ID="t"><Font ss:FontName="Arial" ss:Size="' +(RP_FONT_SIZE+4)+'" ss:Bold="1"/></Style>');
   o.push('<Style ss:ID="et1"><Font ss:FontName="Arial" ss:Size="' +(RP_FONT_SIZE+4)+'" ss:Bold="1"/><Alignment ss:Horizontal="Center"/></Style>');
   o.push('<Style ss:ID="et2"><Font ss:FontName="Arial" ss:Size="' +(RP_FONT_SIZE+2)+'" ss:Bold="1"/><Alignment ss:Horizontal="Center"/></Style>');
-  o.push('<Style ss:ID="n">' + f + '/><NumberFormat ss:Format="#,##0.00"/>' + bd + '</Style>');
-  o.push('<Style ss:ID="bn">' + f + ' ss:Bold="1"/><Interior ss:Color="#EEF3FA" ss:Pattern="Solid"/><NumberFormat ss:Format="#,##0.00"/>' + bd + '</Style>');
+  o.push('<Style ss:ID="n"><Alignment ss:Vertical="Center" ss:WrapText="1"/>' + f + '/><NumberFormat ss:Format="#,##0.00"/>' + bd + '</Style>');
+  o.push('<Style ss:ID="bn">' + f + ' ss:Bold="1"/><Alignment ss:Vertical="Center" ss:WrapText="1"/><Interior ss:Color="#EEF3FA" ss:Pattern="Solid"/><NumberFormat ss:Format="#,##0.00"/>' + bd + '</Style>');
   o.push('<Style ss:ID="d">' + f + '/><NumberFormat ss:Format="yyyy\\-mm\\-dd"/>' + bd + '</Style>');
   var nb = '<Borders><Border ss:Position="Bottom" ss:LineStyle="None"/><Border ss:Position="Left" ss:LineStyle="None"/><Border ss:Position="Right" ss:LineStyle="None"/><Border ss:Position="Top" ss:LineStyle="None"/></Borders>';
   var ae = '<Font ss:FontName="Arabic Transparent" x:CharSet="178" ss:Size=';
-  o.push('<Style ss:ID="x6"><Alignment ss:Vertical="Bottom"/>' + f + '/><NumberFormat ss:Format="0.000000"/>' + bd + '</Style>');
-  o.push('<Style ss:ID="cxa"><Alignment ss:Vertical="Center"' + (LANG === "ar" ? ' ss:ReadingOrder="RightToLeft"' : '') + '/>' + f + '/><Interior ss:Color="#F7F7F2" ss:Pattern="Solid"/>' + bd + '</Style>');
+  o.push('<Style ss:ID="x6"><Alignment ss:Vertical="Center" ss:WrapText="1"/>' + f + '/><NumberFormat ss:Format="0.000000"/>' + bd + '</Style>');
+  o.push('<Style ss:ID="cxa"><Alignment ss:Vertical="Center" ss:WrapText="1"' + (LANG === "ar" ? ' ss:ReadingOrder="RightToLeft"' : '') + '/>' + f + '/><Interior ss:Color="#F7F7F2" ss:Pattern="Solid"/>' + bd + '</Style>');
   o.push('<Style ss:ID="e7"><Alignment ss:Horizontal="CenterAcrossSelection" ss:Vertical="Bottom"/>' + ae + '"' +(RP_FONT_SIZE+10)+'" ss:Bold="1"/>' + nb + '</Style>');
   o.push('<Style ss:ID="e6"><Alignment ss:Horizontal="Left" ss:Vertical="Center"/>' + ae + '"' +(RP_FONT_SIZE+6)+'" ss:Bold="1"/>' + nb + '</Style>');
-  o.push('<Style ss:ID="e5"><Font ss:FontName="Arial" ss:Size="' +(RP_FONT_SIZE+4)+'" ss:Bold="1"/>' + nb + '</Style>');
+  o.push('<Style ss:ID="e5"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/><Font ss:FontName="Arial" ss:Size="' +(RP_FONT_SIZE+4)+'" ss:Bold="1"/>' + nb + '</Style>');
   o.push('<Style ss:ID="e1"><Alignment ss:Horizontal="CenterAcrossSelection" ss:Vertical="Bottom"/>' + ae + '"' +(RP_FONT_SIZE+12)+'" ss:Bold="1"/>' + nb + '</Style>');
   o.push('<Style ss:ID="e2"><Alignment ss:Horizontal="CenterAcrossSelection" ss:Vertical="Bottom"/>' + ae + '"' +(RP_FONT_SIZE+8)+'" ss:Bold="1"/>' + nb + '</Style>');
-  o.push('<Style ss:ID="e3"><Alignment ss:Horizontal="Right" ss:Vertical="Bottom"/>' + ae + '"' +(RP_FONT_SIZE+10)+'" ss:Bold="1"/>' + nb + '</Style>');
+  o.push('<Style ss:ID="e3"><Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>' + ae + '"' +(RP_FONT_SIZE+10)+'" ss:Bold="1"/>' + nb + '</Style>');
   o.push('<Style ss:ID="e4"><Alignment ss:Horizontal="CenterAcrossSelection" ss:Vertical="Bottom"/>' + ae + '"' +(RP_FONT_SIZE+8)+'" ss:Bold="1"/>' + nb + '</Style>');
   o.push('</Styles>\r\n');
   for (i = 0; i < sheets.length; i++) {
@@ -1014,7 +1014,7 @@ function buildXls(sheets) {
     for (j = 0; j < wOut.length; j++) o.push('<Column ss:AutoFitWidth="0" ss:Width="' + wOut[j] + '"/>');
     for (j = 0; j < rowsOut.length; j++) {
       var r = rowsOut[j];
-      var rh = r.h ? ' ss:AutoFitHeight="0" ss:Height="' + r.h + '"' : "";
+      var rh = r.h ? ' ss:AutoFitHeight="1" ss:Height="' + r.h + '"' : "";
       if (r.length == 0) { o.push('<Row' + rh + '/>'); continue; }
       o.push('<Row' + rh + '>');
       for (k = 0; k < r.length; k++) o.push(xlsCellXml(r[k]));
@@ -1029,7 +1029,7 @@ function buildXls(sheets) {
       if (!sh1.entete && sh1.footer) o.push('<Footer x:Margin="0.2" x:Data="&amp;C' + xmlEsc(T("Page")) + ' &amp;P / &amp;N"/>');
       if (sh1.land) o.push('<PageMargins x:Bottom="0.35" x:Left="0.25" x:Right="0.25" x:Top="' + (sh1.top || "0.6") + '" x:Header="0.15" x:Footer="0.15"/>');
       o.push('</PageSetup>');
-      if (sh1.land) o.push('<FitToPage/><Print><ValidPrinterInfo/><PaperSizeIndex>8</PaperSizeIndex><FitWidth>1</FitWidth><FitHeight>0</FitHeight><HorizontalResolution>600</HorizontalResolution><VerticalResolution>600</VerticalResolution></Print>');
+      if (sh1.land) o.push('<Print><ValidPrinterInfo/><PaperSizeIndex>8</PaperSizeIndex><Scale>100</Scale><HorizontalResolution>600</HorizontalResolution><VerticalResolution>600</VerticalResolution></Print>');
       o.push('</WorksheetOptions>');
       if (sh1.plan && sh1.plan.breaks.length) {
         o.push('<PageBreaks xmlns="urn:schemas-microsoft-com:office:excel"><RowBreaks>');
@@ -1890,28 +1890,54 @@ function rpSetView() {
 }
 var RP_E1 = "\u0627\u0644\u062c\u0645\u0647\u0648\u0631\u064a\u0640\u0640\u0629 \u0627\u0644\u062c\u0640\u0632\u0627\u0626\u0640\u0631\u064a\u0640\u0640\u0629 \u0627\u0644\u062f\u064a\u0645\u0642\u0631\u0627\u0637\u064a\u0640\u0640\u0629 \u0627\u0644\u0634\u0639\u0628\u064a\u0640\u0640\u0640\u0640\u0629", RP_E2 = "\u0648\u0632\u0627\u0631\u0629 \u0627\u0644\u0635\u062d\u0640\u0629 ";
 function rpNrm(t) { return String(t||"").toLowerCase().replace(/[\u00e9\u00e8\u00ea\u00eb]/g,"e").replace(/[\u00e0\u00e2\u00e4]/g,"a").replace(/['\u2019`]/g,"").replace(/[\s._\-\/]+/g,""); }
-/* Page layout: employee blocks are never split; every page ends with a TOTAL PAGE row (sum of the employee totals on that page).
-   groups: [{rows:[cell rows], tot:[typed total row], h:height}], o: {capH, topH, hdrH, totH, footH, pageTotal(list,no,count), foot} */
+/* Page layout: employee blocks remain intact. Heights are estimated after font/spacing/wrapping settings. */
+function rpMeasurePrintRow(row, widths, layout) {
+  var base=row.h||0, scaled=Math.max(base*layout.line,layout.font+6), col=0, i, c, start, span, w, txt, cap, lines, need;
+  if (!base) return 0;
+  if (widths && widths.length) {
+    for (i=0;i<row.length;i++) {
+      c=row[i]||{}; start=(c.ix&&c.ix>0)?c.ix-1:col; span=c.m?c.m+1:1;
+      w=0; for (var q=start;q<start+span&&q<widths.length;q++) w+=widths[q];
+      txt=(c.t==="E"||c.v===undefined||c.v===null)?"":String(c.v);
+      if (txt && w>0) {
+        cap=Math.max(6,Math.floor(w*0.82*10/Math.max(8,layout.font)));
+        lines=Math.ceil(txt.length/cap);
+        need=lines*(layout.font+5)+4;
+        if (need>scaled) scaled=need;
+      }
+      col=start+span;
+    }
+  }
+  row._rpPrintH=scaled;
+  return scaled;
+}
 function rpPaged(groups, o) {
-  var pages = [], cur = [], used = o.topH + o.hdrH, i, k, p, g, need, rows = [], breaks = [];
-  for (i = 0; i < groups.length; i++) {
-    g = groups[i]; need = g.h + o.totH + ((i === groups.length - 1) ? o.footH : 0);
-    if (cur.length && used + need > o.capH) { pages.push(cur); cur = []; used = o.hdrH; }
-    cur.push(g); used += g.h;
+  var pages=[],cur=[],used=o.topH+o.hdrH,i,k,p,g,gh,need,rows=[],breaks=[],layout=rpReadLayoutSettings(),q;
+  for(i=0;i<groups.length;i++) {
+    g=groups[i]; gh=0;
+    for(q=0;q<g.rows.length;q++) gh+=rpMeasurePrintRow(g.rows[q],o.widths,layout);
+    g._rpPrintH=gh;
+    need=gh+o.totH+((i===groups.length-1)?o.footH:0);
+    if(cur.length && used+need>o.capH) { pages.push(cur); cur=[]; used=o.hdrH; }
+    cur.push(g); used+=gh;
   }
-  if (cur.length) pages.push(cur);
-  for (p = 0; p < pages.length; p++) {
-    if (p > 0) breaks.push(rows.length);
-    for (i = 0; i < pages[p].length; i++) for (k = 0; k < pages[p][i].rows.length; k++) rows.push(pages[p][i].rows[k]);
-    rows.push(o.pageTotal(pages[p], p + 1, pages.length));
+  if(cur.length) pages.push(cur);
+  for(p=0;p<pages.length;p++) {
+    if(p>0) breaks.push(rows.length);
+    for(i=0;i<pages[p].length;i++) for(k=0;k<pages[p][i].rows.length;k++) rows.push(pages[p][i].rows[k]);
+    rows.push(o.pageTotal(pages[p],p+1,pages.length));
   }
-  if (o.foot) rows.push(o.foot);
-  return { rows: rows, breaks: breaks, pages: pages.length };
+  if(o.foot) rows.push(o.foot);
+  return {rows:rows,breaks:breaks,pages:pages.length};
+}
+function rpHiddenPrintCol(label){
+  var n=rpNrm(label);
+  return n.indexOf("totalretenues")>=0||n.indexOf("coefficient")>=0||n.indexOf("indicemin")>=0||n.indexOf("indicetotal")>=0||n.indexOf("الرقمالاستدلالي")>=0||n.indexOf("معاملالتحيين")>=0||n.indexOf("مجموعالاقتطاعات")>=0;
 }
 function rpBuildSheets() {
   var RTLX=(LANG==="ar");
   var d=curR,out=[],i,j,k,row,c,bold;if(!d){$("rpMsg").innerHTML='<span class="err">Calculez d’abord le rappel.</span>';return null;}
-  var keep=[0,1,2,4,5,-1,-2,-3,-4,-5,-6],IXK=["Categorie","Echelon","Indice min","Points echelon","Indice total","Coefficient"];for(j=7;j<d.cols.length;j++)keep.push(j); // omit Grille and Bulletin de reference from Excel
+  var keep=[0,1,2,4,5,-1,-2,-4],IXK=["Categorie","Echelon","Indice min","Points echelon","Indice total","Coefficient"];for(j=7;j<d.cols.length;j++)if(!rpHiddenPrintCol(d.cols[j]))keep.push(j); // hide update coefficient, indices and total deductions
   var nc=keep.length;
   function hr(h,cells){cells.h=h;return cells;}
   function span(text,style,n,startCol){var cells=[X("S",text,style,null,startCol>1?startCol:undefined)],q;for(q=1;q<n;q++)cells.push(X("E","",style));return cells;}
@@ -1922,8 +1948,8 @@ function rpBuildSheets() {
     rows.push(hr(23.25,span(ENTETE1,"e2",b1,RTLX?1:n-b1+1)));
     rows.push(hr(23.25,span(ENTETE2,"e2",b2,RTLX?1:n-b2+1)));
   }
-  var TOPH=27.75*2+23.25*2+26.25+23.25+15,HDRH=51,ROWH=15,TOTH=18,FOOTH=18,PH=740;
-  function scaleFor(w){var t=0,q;for(q=0;q<w.length;q++)t+=w[q];return Math.max(30,Math.min(100,Math.floor(1154/(t*1.15)*100)));}
+  var TOPH=27.75*2+23.25*2+26.25+23.25+15,HDRH=54,ROWH=18,TOTH=21,FOOTH=24,SIGNOFFH=58,PH=760;
+  function scaleFor(w){return 100;}
   /* period covered */
   var mn=null,mx=null,mm,pa,pb;
   for(i=0;i<d.rows.length;i++){
@@ -1949,8 +1975,8 @@ function rpBuildSheets() {
   var titleRend="\u0628\u064a\u0627\u0646 \u062a\u0643\u0645\u064a\u0644\u064a \u0644\u0645\u0646\u062d\u0629 \u0627\u0644\u0645\u0631\u062f\u0648\u062f\u064a\u0629 \u0627\u0644\u0646\u0627\u062c\u0645 \u0639\u0646 \u0627\u0644\u062a\u0631\u0642\u064a\u0629 \u0641\u064a \u0627\u0644\u062f\u0631\u062c\u0627\u062a"+(corpsTxt?(" "+corpsTxt):"")+yearTxt;
   function headBlock(n,ttl,rows,corner,periodOverride){
     entete(n,rows);
-    if(corner)rows.push(hr(26.25,span(ttl,"e7",n,1)));
-    else if(RTLX)rows.push(hr(26.25,span(ttl,"e3",n,1)));
+    if(corner)rows.push(hr(26.25,[X("S",ttl,"e7",n-1,1)]));
+    else if(RTLX)rows.push(hr(26.25,[X("S",ttl,"e3",n-1,1)]));
     else rows.push(hr(26.25,[X("S",ttl,"e3",null,Math.max(1,n-7))]));
     var shownPeriod=(periodOverride!==undefined)?periodOverride:periodTxt;
     if(shownPeriod)rows.push(hr(23.25,span(shownPeriod,"e4",n,1)));else rows.push(hr(23.25,[]));
@@ -1984,7 +2010,7 @@ function rpBuildSheets() {
     r.h=TOTH;return r;
   }
   var footRow=[];for(j=0;j<nc;j++)footRow.push(keep[j]<0?X("E","","bf"):xr(d.foot[keep[j]],rt(d.foot[keep[j]])==="N"?"bn":"bf"));footRow.h=FOOTH;
-  var pg=rpPaged(groups,{capH:PH/(sc1/100),topH:TOPH,hdrH:HDRH,totH:TOTH,footH:FOOTH,pageTotal:jPageTotal,foot:footRow});
+  var pg=rpPaged(groups,{capH:PH/(sc1/100),topH:TOPH,hdrH:HDRH,totH:TOTH,footH:FOOTH+SIGNOFFH,widths:w,pageTotal:jPageTotal,foot:footRow});
   headBlock(nc,title,out);
   row=[];for(i=0;i<nc;i++)row.push(X("S",keep[i]<0?T(IXK[-keep[i]-1]):hdrT(d.cols[keep[i]]),"h"));row.h=HDRH;out.push(row);
   var headRow=out.length,off=out.length;
@@ -2029,7 +2055,7 @@ function rpBuildSheets() {
   function rSums(list){return [rtot(list,5),rtot(list,9),rtot(list,10),rtot(list,11),rtot(list,12)];}
   function rPageTotal(list,no,cnt){var r=rendTot(T("TOTAL PAGE"),no+" / "+cnt,rSums(list));r.h=TOTH;return r;}
   var rfoot=rendTot(T("TOTAL GENERAL"),T("TOTAL GENERAL"),rSums(rg));rfoot.h=FOOTH;
-  var sc2=scaleFor(rw),pr=rpPaged(rg,{capH:PH/(sc2/100),topH:TOPH,hdrH:HDRH,totH:TOTH,footH:FOOTH,pageTotal:rPageTotal,foot:rfoot});
+  var sc2=scaleFor(rw),pr=rpPaged(rg,{capH:PH/(sc2/100),topH:TOPH,hdrH:HDRH,totH:TOTH,footH:FOOTH+SIGNOFFH,widths:rw,pageTotal:rPageTotal,foot:rfoot});
   var rout=[];headBlock(rnc,titleRend,rout);
   row=[];for(i=0;i<rnc;i++)row.push(X("S",T(rcols[i]),"h"));row.h=HDRH;rout.push(row);
   var rHead=rout.length,roff=rout.length;
@@ -2037,12 +2063,25 @@ function rpBuildSheets() {
   var br2=[];for(i=0;i<pr.breaks.length;i++)br2.push(roff+pr.breaks[i]);
 
   /* ---------- recap sheet ---------- */
-  var rkeep=[0,1,2,3,4,5,6,9,10,11],r2s=[];
+  var rkeep=[0,1,2,3,4,5,6,9,11],r2s=[];
   entete(rkeep.length,r2s);
-  r2s.push(hr(21,[X("S",T("Recapitulatif par agent"),"e5")]));r2s.push(hr(10,[]));
+  r2s.push(hr(21,[X("S",T("Recapitulatif par agent"),"e5",rkeep.length-1)]));r2s.push(hr(10,[]));
   row=[];for(i=0;i<rkeep.length;i++)row.push(X("S",T(d.rcols[rkeep[i]]),"h"));row.h=30;r2s.push(row);
-  var rcHead=r2s.length;
-  for(i=0;i<d.recap.length;i++){row=[];for(j=0;j<rkeep.length;j++)row.push(xr(d.recap[i][rkeep[j]]));r2s.push(row);}
+  var rcHead=r2s.length,rcGroups=[],rcBreaks=[],rcOffset,rcPg,rcGrand=[0,0],rcVal;
+  for(i=0;i<d.recap.length;i++){
+    row=[];for(j=0;j<rkeep.length;j++)row.push(xr(d.recap[i][rkeep[j]]));
+    row.h=ROWH;rcGroups.push({rows:[row],tot:d.recap[i],h:ROWH});
+    rcGrand[0]+=parseFloat(rv(d.recap[i][9]))||0;rcGrand[1]+=parseFloat(rv(d.recap[i][11]))||0;
+  }
+  function rcTotal(list,no,cnt){
+    var a=[X("S",T("TOTAL PAGE"),"bf"),X("E","","bf"),X("S",no+" / "+cnt,"bf"),X("E","","bf"),X("E","","bf"),X("E","","bf"),X("E","","bf"),X("N","0","bn"),X("N","0","bn")],q,v0=0,v1=0;
+    for(q=0;q<list.length;q++){v0+=parseFloat(rv(list[q].tot[9]))||0;v1+=parseFloat(rv(list[q].tot[11]))||0;}
+    a[7]=X("N",""+r2(v0),"bn");a[8]=X("N",""+r2(v1),"bn");a.h=TOTH;return a;
+  }
+  var rcFoot=[X("S",T("TOTAL GENERAL"),"bf"),X("E","","bf"),X("E","","bf"),X("E","","bf"),X("E","","bf"),X("E","","bf"),X("E","","bf"),X("N",""+r2(rcGrand[0]),"bn"),X("N",""+r2(rcGrand[1]),"bn")];rcFoot.h=FOOTH;
+  rcPg=rpPaged(rcGroups,{capH:PH,topH:TOPH,hdrH:HDRH,totH:TOTH,footH:FOOTH+SIGNOFFH,widths:[58,115,42,48,48,68,62,78,78,78],pageTotal:rcTotal,foot:rcFoot});
+  rcOffset=r2s.length;for(i=0;i<rcPg.rows.length;i++)r2s.push(rcPg.rows[i]);
+  for(i=0;i<rcPg.breaks.length;i++)rcBreaks.push(rcOffset+rcPg.breaks[i]);
   /* file name from the contents */
   var fcodes=[],fseen={};
   for(i=0;i<rpEmployees.length;i++){ee=rpEmployees[i];if(mats["k"+ee.mat]&&ee.corpsCode&&!fseen["k"+ee.corpsCode]){fseen["k"+ee.corpsCode]=true;fcodes.push(ee.corpsCode);}}
@@ -2129,35 +2168,35 @@ function rpBuildSheets() {
   function annualPeriod(year,fromRappelStart){return fromRappelStart?"الفترة من تاريخ بداية الاستدراك الفعلي لكل موظف إلى 31/12/"+year:"الفترة من 01/01/"+year+" إلى 31/12/"+year;}
   function famSheet(sheetName,corner,defs,source,periodLabel){
     var useRows=source?source.rows:srcRows;
-    var n=11+defs.length+1,ww=[58,115,100,112,62,62,62,62,62,62,62],q,z,gl=[],cur=[],sums=[],t0,v,rw0,cells,tt;
+    var n=8+defs.length+1,ww=[58,115,100,112,62,82,82,58],q,z,gl=[],cur=[],sums=[],t0,v,rw0,cells,tt;
     for(q=0;q<defs.length;q++)ww.push(88);ww.push(95);
     for(q=0;q<defs.length+1;q++)sums.push(0);
     function vals(raw){var vs=[],q2,z2,s;for(q2=0;q2<defs.length;q2++){s=0;for(z2=0;z2<defs[q2].idx.length;z2++)s+=(raw[defs[q2].idx[z2]]||0);vs.push(r2(s));}return vs;}
     for(i=0;i<useRows.length;i++){
       rw0=useRows[i];
-      if(rw0.info){cells=[];for(q=0;q<5;q++)cells.push(xr(rw0[[0,1,2,4,5][q]]));cells.push(X("S",rw0.info,"cxa",defs.length));cells.h=ROWH;cur.push(cells);continue;}
+      if(rw0.info){cells=[];for(q=0;q<5;q++)cells.push(xr(rw0[[0,1,2,4,5][q]]));cells.push(X("E","","cxa"));cells.push(X("E","","cxa"));cells.push(X("E","","cxa"));cells.push(X("S",rw0.info,"cxa",defs.length));cells.h=ROWH;cur.push(cells);continue;}
       var isTot=(rv(rw0[4])==="TOTAL EMPLOYE"),vs=vals(rw0.raw||[]),tot0=0;
       for(q=0;q<vs.length;q++)tot0+=vs[q];tot0=r2(tot0);
       cells=[];
       var cidx=[0,1,2,4,5];
       for(q=0;q<5;q++)cells.push(xr(rw0[cidx[q]],isTot?"bf":undefined));
-      for(q=0;q<6;q++){var xc=(rw0.ixc||[])[q]||"E";cells.push(xr(xc,isTot?"bf":(q===5&&rt(xc)==="N"?"x6":undefined)));}
+      for(q=0;q<6;q++){if(q===2||q===4||q===5)continue;var xc=(rw0.ixc||[])[q]||"E";cells.push(xr(xc,isTot?"bf":undefined));}
       for(q=0;q<vs.length;q++)cells.push(cellN(vs[q],isTot?"bn":"n"));
       cells.push(cellN(tot0,"bn"));cells.h=ROWH;cur.push(cells);
       if(isTot){
-        tt=[];for(q=0;q<vs.length;q++){tt[11+q]="N"+vs[q];sums[q]+=vs[q];}tt[11+vs.length]="N"+tot0;sums[vs.length]+=tot0;
+        tt=[];for(q=0;q<vs.length;q++){tt[8+q]="N"+vs[q];sums[q]+=vs[q];}tt[8+vs.length]="N"+tot0;sums[vs.length]+=tot0;
         gl.push({rows:cur,tot:tt,h:cur.length*ROWH});cur=[];
       }
     }
     if(cur.length)gl.push({rows:cur,tot:[],h:cur.length*ROWH});
-    function sumRow(l1,l2,vs3){var r=[X("S",l1,"bf"),X("E","","bf"),X("S",l2,"bf"),X("E","","bf"),X("E","","bf"),X("E","","bf"),X("E","","bf"),X("E","","bf"),X("E","","bf"),X("E","","bf"),X("E","","bf")],z3;for(z3=0;z3<vs3.length;z3++)r.push(cellN(vs3[z3],"bn"));r.h=ROWH;return r;}
-    function pageSums(list){var vs4=[],z4,y,s0;for(z4=0;z4<defs.length+1;z4++){s0=0;for(y=0;y<list.length;y++){var c0=list[y].tot[11+z4];if(c0)s0+=parseFloat(rv(c0));}vs4.push(r2(s0));}return vs4;}
+    function sumRow(l1,l2,vs3){var r=[X("S",l1,"bf"),X("E","","bf"),X("S",l2,"bf"),X("E","","bf"),X("E","","bf"),X("E","","bf"),X("E","","bf"),X("E","","bf")],z3;for(z3=0;z3<vs3.length;z3++)r.push(cellN(vs3[z3],"bn"));r.h=ROWH;return r;}
+    function pageSums(list){var vs4=[],z4,y,s0;for(z4=0;z4<defs.length+1;z4++){s0=0;for(y=0;y<list.length;y++){var c0=list[y].tot[8+z4];if(c0)s0+=parseFloat(rv(c0));}vs4.push(r2(s0));}return vs4;}
     var tg=[];for(z=0;z<sums.length;z++)tg.push(r2(sums[z]));
     var fr=sumRow(T("TOTAL GENERAL"),T("TOTAL GENERAL"),tg);fr.h=FOOTH;
-    var sc=scaleFor(ww),pgx=rpPaged(gl,{capH:PH/(sc/100),topH:TOPH,hdrH:HDRH,totH:TOTH,footH:FOOTH,
+    var sc=scaleFor(ww),pgx=rpPaged(gl,{capH:PH/(sc/100),topH:TOPH,hdrH:HDRH,totH:TOTH,footH:FOOTH+SIGNOFFH,widths:ww,
         pageTotal:function(list,no,cnt){var r=sumRow(T("TOTAL PAGE"),no+" / "+cnt,pageSums(list));r.h=TOTH;return r;},foot:fr});
     var o4=[];headBlock(n,title,o4,corner,periodLabel);
-    var row2=[X("S",T("Matricule"),"h"),X("S",T("Nom et prenom"),"h"),X("S",T("Nature"),"h"),X("S",T("Periode couverte"),"h"),X("S",T("Jours rappel (base 30j)"),"h"),X("S",T("Categorie"),"h"),X("S",T("Echelon"),"h"),X("S",T("Indice min"),"h"),X("S",T("Points echelon"),"h"),X("S",T("Indice total"),"h"),X("S",T("Coefficient"),"h")];
+    var row2=[X("S",T("Matricule"),"h"),X("S",T("Nom et prenom"),"h"),X("S",T("Nature"),"h"),X("S",T("Periode couverte"),"h"),X("S",T("Jours rappel (base 30j)"),"h"),X("S",T("Categorie"),"h"),X("S",T("Echelon"),"h"),X("S",T("Points echelon"),"h")];
     for(q=0;q<defs.length;q++)row2.push(X("S",hdrT(defs[q].label),"h"));row2.push(X("S",T("Total"),"h"));row2.h=HDRH;o4.push(row2);
     var hr2=o4.length,off2=o4.length,bk=[];
     for(q=0;q<pgx.rows.length;q++)o4.push(pgx.rows[q]);
@@ -2175,8 +2214,8 @@ function rpBuildSheets() {
   var s5=famSheet("Feuille 5",paperNo(5),allDefs,prevData,annualPeriod(previousYear,true));
   /* Feuille 6 = full كشف الاستدراك for the current year, with every salary rubrique. */
   function annualJournalSheet(source,year){
-    var p6keep=[0,1,2,4,5,-4,-3,-2,-1],p6w=[58,115,100,112,62,82,82,58,58],p6nc,q,z,rr,bb,sc,pgj,jbreaks=[],ki,tv,jcur=[],jgroups=[],jtot={};
-    for(z=7;z<d.cols.length;z++){p6keep.push(z);p6w.push(62);}
+    var p6keep=[0,1,2,4,5,-2,-1],p6w=[58,115,100,112,62,82,82],p6nc,q,z,rr,bb,sc,pgj,jbreaks=[],ki,tv,jcur=[],jgroups=[],jtot={};
+    for(z=7;z<d.cols.length;z++)if(!rpHiddenPrintCol(d.cols[z])){p6keep.push(z);p6w.push(62);}
     p6nc=p6keep.length;
     for(q=0;q<source.rows.length;q++){
       rr=source.rows[q];bb=(rv(rr[4])==="TOTAL EMPLOYE");var cells=[];
@@ -2206,9 +2245,9 @@ function rpBuildSheets() {
     var annualFoot=[];
     for(z=0;z<p6nc;z++){ki=p6keep[z];annualFoot.push(ki<0?X("E","","bf"):xr(jtot[ki]||"E",rt(jtot[ki]||"E")==="N"?"bn":"bf"));}
     annualFoot.h=FOOTH;sc=scaleFor(p6w);
-    pgj=rpPaged(jgroups,{capH:PH/(sc/100),topH:TOPH,hdrH:HDRH,totH:TOTH,footH:FOOTH,pageTotal:annualPageTotal,foot:annualFoot});
+    pgj=rpPaged(jgroups,{capH:PH/(sc/100),topH:TOPH,hdrH:HDRH,totH:TOTH,footH:FOOTH+SIGNOFFH,widths:p6w,pageTotal:annualPageTotal,foot:annualFoot});
     var jo=[];headBlock(p6nc,title,jo,null,annualPeriod(year,false));
-    var p6Labels=["الصنف","الدرجة","الرقم الاستدلالي للصنف","الرقم الاستدلالي للدرجة"];
+    var p6Labels=["الصنف","الدرجة"];
     var jh=[];for(z=0;z<p6nc;z++){ki=p6keep[z];jh.push(X("S",ki<0?p6Labels[-ki-1]:hdrT(d.cols[ki]),"h"));}jh.h=HDRH;jo.push(jh);
     var jhead=jo.length,joff=jo.length;
     for(q=0;q<pgj.rows.length;q++)jo.push(pgj.rows[q]);
@@ -2219,7 +2258,7 @@ function rpBuildSheets() {
   var sheets=[{rtl:true,name:T("Journal rappel"),w:w,rows:out,land:true,top:"0.35",footer:true,printRow:headRow,plan:{scale:sc1,breaks:br1}},
               s2,s3,s4,s5,s6,
               {rtl:true,name:T("Rendement"),w:rw,rows:rout,land:true,top:"0.35",footer:true,printRow:rHead,plan:{scale:sc2,breaks:br2}},
-              {rtl:true,name:T("Recap agents"),w:recapW,rows:r2s,land:true,top:"0.35",footer:true,printRow:rcHead,plan:{scale:scaleFor(recapW),breaks:[]}}];
+              {rtl:true,name:T("Recap agents"),w:recapW,rows:r2s,land:true,top:"0.35",footer:true,printRow:rcHead,plan:{scale:scaleFor(recapW),breaks:rcBreaks}}];
   return {sheets:sheets,fbase:fbase,info:"A3: journal "+pg.pages+" page(s) (echelle "+sc1+"%), rendement "+pr.pages+" page(s). Chaque page se termine par son TOTAL PAGE; aucun agent n’est coupe entre deux pages."};
 }
 function rpReadLayoutSettings(){
@@ -2228,17 +2267,32 @@ function rpReadLayoutSettings(){
       c=parseFloat(trim($("rpColSpacing")?$("rpColSpacing").value:"1").replace(",","."));
   if(isNaN(f)||f<6||f>18)f=10;
   if(isNaN(l)||l<0.5||l>2)l=1;
-  if(isNaN(c)||c<0.5||c>2)c=1;
+  if(isNaN(c)||c<0.5||c>3.5)c=1;
   RP_FONT_SIZE=f;
   return {font:f,line:l,col:c};
 }
+function rpFitSheetColumns(sh){
+  var n=sh.w.length,mx=[],i,j,row,col,cell,sp,txt,sz;
+  for(i=0;i<n;i++)mx[i]=5;
+  for(i=0;i<sh.rows.length;i++){row=sh.rows[i];col=0;for(j=0;j<row.length&&col<n;j++){cell=row[j]||{};if(cell.ix&&cell.ix>col+1)col=cell.ix-1;sp=cell.m?cell.m+1:1;txt=(cell.v===undefined||cell.v===null)?"":String(cell.v);if(cell.t!=="E"&&!/^(e[1-7]|t)$/.test(cell.s||"")){sz=txt.length;if(sz>mx[col])mx[col]=sz;}col+=sp;}}
+  var total=0,ratio;
+  for(i=0;i<n;i++){sh.w[i]=Math.max(34,Math.min(sh.w[i],Math.max(38,Math.min(78,mx[i]*4.1+10))));total+=sh.w[i];}
+  if(total>1100){ratio=1100/total;for(i=0;i<n;i++)sh.w[i]=Math.max(24,r2(sh.w[i]*ratio));}
+}
 function rpApplyLayoutSettings(sheets){
-  var v=rpReadLayoutSettings(),factor=Math.max(v.font/10,v.col),i,j,sh,row;
+  var v=rpReadLayoutSettings(),i,j,sh,row,base;
   for(i=0;i<sheets.length;i++){
-    sh=sheets[i];
+    sh=sheets[i];rpFitSheetColumns(sh);
     for(j=0;j<sh.w.length;j++)sh.w[j]=r2(sh.w[j]*v.col);
-    for(j=0;j<sh.rows.length;j++){row=sh.rows[j];if(row.h)row.h=r2(row.h*v.line);}
-    if(sh.plan)sh.plan.scale=Math.max(20,Math.min(100,Math.round(sh.plan.scale/factor)));
+    var totalW=0,fitRatio;for(j=0;j<sh.w.length;j++)totalW+=sh.w[j];
+    if(totalW>1100){fitRatio=1100/totalW;for(j=0;j<sh.w.length;j++)sh.w[j]=r2(sh.w[j]*fitRatio);}
+    for(j=0;j<sh.rows.length;j++){
+      row=sh.rows[j];if(row.h){
+        base=(row._rpPrintH!==undefined)?row._rpPrintH:Math.max(row.h,v.font+6);
+        row.h=r2(base);delete row._rpPrintH;
+      }
+    }
+    if(sh.plan)sh.plan.scale=100;
   }
 }
 function rpExport() {
@@ -2538,7 +2592,7 @@ function rpPrintSignoffHtml() {
     '</div>';
 }
 function sheetsToHtml(sheets) {
-  var o=['<!DOCTYPE html><html'+(LANG==="ar"?' dir="rtl"':'')+'><head><meta charset="utf-8"><title>Rappel d’echelon</title><style>@page{size:A3 landscape;margin:8mm}body{font-family:Arial,sans-serif;margin:0}.bar{padding:8px 12px;background:#dfe6f0;font-size:13px}table{border-collapse:collapse;table-layout:fixed}td{font-size:8pt;padding:1px 3px;white-space:nowrap;overflow:hidden;border:1px solid #000;vertical-align:middle}td.nb{border:0}.s_h{background:#dce6f1;font-weight:bold;text-align:center;white-space:normal}.s_bf,.s_bn,.s_b{background:#eef3fa;font-weight:bold}.num{text-align:right}.s_e1{font-size:20pt;font-weight:bold;text-align:center}.s_e2,.s_e4{font-size:13pt;font-weight:bold;text-align:center}.s_e3{font-size:14pt;font-weight:bold;text-align:right}.s_e5,.s_t{font-size:13pt;font-weight:bold}.s_e6{font-size:14pt;font-weight:bold;text-align:left}.s_e7{font-size:15pt;font-weight:bold;text-align:center}.s_cxa{background:#f7f7f2}.pg{page-break-after:always;padding:4px}.signoff{margin:14px 4px 2px;padding:0;font-size:12pt;direction:ltr;text-align:left;border:0}.signoff div{margin:5px 0;text-align:left;border:0}@media print{.bar{display:none}}</style></head><body><div class="bar"><button onclick="window.print()" style="font-size:14px;padding:4px 14px">Imprimer</button> &nbsp; Choisissez le format A3 et l’orientation paysage dans la fenetre d’impression (ou &laquo; Enregistrer en PDF &raquo;).</div>'];
+  var o=['<!DOCTYPE html><html'+(LANG==="ar"?' dir="rtl"':'')+'><head><meta charset="utf-8"><title>Rappel d’echelon</title><style>@page{size:A3 landscape;margin:8mm}body{font-family:Arial,sans-serif;margin:0}.bar{padding:8px 12px;background:#dfe6f0;font-size:13px}table{border-collapse:collapse;table-layout:fixed}td{font-size:8pt;padding:2px 3px;white-space:normal;overflow:visible;overflow-wrap:break-word;word-wrap:break-word;border:1px solid #000;vertical-align:middle}td.nb{border:0}.s_h{background:#dce6f1;font-weight:bold;text-align:center;white-space:normal}.s_bf,.s_bn,.s_b{background:#eef3fa;font-weight:bold}.num{text-align:right}.s_e1{font-size:20pt;font-weight:bold;text-align:center}.s_e2,.s_e4{font-size:13pt;font-weight:bold;text-align:center}.s_e3{font-size:14pt;font-weight:bold;text-align:center}.s_e5,.s_t{font-size:13pt;font-weight:bold;text-align:center}.s_e6{font-size:14pt;font-weight:bold;text-align:left}.s_e7{font-size:15pt;font-weight:bold;text-align:center}.s_cxa{background:#f7f7f2}.pg{page-break-after:always;padding:4px}.signoff{margin:14px 4px 2px;padding:0;font-size:12pt;direction:ltr;text-align:left;border:0}.signoff div{margin:5px 0;text-align:left;border:0}@media print{.bar{display:none}}</style></head><body><div class="bar"><button onclick="window.print()" style="font-size:14px;padding:4px 14px">Imprimer</button> &nbsp; Choisissez le format A3 et l’orientation paysage dans la fenetre d’impression (ou &laquo; Enregistrer en PDF &raquo;).</div>'];
   var si,pi,ri,ci;
   function trHtml(row,isHead){
     var h=['<tr'+(row.h?' style="height:'+row.h+'pt"':'')+'>'],k=0,col=1,cell,st,sp,cls,txt,nb;
@@ -2561,7 +2615,7 @@ function sheetsToHtml(sheets) {
     bounds.push(rows.length);
     for(ci=0;ci<sh2.w.length;ci++){tw+=sh2.w[ci];cols.push('<col style="width:'+sh2.w[ci]+'pt">');}
     for(pi=0;pi<bounds.length-1;pi++){
-      var t=['<div class="pg"><div style="zoom:'+(sh2.plan.scale/100)+'"><table'+(LANG==="ar"?' dir="rtl"':'')+' style="width:'+tw+'pt">'+cols.join("")];
+      var t=['<div class="pg"><div style="zoom:1"><table'+(LANG==="ar"?' dir="rtl"':'')+' style="width:'+tw+'pt">'+cols.join("")];
       if(pi===0)for(ri=0;ri<hi;ri++)t.push(trHtml(rows[ri]));
       t.push(trHtml(rows[hi],true));
       for(ri=bounds[pi];ri<bounds[pi+1];ri++)t.push(trHtml(rows[ri]));
@@ -3777,9 +3831,9 @@ function init() {
   &nbsp; Forcer CALCULEES (codes): <input type="text" id="rpCalc" size="16">
   <label><input type="checkbox" id="rpInt"> afficher les rubriques intermediaires</label>
   &nbsp; <button onclick="rpRun()">Calculer le rappel</button>
-   تنسيق الجداول / Mise en forme: حجم الخط <input type="text" id="rpFontSize" size="3" value="10" title="6 à 18 pt"> pt
+   تنسيق الجداول / Mise en forme: حجم الخط <input type="text" id="rpFontSize" size="3" value="12" title="6 à 18 pt"> pt
    ارتفاع الصفوف <input type="text" id="rpLineSpacing" size="4" value="1.0" title="0.5 إلى 2.0؛ 1.0 = عادي">
-   عرض الأعمدة <input type="text" id="rpColSpacing" size="4" value="1.0" title="0.5 إلى 2.0؛ 1.0 = عادي"> &nbsp;
+   عرض الأعمدة <input type="text" id="rpColSpacing" size="4" value="1.0" title="0.5 إلى 3.5؛ 1.0 = عادي"> &nbsp;
   Rendement: taux max % <input type="text" id="rpRendRate" size="4" title="vide = automatique selon le corps (35 / 30)"> note /40 <input type="text" id="rpRendNote" size="3" value="40"> &nbsp; Titre de l’etat (optionnel): <input type="text" id="rpTitle" size="46" dir="auto"> <button onclick="rpExport()">Exporter Excel 2003 (.xls)</button> <button onclick="rpPrint()">Imprimer / PDF (A3)</button> <span id="rpMsg"></span>
   <p class="muted"><b>Regles appliquees (promotion d echelon) :</b> seule l IEP change (points d echelon x 45 DA). Le Salaire de Base (indice minimum x 45 DA) est INCHANGE — son rappel vaut toujours 0. Chaque indemnite calculee est refaite avec SON POURCENTAGE de (base + IEP), le taux etant lu sur le bulletin de reference de la MEME grille que la periode ; les rubriques fixes et I.Cont restent inchangees (rappel 0). Prorata en jours (30 jours par mois). Le bulletin de reference de chaque periode est choisi automatiquement parmi TOUTES les bases ajoutees : un bulletin d une autre grille (2022 pour 2023) est ecarte, sinon avertissement. Sauvegarde de projet : un fichier .json par projet (filtres, agents coches, echelons, dates, parametres) dans le dossier projets ; « Ouvrir le projet » recharge toute l’interface pour poursuivre le travail. Export Excel A3 paysage. Les dates d’application des grilles doivent etre confirmees avec les textes officiels avant validation comptable. La base Access est en lecture seule.</p>
   </div>
