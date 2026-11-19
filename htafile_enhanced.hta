@@ -1024,12 +1024,12 @@ function buildXls(sheets) {
     if (sh1.entete) o.push('<Names><NamedRange ss:Name="_xlnm.Print_Titles" ss:RefersTo="=\'' + sName + '\'!$' + (sh1.headRow + rowOff) + ':$' + (sh1.headRow + rowOff) + '"/></Names>');
     if (sh1.land || sh1.entete) {
       o.push('<WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel"><PageSetup>');
-      if (sh1.land) o.push('<Layout x:Orientation="' + (sh1.paperProfile==="listing" ? "Portrait" : "Landscape") + '" x:PaperSize="' + (sh1.paperProfile==="listing" ? "256" : "8") + '"/>');
+      if (sh1.land) o.push('<Layout x:Orientation="Landscape" x:PaperSize="8"/>');
       if (sh1.entete) o.push('<Header x:Margin="0.2" x:Data="&amp;C' + xmlEsc(ENTETE1) + '&#10;' + xmlEsc(ENTETE2) + '"/><Footer x:Margin="0.2" x:Data="&amp;C' + T("Page") + ' &amp;P / &amp;N"/>');
       if (!sh1.entete && sh1.footer) o.push('<Footer x:Margin="0.2" x:Data="&amp;C' + xmlEsc(T("Page")) + ' &amp;P / &amp;N"/>');
-      if (sh1.land) o.push(sh1.paperProfile==="listing" ? '<PageMargins x:Bottom="0.45" x:Left="0.85" x:Right="0.85" x:Top="0.45" x:Header="0.15" x:Footer="0.15"/>' : '<PageMargins x:Bottom="0.35" x:Left="0.25" x:Right="0.25" x:Top="' + (sh1.top || "0.35") + '" x:Header="0.15" x:Footer="0.15"/>');
+      if (sh1.land) o.push('<PageMargins x:Bottom="0.35" x:Left="0.25" x:Right="0.25" x:Top="' + (sh1.top || "0.6") + '" x:Header="0.15" x:Footer="0.15"/>');
       o.push('</PageSetup>');
-      if (sh1.land) o.push('<Print><ValidPrinterInfo/><PaperSizeIndex>' + (sh1.paperProfile==="listing" ? "256" : "8") + '</PaperSizeIndex><HorizontalResolution>600</HorizontalResolution><VerticalResolution>600</VerticalResolution></Print>');
+      if (sh1.land) o.push('<FitToPage/><Print><ValidPrinterInfo/><PaperSizeIndex>8</PaperSizeIndex><FitWidth>1</FitWidth><FitHeight>0</FitHeight><HorizontalResolution>600</HorizontalResolution><VerticalResolution>600</VerticalResolution></Print>');
       o.push('</WorksheetOptions>');
       if (sh1.plan && sh1.plan.breaks.length) {
         o.push('<PageBreaks xmlns="urn:schemas-microsoft-com:office:excel"><RowBreaks>');
@@ -2226,177 +2226,34 @@ function rpReadLayoutSettings(){
   var f=parseFloat(trim($("rpFontSize")?$("rpFontSize").value:"10").replace(",",".")),
       l=parseFloat(trim($("rpLineSpacing")?$("rpLineSpacing").value:"1").replace(",",".")),
       c=parseFloat(trim($("rpColSpacing")?$("rpColSpacing").value:"1").replace(",","."));
-  if(isNaN(f)||f<6||f>18)f=11;
+  if(isNaN(f)||f<6||f>18)f=10;
   if(isNaN(l)||l<0.5||l>2)l=1;
   if(isNaN(c)||c<0.5||c>2)c=1;
   RP_FONT_SIZE=f;
   return {font:f,line:l,col:c};
 }
 function rpApplyLayoutSettings(sheets){
-  var v=rpReadLayoutSettings(),i,j,sh,row,fontFactor=v.font/10;
+  var v=rpReadLayoutSettings(),factor=Math.max(v.font/10,v.col),i,j,sh,row;
   for(i=0;i<sheets.length;i++){
     sh=sheets[i];
     for(j=0;j<sh.w.length;j++)sh.w[j]=r2(sh.w[j]*v.col);
-    for(j=0;j<sh.rows.length;j++){row=sh.rows[j];if(row.h)row.h=r2(row.h*fontFactor*v.line);}
+    for(j=0;j<sh.rows.length;j++){row=sh.rows[j];if(row.h)row.h=r2(row.h*v.line);}
+    if(sh.plan)sh.plan.scale=Math.max(20,Math.min(100,Math.round(sh.plan.scale/factor)));
   }
-}
-function rpCellNumber(c){
-  if(!c||(c.t!=="N"&&c.t!=="I"))return 0;
-  var n=parseFloat(c.v);return isNaN(n)?0:n;
-}
-function rpCellText(c){return c?String(c.v===undefined?"":c.v):"";}
-function rpRowHasLabel(r,label){
-  var i,t,translated=String(T(label)).toUpperCase();for(i=0;i<Math.min(r.length,5);i++){t=rpCellText(r[i]).toUpperCase();if(t===label||t===translated)return true;}return false;
-}
-function rpRowIsEmployeeTotal(r){return rpRowHasLabel(r,"TOTAL EMPLOYE");}
-function rpRowIsGrandTotal(r){return rpRowHasLabel(r,"TOTAL GENERAL");}
-function rpRowIsPageTotal(r){return rpRowHasLabel(r,"TOTAL PAGE");}
-function rpColumnWidth(sheet,col,font,pad){
-  var max=0,i,r,c,t,chars,w;
-  for(i=0;i<sheet.rows.length;i++){r=sheet.rows[i];if(!r||!r.length)continue;c=r[col];if(c){t=rpCellText(c);if(t.length>max)max=t.length;}}
-  chars=Math.max(5,Math.min(34,max));w=Math.max(30,Math.min(190,chars*font*0.53+12*pad));
-  if(col===0)w=Math.max(w,48);if(col===1)w=Math.max(w,78);if(col===2)w=Math.max(w,52);
-  return r2(w);
-}
-function rpBandColumns(sheet,profile,settings){
-  var n=sheet.w.length,base=[],bands=[],widths=[],i,cap=profile==="listing"?950:1155,
-      baseW=0,cur,curW,baseCount=Math.min(n,3);
-  for(i=0;i<baseCount;i++){base.push(i);baseW+=rpColumnWidth(sheet,i,settings.font,settings.col);}
-  for(i=baseCount;i<n;i++)widths[i]=rpColumnWidth(sheet,i,settings.font,settings.col);
-  for(i=baseCount;i<n;){
-    cur=[];curW=baseW;
-    while(i<n){if(cur.length&&curW+widths[i]>cap)break;cur.push(i);curW+=widths[i];i++;}
-    if(!cur.length){cur.push(i);i++;}
-    bands.push(base.concat(cur));
-  }
-  if(!bands.length)bands.push(base);
-  return bands;
-}
-function rpRowsAsEmployeeGroups(sheet,headEnd){
-  var groups=[],cur=[],rows=sheet.rows,i,r,grand=null,numericStart=sheet.name.indexOf("Recap")>=0?9:(sheet.name.indexOf("Rendement")>=0?5:(sheet.name.indexOf("Feuille 6")>=0?9:11));
-  for(i=headEnd;i<rows.length;i++){
-    r=rows[i];if(!r||!r.length)continue;
-    if(rpRowIsPageTotal(r))continue;
-    if(rpRowIsGrandTotal(r)){grand=r;continue;}
-    cur.push(r);
-    if(rpRowIsEmployeeTotal(r)){groups.push(cur);cur=[];}
-    else if(sheet.name.indexOf("Recap")>=0){groups.push(cur);cur=[];}
-  }
-  if(cur.length)groups.push(cur);
-  return {groups:groups,grand:grand,numericStart:numericStart};
-}
-function rpGroupTotalRow(group){
-  var i;for(i=group.length-1;i>=0;i--)if(rpRowIsEmployeeTotal(group[i]))return group[i];
-  return group.length===1?group[0]:null;
-}
-function rpSumGroups(groups,cols,numericStart){
-  var sums=[],i,j,row;
-  for(j=0;j<cols.length;j++)sums[j]=0;
-  for(i=0;i<groups.length;i++){
-    row=rpGroupTotalRow(groups[i]);if(!row)continue;
-    for(j=0;j<cols.length;j++)if(cols[j]>=numericStart)sums[j]+=rpCellNumber(row[cols[j]]);
-  }
-  for(j=0;j<sums.length;j++)sums[j]=r2(sums[j]);
-  return sums;
-}
-function rpMakeBandTotal(cols,label,groupLabel,values,numericStart){
-  var r=[],i,c;
-  for(i=0;i<cols.length;i++){c=cols[i];
-    if(i===0)r.push(X("S",label,"bf"));
-    else if(i===2)r.push(X("S",groupLabel||"","bf"));
-    else if(c>=numericStart)r.push(X("N",""+r2(values[i]||0),"bn"));
-    else r.push(X("E","","bf"));
-  }
-  r.h=18;return r;
-}
-function rpSliceRow(r,cols){
-  var out=[],i,c,cp;for(i=0;i<cols.length;i++){c=cols[i];if(r[c]){cp=xCopy(r[c]);if(i===0&&cp.m)cp.m=cols.length-1;out.push(cp);}else out.push(X("E","","cx"));}
-  out.h=r.h;return out;
-}
-function rpCreatePrintPages(sheets,profile){
-  var settings=rpReadLayoutSettings(),out=[],si,sh,bands,parts,headEnd,allGroups,bi,band,
-      pages,cur,used,pageH=profile==="listing"?690:740,topH=203,
-      rowH=Math.max(15,15*settings.font/10*settings.line),
-      hdrH=Math.max(44,51*settings.font/10*settings.line),pi,gi,g,gh,idx,cols,
-      pageNo,bandLetter,headRows,headerRow,dataRows,rows,signRows,totals,pageSum,
-      allSum,numericStart,values,name,meta,grandCheck,checkSum,allPageSum,warnings=[];
-  for(si=0;si<sheets.length;si++){
-    sh=sheets[si];headEnd=(sh.printRow||0);
-    parts=rpRowsAsEmployeeGroups(sh,headEnd);allGroups=parts.groups;numericStart=parts.numericStart;
-    bands=rpBandColumns(sh,profile,settings);pages=[];
-    for(bi=0;bi<bands.length;bi++){
-      cols=bands[bi];cur=[];used=topH+hdrH+24;
-      for(gi=0;gi<allGroups.length;gi++){
-        g=allGroups[gi];gh=0;for(idx=0;idx<g.length;idx++)gh+=g[idx].h||rowH;
-        if(cur.length&&used+gh+90>pageH){pages.push({band:bi,groups:cur});cur=[];used=topH+hdrH+24;}
-        if(!cur.length&&used+gh+90>pageH)warnings.push(sh.name+": un bloc employe depasse la hauteur imprimable; bloc conserve entier.");
-        cur.push(g);used+=gh;
-      }
-      if(cur.length)pages.push({band:bi,groups:cur});
-      if(!allGroups.length)pages.push({band:bi,groups:[]});
-      var expected=rpSumGroups(allGroups,cols,numericStart),observed=[],pp,ss,cc;
-      for(cc=0;cc<cols.length;cc++)observed[cc]=0;
-      for(pp=0;pp<pages.length;pp++)if(pages[pp].band===bi){
-        ss=rpSumGroups(pages[pp].groups,cols,numericStart);
-        for(cc=0;cc<cols.length;cc++)observed[cc]=r2(observed[cc]+ss[cc]);
-      }
-      for(cc=0;cc<cols.length;cc++)if(Math.abs(r2(expected[cc]-observed[cc]))>0.01){warnings.push(sh.name+" bande "+String.fromCharCode(65+bi)+": ecart de total colonne "+(cols[cc]+1));break;}
-    }
-    var maxPage=0;for(bi=0;bi<bands.length;bi++){var cnt=0;for(pi=0;pi<pages.length;pi++)if(pages[pi].band===bi)cnt++;if(cnt>maxPage)maxPage=cnt;}
-    for(pageNo=0;pageNo<maxPage;pageNo++){
-      for(bi=0;bi<bands.length;bi++){
-        var bandPage=null,seen=0;
-        for(pi=0;pi<pages.length;pi++)if(pages[pi].band===bi){if(seen===pageNo){bandPage=pages[pi];break;}seen++;}
-        if(!bandPage)continue;
-        cols=bands[bi];bandLetter=String.fromCharCode(65+bi);headerRow=sh.rows[headEnd-1];
-        headRows=[];for(idx=0;idx<headEnd-1;idx++)headRows.push(rpSliceRow(sh.rows[idx],cols));
-        meta=[];for(idx=0;idx<cols.length;idx++)meta.push(X("S",idx===0?("Groupe "+(pageNo+1)+" / Bande "+bandLetter+" — "+(profile==="listing"?"Listing 14 7/8 × 11 in":"A3 paysage")):"","bf"));meta.h=20;
-        headRows.push(meta);headRows.push(rpSliceRow(headerRow,cols));
-        dataRows=[];for(gi=0;gi<bandPage.groups.length;gi++)for(idx=0;idx<bandPage.groups[gi].length;idx++)dataRows.push(rpSliceRow(bandPage.groups[gi][idx],cols));
-        rows=headRows.concat(dataRows);
-        pageSum=rpSumGroups(bandPage.groups,cols,numericStart);
-        values=pageSum.slice(0);
-        rows.push(rpMakeBandTotal(cols,T("TOTAL PAGE"),"G"+(pageNo+1)+"/"+bandLetter,values,numericStart));
-        var lastBandPage=true;
-        for(pi=0;pi<pages.length;pi++)if(pages[pi].band===bi){lastBandPage=(pages[pi]===bandPage);break;}
-        var later=false;for(pi=0;pi<pages.length;pi++)if(pages[pi].band===bi&&pi>pages.indexOf(bandPage))later=true;
-        if(!later){
-          allSum=rpSumGroups(allGroups,cols,numericStart);
-          rows.push(rpMakeBandTotal(cols,T("TOTAL GENERAL"),"",allSum,numericStart));
-        }
-        signRows=rpSignoffRows(cols.length);
-        for(idx=0;idx<signRows.length;idx++)rows.push(rpSliceRow(signRows[idx],cols));
-        name=String(sh.name).substring(0,14)+" G"+("0"+(pageNo+1)).slice(-2)+" "+bandLetter;
-        out.push({name:name,rtl:sh.rtl,w:cols.map(function(c){return rpColumnWidth(sh,c,settings.font,settings.col);}),rows:rows,land:true,footer:true,printRow:headRows.length,paperProfile:profile,plan:{scale:100,breaks:[]}});
-      }
-    }
-  }
-  return {sheets:out,warnings:warnings};
-}
-function rpCalibrationSheet(profile){
-  var width=profile==="listing"?950:1155,cols=12,w=[],rows=[],i,r;
-  for(i=0;i<cols;i++)w.push(r2(width/cols));
-  r=[];for(i=0;i<cols;i++)r.push(X("S",i===0?"CALIBRATION — "+(profile==="listing"?"LISTING 14 7/8 × 11 in":"A3 LANDSCAPE"):"","bf"));r.h=30;rows.push(r);
-  r=[];for(i=0;i<cols;i++)r.push(X("S",String(i+1),"bf"));r.h=24;rows.push(r);
-  r=[];for(i=0;i<cols;i++)r.push(X("S",i===0?"LEFT MARGIN":(i===cols-1?"RIGHT MARGIN":"|"),"bf"));r.h=24;rows.push(r);
-  r=[];for(i=0;i<cols;i++)r.push(X("S",i===0?"0":(i===cols-1?String(width)+" pt":String(Math.round(width*(i+1)/cols))+" pt"),"bf"));r.h=24;rows.push(r);
-  r=[];for(i=0;i<cols;i++)r.push(X("S",i===0?"Verify the printed frame against the paper edges.":"","bf"));r.h=30;rows.push(r);
-  return {name:"Calibration",w:w,rows:rows,rtl:false,land:true,footer:false,paperProfile:profile,plan:{scale:100,breaks:[]}};
 }
 function rpExport() {
   var oldLang=LANG;LANG="ar";
   try{
     var b=rpBuildSheets();if(!b)return;
     rpApplyLayoutSettings(b.sheets);
-    var selected=$("rpPaper")?$("rpPaper").value:"both",profiles=selected==="both"?["listing","a3"]:[selected],p,printSet,info=[];
-    for(p=0;p<profiles.length;p++){
-      printSet=rpCreatePrintPages(b.sheets,profiles[p]);
-      printSet.sheets.unshift(rpCalibrationSheet(profiles[p]));
-      if(!printSet.sheets.length)throw new Error("Aucune page a exporter.");
-      exportXls(printSet.sheets,b.fbase+(profiles[p]==="listing"?"_Listing":"_A3"),"rpMsg");
-      info.push((profiles[p]==="listing"?"Listing":"A3")+": "+(printSet.sheets.length-1)+" pages de donnees + 1 calibration, impression a 100%."+(printSet.warnings.length?" AVERTISSEMENTS: "+printSet.warnings.join("; "):" Totaux des pages verifies."));
+    var si,fi,fr;
+    for(si=0;si<b.sheets.length;si++){
+      b.sheets[si].rows.push([]);
+      fr=rpSignoffRows(b.sheets[si].w.length);
+      for(fi=0;fi<fr.length;fi++)b.sheets[si].rows.push(fr[fi]);
     }
-    $("rpMsg").innerHTML+='<br><span class="muted">'+b.info+'</span><br><span class="muted">'+esc(info.join(" || "))+'</span>';
+    exportXls(b.sheets,b.fbase,"rpMsg");
+    $("rpMsg").innerHTML+='<br><span class="muted">'+b.info+'</span>';
   }finally{LANG=oldLang;}
 }
 /* ===================== Bases de reference supplementaires ===================== */
@@ -3920,10 +3777,10 @@ function init() {
   &nbsp; Forcer CALCULEES (codes): <input type="text" id="rpCalc" size="16">
   <label><input type="checkbox" id="rpInt"> afficher les rubriques intermediaires</label>
   &nbsp; <button onclick="rpRun()">Calculer le rappel</button>
-   تنسيق الجداول / Mise en forme: حجم الخط <input type="text" id="rpFontSize" size="3" value="11" title="6 à 18 pt"> pt
+   تنسيق الجداول / Mise en forme: حجم الخط <input type="text" id="rpFontSize" size="3" value="10" title="6 à 18 pt"> pt
    ارتفاع الصفوف <input type="text" id="rpLineSpacing" size="4" value="1.0" title="0.5 إلى 2.0؛ 1.0 = عادي">
    عرض الأعمدة <input type="text" id="rpColSpacing" size="4" value="1.0" title="0.5 إلى 2.0؛ 1.0 = عادي"> &nbsp;
-  Rendement: taux max % <input type="text" id="rpRendRate" size="4" title="vide = automatique selon le corps (35 / 30)"> note /40 <input type="text" id="rpRendNote" size="3" value="40"> &nbsp; Titre de l’etat (optionnel): <input type="text" id="rpTitle" size="46" dir="auto"> Papier: <select id="rpPaper"><option value="listing">Listing 14 7/8 × 11 in</option><option value="a3">A3 paysage</option><option value="both" selected>Les deux</option></select> <button onclick="rpExport()">Exporter Excel 2003 (.xls)</button> <button onclick="rpPrint()">Imprimer / PDF (A3)</button> <span id="rpMsg"></span>
+  Rendement: taux max % <input type="text" id="rpRendRate" size="4" title="vide = automatique selon le corps (35 / 30)"> note /40 <input type="text" id="rpRendNote" size="3" value="40"> &nbsp; Titre de l’etat (optionnel): <input type="text" id="rpTitle" size="46" dir="auto"> <button onclick="rpExport()">Exporter Excel 2003 (.xls)</button> <button onclick="rpPrint()">Imprimer / PDF (A3)</button> <span id="rpMsg"></span>
   <p class="muted"><b>Regles appliquees (promotion d echelon) :</b> seule l IEP change (points d echelon x 45 DA). Le Salaire de Base (indice minimum x 45 DA) est INCHANGE — son rappel vaut toujours 0. Chaque indemnite calculee est refaite avec SON POURCENTAGE de (base + IEP), le taux etant lu sur le bulletin de reference de la MEME grille que la periode ; les rubriques fixes et I.Cont restent inchangees (rappel 0). Prorata en jours (30 jours par mois). Le bulletin de reference de chaque periode est choisi automatiquement parmi TOUTES les bases ajoutees : un bulletin d une autre grille (2022 pour 2023) est ecarte, sinon avertissement. Sauvegarde de projet : un fichier .json par projet (filtres, agents coches, echelons, dates, parametres) dans le dossier projets ; « Ouvrir le projet » recharge toute l’interface pour poursuivre le travail. Export Excel A3 paysage. Les dates d’application des grilles doivent etre confirmees avec les textes officiels avant validation comptable. La base Access est en lecture seule.</p>
   </div>
   <div id="rpOut"></div>
@@ -3988,8 +3845,7 @@ Lignes (une par ligne, <code>texte ; montant</code>, montant facultatif) :<br><t
     <hr>
     <p><b>Option 2 — convertir toutes les bases d'un dossier :</b></p>
     <button onclick="jsonConvertFolder()">Choisir un dossier source et le dossier de destination</button>
-    <p class="muted">Listing : créez si nécessaire le formulaire papier personnalisé 37,8 × 27,9 cm dans les propriétés du serveur d’impression Windows, puis sélectionnez-le dans le pilote Epson. Vérifiez d’abord la feuille Calibration avant le tirage complet.</p>
-  <p class="muted">Les bases Access originales restent intactes. Les tables sont exportees separement pour eviter un unique fichier JSON geant. Les champs binaires sont exportes comme null. Pour utiliser une base convertie dans les calculs, selectionnez son fichier manifest.json dans « Bases supplementaires de reference » de l'onglet استدراك.</p>
+    <p class="muted">Les bases Access originales restent intactes. Les tables sont exportees separement pour eviter un unique fichier JSON geant. Les champs binaires sont exportes comme null. Pour utiliser une base convertie dans les calculs, selectionnez son fichier manifest.json dans « Bases supplementaires de reference » de l'onglet استدراك.</p>
   </div>
   <div id="jsonOut"></div>
 </div>
