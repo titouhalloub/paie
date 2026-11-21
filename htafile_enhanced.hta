@@ -1816,13 +1816,13 @@ function doRappel() {
     if(minT>0)for(gk2 in G)if(G.hasOwnProperty(gk2)&&Math.abs(G[gk2][0]-minT)<=1)cand.push(gk2);
     if(cand.length){catFound=true;catP=cand[0];for(q=0;q<cand.length;q++)if(cand[q]===key){catP=key;break;}}
     else warnOnce(e.mat+" "+e.name+": le salaire de base du bulletin "+ref.period+" ("+r2(sbV)+") ne correspond a aucune categorie de la grille "+gk+"; categorie actuelle "+key+" utilisee.");
-    if(catFound&&catP!==key)warnOnce(e.mat+" "+e.name+": categorie "+catP+" (et non "+key+") sur la grille "+gk+" d apres le bulletin "+ref.period+".");
+    if(catFound&&catP!==key)warnOnce(e.mat+" "+e.name+": categorie "+catP+" (et non "+key+") sur la grille "+gk+" d apres les bulletins de reference.");
     var gg=G[catP],ptsT=iepV/PTV,best=-1,bd=1e9,ee,pp;
     if(gg&&iepV>0){for(ee=0;ee<=12;ee++){pp=(ee>0)?gg[1][ee-1]:0;if(Math.abs(pp-ptsT)<bd){bd=Math.abs(pp-ptsT);best=ee;}}}
     if(best>=0&&bd<=1.5)echP=best;
     else if(iepV>0)warnOnce(e.mat+" "+e.name+": l IEP du bulletin "+ref.period+" ne correspond a aucun echelon de la categorie "+catP+" ; echelon "+oe+" utilise.");
     var newE=ne;
-    if(echP!==oe){newE=Math.max(0,Math.min(12,echP+(ne-oe)));warnOnce(e.mat+" "+e.name+": echelon "+echP+" (et non "+oe+") sur le bulletin "+ref.period+" ; nouvel echelon "+newE+".");}
+    if(echP!==oe){newE=Math.max(0,Math.min(12,echP+(ne-oe)));warnOnce(e.mat+" "+e.name+": echelon "+echP+" (et non "+oe+") sur la grille "+gk+" ; nouvel echelon "+newE+".");}
     if(newE===echP)return null;
     var oldIdx=rpIdx(G,catP,echP),newIdx=rpIdx(G,catP,newE);
     if(!oldIdx||!newIdx||oldIdx.total===0){warnOnce(e.mat+": indice impossible pour "+gk+", categorie "+catP+".");return null;}
