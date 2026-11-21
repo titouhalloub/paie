@@ -1462,6 +1462,7 @@ function rpGridAt(y,m) {
   if(v>=n22) return "2022";
   return "2007";
 }
+var RP_RUN = 0;
 function rpRun() {
   if (needDb("rpOut")) return;
   rpStage="validation des dates et des echelons";
@@ -1906,13 +1907,14 @@ function doRappel() {
     var rRap=lineRow(mat,nm,"RAPPEL",sg.gk,periodText,sg.days,sg.refPeriod,sg.recall);rRap.ixc=["E","E","E","E","E","N"+(Math.round(ratio*1000000)/1000000)];rows.push(rRap);
     flushEmp.rows++;if(flushEmp.grids.indexOf(sg.gk)<0)flushEmp.grids.push(sg.gk);
   }
-  for(i=0;i<selected.length;i++) {
+  var ai=0,runTok=++RP_RUN;
+  function processAgent(i) {
     e=selected[i];var key=e.cat,oe=e.old,ne=e.newEch,base=baseVals["k"+lc(e.mat)]||{},baseMeta=chosen["k"+lc(e.mat)],tot=[];
     for(j=0;j<rubs.length;j++)tot.push(0);
     flushTot=tot;
-    if(!key||!GRIDS["2007"][key]){warns.push(e.mat+" "+e.name+": categorie absente des grilles historiques ("+key+").");continue;}
-    if(ne===oe){warns.push(e.mat+" "+e.name+": echelon inchange, ignore.");continue;}
-    if(!baseMeta&&!candByMat["k"+lc(e.mat)]){warns.push(e.mat+" "+e.name+": aucun bulletin de reference trouve (toutes bases confondues); rappel non calcule.");continue;}
+    if(!key||!GRIDS["2007"][key]){warns.push(e.mat+" "+e.name+": categorie absente des grilles historiques ("+key+").");return;}
+    if(ne===oe){warns.push(e.mat+" "+e.name+": echelon inchange, ignore.");return;}
+    if(!baseMeta&&!candByMat["k"+lc(e.mat)]){warns.push(e.mat+" "+e.name+": aucun bulletin de reference trouve (toutes bases confondues); rappel non calcule.");return;}
     /* I.Cont (indemnite de contagieux): fixed allowance, never indexed by the
        echelon ratio (old = new, recall = 0). The applicable category is read
        from THIS employee's own reference bulletin: only the contagieux rubric
@@ -1955,12 +1957,13 @@ function doRappel() {
       if(cur)flushSeg(cur);
     }
     employeeRows=flushEmp.rows;
-    if(!employeeRows){warns.push(e.mat+" "+e.name+": aucune periode de grille applicable.");continue;}
+    if(!employeeRows){warns.push(e.mat+" "+e.name+": aucune periode de grille applicable.");return;}
     empTotals.push({mat:e.mat,name:e.name,tot:tot.slice(0)});
     rows.push(lineRow(e.mat,e.name,"TOTAL EMPLOYE","","TOTAL EMPLOYE",null,baseMeta.period,tot));
     var tg=0,tr=0;for(j=0;j<rubs.length;j++){if(j<nG)tg+=tot[j];else if(j<nG+nR)tr+=tot[j];}
     recap.push(["S"+e.mat,"S"+e.name,"S"+key,"I"+oe,(e.ne2!==null?"S"+neFirst+" / "+e.ne2:"I"+neFirst),"S"+$('rpd_'+e.id).value+(e.ne2!==null?" / "+$('rpd2_'+e.id).value:""),"S"+$('rpe_'+e.id).value,"S"+baseMeta.period,"S"+gridsUsed.join(", "),"N"+r2(tg),"N"+r2(tr),"N"+r2(tg-tr)]);
   }
+  function finishRappel() {
   if(!rows.length){rpFail("Aucun rappel calcule. Verifiez les bulletins de reference, les categories et les dates.");return;}
   rpStage="construction du journal et du recapitulatif";
   var foot=lineRow("TOTAL GENERAL","","TOTAL GENERAL","","TOTAL GENERAL",null,"",gsum);
@@ -1972,6 +1975,19 @@ function doRappel() {
   }
   curR={empTotals:empTotals,rubKinds:rubKinds,cols:cols,rows:rows,detailRows:rows,compactRows:compactRows,foot:foot,rcols:rcols,recap:recap,rubs:rubs,warns:warns.slice(0),contIdx:contIdx.slice(0),date:"individuelle par agent",until:"individuel par agent"};
     rpRenderOut();
+  }
+  /* calcul par tranches de ~120 ms : la fenetre reste vivante et affiche la progression */
+  function stepRappel() {
+    if(runTok!==RP_RUN)return;
+    try{
+      var t0=new Date().getTime();
+      while(ai<selected.length&&(new Date().getTime()-t0)<120){processAgent(ai);ai++;}
+      if(ai<selected.length){$("rpOut").innerHTML='<span class="muted">Calcul en cours : agent '+ai+' / '+selected.length+' ...</span>';setTimeout(stepRappel,15);}
+      else finishRappel();
+    }catch(exS){rpFail("Erreur pendant : "+rpStage+"\n"+errText(exS));}
+  }
+  rpStage="calcul des rappels par agent et par periode";
+  stepRappel();
 }
 function rpToggleClass() { var d=$("rpClass"); if(d) d.style.display=(d.style.display==="none")?"block":"none"; }
 function rpSetView() {
