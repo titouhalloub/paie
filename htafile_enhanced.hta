@@ -1842,11 +1842,14 @@ function doRappel() {
   /* categorie + echelon reels d UN mois (grille de ce mois) : salaire de base / 45 = indice minimum ; IEP / 45 = points */
   /* categorie/echelon lus sur la grille PROPRE au bulletin (et non celle du mois calcule) */
   function classify(sbV,iepV,gkRef,key,oe){
-    var RG=GRIDS[gkRef]||{},minT=Math.round(sbV/PTV),cand=[],g2,q,r={cat:key,ech:oe,catFound:false,echFound:false},gks=[gkRef,"2024","2023","2022","2007"],gi;
+    var RG=GRIDS[gkRef]||{},minT=Math.round(sbV/PTV),cand=[],g2,q,r={cat:key,ech:oe,catFound:false,echFound:false},gks=[gkRef],gi,tol,order=["2007","2022","2023","2024"],oi=order.indexOf(gkRef);
+    /* une paie versee en retard garde les valeurs de la grille PRECEDENTE : on n essaie que la grille du bulletin puis les plus anciennes, jamais les plus recentes */
+    for(gi=oi-1;gi>=0;gi--)gks.push(order[gi]);
     for(gi=0;gi<gks.length&&!cand.length;gi++){
       if(!GRIDS[gks[gi]])continue;
       RG=GRIDS[gks[gi]];
-      if(minT>0)for(g2 in RG)if(RG.hasOwnProperty(g2)&&Math.abs(RG[g2][0]-minT)<=1)cand.push(g2);
+      for(tol=0;tol<=1&&!cand.length;tol++)
+        if(minT>0)for(g2 in RG)if(RG.hasOwnProperty(g2)&&Math.abs(RG[g2][0]-minT)<=tol)cand.push(g2);
     }
     if(cand.length){r.catFound=true;r.cat=cand[0];for(q=0;q<cand.length;q++)if(cand[q]===key){r.cat=key;break;}}
     var gg=RG[r.cat],ptsT=iepV/PTV,best=-1,bd=1e9,ee,pp;
