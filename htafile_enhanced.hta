@@ -2146,6 +2146,7 @@ function rpFixHeadHeights(rows) { var i; for (i = 0; i < rows.length; i++) rows[
 function rpLabelRowTxt(n, text) { var r = [X("S", text, "e5", n - 1, 1)]; r.h = rpQ((RP_FONT_SIZE + 4) * 1.35 + 4); return r; }
 function rpSumH(rows) { var i, t = 0; for (i = 0; i < rows.length; i++) t += (rows[i].h || 15); return t; }
 /* spec: {name,label,nc,idN,idCap,groups:[{rows}],hdr:[cells],head(n,rows),pageTotal(list,no,cnt),foot,signoff} */
+var RP_FORCE = null, RP_FORCE_MATS = null;
 function rpBandSheet(spec, prof) {
   var font = RP_FONT_SIZE, lineH = rpQ(font * 1.3 * RP_LINEF), nc = spec.nc, idN = spec.idN, M = nc - idN, warns = [], G = spec.groups.length,
       capW = prof.W * RP_SAFE_W, capH = prof.H * RP_SAFE_H, idCap = spec.idCap || [120, 200, 100, 150], i, j, k, g, b, p, q, x;
@@ -2191,7 +2192,7 @@ function rpBandSheet(spec, prof) {
   }
   var Wt = sumW(widths), scale = 100;
   if (Wt > capW) scale = Math.max(20, Math.floor(capW / Wt * 100));
-  capH = capH * 100 / scale;
+  var capH0 = capH;
   function colW(c) { return c < idN ? idW[c] : (per > 0 ? posW[(c - idN) % per] : 60); }
   function rowH(r0) {
     var pos = 0, lines = 1, k2, c2, l, w, z;
@@ -2217,9 +2218,39 @@ function rpBandSheet(spec, prof) {
   if (signRows) { SIGNH = 10; for (i = 0; i < signRows.length; i++) { signRows[i].h = rpQ((font + 6) * 1.35 + 8); SIGNH += signRows[i].h; } }
   var tmp = [], fullH, compH = rpLabelRowTxt(n, "x").h;
   spec.head(n, tmp); rpFixHeadHeights(tmp); fullH = rpSumH(tmp);
-  /* vertical pagination: whole agents only */
-  var pages = [], cur = [], used = fullH + (nb > 1 ? compH : 0) + hdrH, nextUsed = compH + hdrH, need;
-  for (i = 0; i < G; i++) {
+  /* vertical pagination: whole agents only. Si un plan de pages de reference existe (celui du journal), TOUTES les feuilles
+     le suivent : memes agents sur la meme page ; l echelle est reduite au besoin pour que chaque page tienne. */
+  var pages = [], cur = [], used = fullH + (nb > 1 ? compH : 0) + hdrH, nextUsed = compH + hdrH, need, fc = null, fsum = 0, pi, gi2, u2, maxU = 0;
+  if (RP_FORCE_MATS && RP_FORCE_MATS.length) {
+    /* meme plan, par matricule : les agents absents d une feuille sont simplement omis, la page reste la meme */
+    var byM = {}, okM = true, pg2, sel, cnt2 = 0, planC = [];
+    for (i = 0; i < G; i++) { if (spec.groups[i].mat === undefined || spec.groups[i].mat === "") { okM = false; break; } byM["k" + spec.groups[i].mat] = spec.groups[i]; }
+    if (okM) {
+      for (pi = 0; pi < RP_FORCE_MATS.length; pi++) {
+        sel = [];
+        for (pg2 = 0; pg2 < RP_FORCE_MATS[pi].length; pg2++) if (byM["k" + RP_FORCE_MATS[pi][pg2]]) { sel.push(byM["k" + RP_FORCE_MATS[pi][pg2]]); byM["k" + RP_FORCE_MATS[pi][pg2]] = null; }
+        if (sel.length) { planC.push(sel); cnt2 += sel.length; }
+      }
+      if (cnt2 === G) { fc = []; for (pi = 0; pi < planC.length; pi++) fc.push(planC[pi].length); spec.groups = [].concat.apply([], planC); }
+    }
+  }
+  if (fc && !RP_FORCE_MATS) fc = null;
+  if (!fc && RP_FORCE && RP_FORCE.length) { for (pi = 0; pi < RP_FORCE.length; pi++) fsum += RP_FORCE[pi]; if (fsum === G) fc = RP_FORCE; }
+  if (fc) {
+    gi2 = 0;
+    for (pi = 0; pi < fc.length; pi++) {
+      u2 = (pi === 0) ? (fullH + (nb > 1 ? compH : 0) + hdrH) : nextUsed;
+      cur = [];
+      for (i = 0; i < fc[pi]; i++, gi2++) { cur.push(spec.groups[gi2]); u2 += spec.groups[gi2].h; }
+      u2 += TOTH + ((pi === fc.length - 1) ? (FOOTH + SIGNH) : 0);
+      if (u2 > maxU) maxU = u2;
+      pages.push(cur);
+    }
+    if (maxU > capH0 * 100 / scale) scale = Math.max(20, Math.floor(capH0 * 100 / maxU));
+    cur = [];
+  }
+  capH = capH0 * 100 / scale;
+  for (i = 0; !fc && i < G; i++) {
     g = spec.groups[i];
     need = g.h + TOTH + ((i === G - 1) ? (FOOTH + SIGNH) : 0);
     if (cur.length && used + need > capH) { pages.push(cur); cur = []; used = nextUsed; }
@@ -2267,7 +2298,7 @@ function rpBandSheet(spec, prof) {
     if (Math.abs(sp - fv) > 0.011 * pages.length + 0.005) { bad++; warns.push(spec.name + " / " + rpCellTxt(spec.hdr[j]) + " : somme des pages " + fmtNum(sp) + " <> total general " + fmtNum(fv)); }
   }
   return { rtl: true, name: spec.name, w: widths, rows: rows, page: prof, footer: true, printRow: 0, banded: true, plan: { scale: scale, breaks: breaks }, scale: scale, eff: Math.round(font * scale) / 100,
-           pages: pages.length, bands: nb, agents: G, warns: warns, checked: checked, bad: bad, perBand: per };
+           pages: pages.length, matPages: (function(){var c=[],z,y,m;for(z=0;z<pages.length;z++){m=[];for(y=0;y<pages[z].length;y++)m.push(pages[z][y].mat);c.push(m);}return c;})(), counts: (function(){var c=[],z;for(z=0;z<pages.length;z++)c.push(pages[z].length);return c;})(), forced: !!fc, bands: nb, agents: G, warns: warns, checked: checked, bad: bad, perBand: per };
 }
 /* calibration sheet: ruler + frame to check that the paper, margins and 132 columns print as expected */
 function rpCalibSheet(prof) {
@@ -2303,6 +2334,7 @@ function rpBuildSheets(prof) {
 function rpBuildSheetsAt(prof) {
   var RTLX=(LANG==="ar");
   var d=curR,out=[],i,j,k,row,c,bold;if(!d){$("rpMsg").innerHTML='<span class="err">Calculez d’abord le rappel.</span>';return null;}
+  RP_FORCE=null;RP_FORCE_MATS=null;
   var keep=[0,1,5,-1,-2,-3,-4],IXK=["Categorie","Echelon","Indice min","Points echelon","Indice total","Coefficient"];for(j=7;j<d.cols.length;j++)if(!rpHiddenPrintCol(d.cols[j])&&!rpZeroCol(d,j))keep.push(j); // hide update coefficient, indices and total deductions
   var nc=keep.length;
   function hr(h,cells){cells.h=h;return cells;}
@@ -2361,7 +2393,7 @@ function rpBuildSheetsAt(prof) {
     if(rv(d.rows[i][2])==="ANCIEN SALAIRE"){var pr=[X("S",T("Periode couverte")+" : "+rv(d.rows[i][4]),"cxa",nc-1)];pr.h=ROWH;gRows.push(pr);}
     for(j=0;j<nc;j++){c=keep[j]>=0?d.rows[i][keep[j]]:((d.rows[i].ixc||[])[-keep[j]-1]||"E");row.push(xr(c,bold?(rt(c)==="N"?"bn":"bf"):undefined));}
     row.h=ROWH;gRows.push(row);
-    if(bold){groups.push({rows:gRows,tot:d.rows[i],h:gRows.length*ROWH});gRows=[];}
+    if(bold){groups.push({rows:gRows,tot:d.rows[i],h:gRows.length*ROWH,mat:rv(d.rows[i][0])});gRows=[];}
   }
   if(gRows.length)groups.push({rows:gRows,tot:d.rows[d.rows.length-1],h:gRows.length*ROWH});
   function jPageTotal(list,no,cnt){
@@ -2376,6 +2408,7 @@ function rpBuildSheetsAt(prof) {
   var footRow=[];for(j=0;j<nc;j++)footRow.push(keep[j]<0?X("E","","bf"):xr(d.foot[keep[j]],rt(d.foot[keep[j]])==="N"?"bn":"bf"));footRow.h=FOOTH;
   var jHdr=[];for(i=0;i<nc;i++)jHdr.push(X("S",keep[i]<0?T(IXK[-keep[i]-1]):hdrT(d.cols[keep[i]]),"h"));
   var jSheet=rpBandSheet({name:T("Journal rappel"),label:T("Journal rappel"),nc:nc,idN:2,groups:groups,hdr:jHdr,head:function(nn,rows){headBlock(nn,title,rows);},pageTotal:jPageTotal,foot:footRow,signoff:true},prof);
+  RP_FORCE=jSheet.counts;RP_FORCE_MATS=jSheet.matPages; /* le journal fixe la pagination : les autres feuilles la suivent */
 
   /* ---------- rendement sheet: brut = rate x note/40 x (Base + IEP); C.S 9%; fixed IRG 10% on (brut - C.S) ---------- */
   var ib=-1,ie=-1;
@@ -2540,7 +2573,7 @@ function rpBuildSheetsAt(prof) {
       cells.push(cellN(tot0,"bn"));cells.h=ROWH;cur.push(cells);
       if(isTot){
         tt=[];for(q=0;q<vs.length;q++){tt[7+q]="N"+vs[q];sums[q]+=vs[q];}tt[7+vs.length]="N"+tot0;sums[vs.length]+=tot0;
-        gl.push({rows:cur,tot:tt,h:cur.length*ROWH});cur=[];
+        gl.push({rows:cur,tot:tt,h:cur.length*ROWH,mat:rv(rw0[0])});cur=[];
       }
     }
     if(cur.length)gl.push({rows:cur,tot:[],h:cur.length*ROWH});
@@ -2575,7 +2608,7 @@ function rpBuildSheetsAt(prof) {
       cells.h=ROWH;
       if(rv(rr[2])==="ANCIEN SALAIRE"){var ppr=[X("S",T("Periode couverte")+" : "+rv(rr[4]),"cxa",p6nc-1)];ppr.h=ROWH;jcur.push(ppr);}
       jcur.push(cells);
-      if(bb){jgroups.push({rows:jcur,tot:rr,h:jcur.length*ROWH});jcur=[];}
+      if(bb){jgroups.push({rows:jcur,tot:rr,h:jcur.length*ROWH,mat:rv(rr[0])});jcur=[];}
     }
     if(jcur.length)jgroups.push({rows:jcur,tot:jcur[jcur.length-1],h:jcur.length*ROWH});
     for(z=0;z<p6nc;z++){
