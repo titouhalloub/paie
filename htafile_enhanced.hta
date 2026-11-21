@@ -1803,15 +1803,51 @@ function doRappel() {
     if(best)warnOnce(mat+": aucun bulletin avant "+dateFmt(pEnd)+" pour la grille "+gk+"; bulletin posterieur "+best.period+" utilise.");
     return best;
   }
-  /* ---- calcul d UN mois : categorie + echelon reels de la periode, lus dans le bulletin de reference ---- */
-  var q3;
-  function monthCalc(e,gk,key,oe,ne,mStart,mEnd,contPayKey,contAmount){
+  /* ---- Etape 1 (rapide) : UNE requete groupee lit, pour tous les agents, le salaire de base et l IEP de chaque mois archive.
+     Elle suffit a retrouver la categorie et l echelon de chaque mois ; les bulletins complets ne sont lus qu aux changements. ---- */
+  var leadTL={},leadCodes={sb:null,iep:null},leadQueries=0,fullReads=0;
+  (function loadLeadTimeline(){
+    var q,lr0,rci2,chunk,mi,rs3,mk3,pp3,ser3,sbList=[];
+    for(q=0;q<rubs.length;q++){lr0=leadRank(rubs[q]);if(lr0===0&&!leadCodes.sb)leadCodes.sb=rubs[q];if(lr0===1&&!leadCodes.iep)leadCodes.iep=rubs[q];}
+    if(!leadCodes.sb||!leadCodes.iep)return;
+    for(rci2=0;rci2<refConns.length;rci2++){
+      if(refConns[rci2].kind==="json")continue;
+      for(mi=0;mi<selected.length;mi+=150){
+        chunk=[];for(q=mi;q<Math.min(selected.length,mi+150);q++)chunk.push("'"+sq(selected[q].mat)+"'");
+        try{
+          rs3=refConns[rci2].conn.Execute("SELECT a.Matricule,a.Code_Periode_Exercice,d.Code_Rubrique,d.Valeur FROM Archive a INNER JOIN Archive_Detail d ON a.Cle_Archive=d.Cle_Archive WHERE CStr(a.Code_Traitement)='0' AND d.Code_Rubrique IN ('"+sq(leadCodes.sb.code)+"','"+sq(leadCodes.iep.code)+"') AND CStr(a.Matricule) IN ("+chunk.join(",")+")");
+          leadQueries++;
+          while(!rs3.EOF){
+            if(rs3.Fields(0).Value!==null&&rs3.Fields(1).Value!==null&&rs3.Fields(3).Value!==null){
+              pp3=rpParsePer(String(rs3.Fields(1).Value));
+              if(pp3&&pp3.m>=1&&pp3.m<=12){
+                mk3="k"+lc(String(rs3.Fields(0).Value));ser3=pp3.y*12+pp3.m;
+                if(!leadTL[mk3])leadTL[mk3]={};
+                if(!leadTL[mk3][ser3])leadTL[mk3][ser3]={dbi:rci2,sb:0,iep:0,n:0};
+                if(leadTL[mk3][ser3].dbi===rci2){
+                  var tv3=parseFloat(String(rs3.Fields(3).Value))||0;
+                  if(String(rs3.Fields(2).Value)===String(leadCodes.sb.code))leadTL[mk3][ser3].sb+=tv3;else leadTL[mk3][ser3].iep+=tv3;
+                  leadTL[mk3][ser3].n++;
+                }
+              }
+            }
+            rs3.MoveNext();
+          }
+          rs3.Close();
+        }catch(eL){leadTL={};return;}   // groupee impossible : retour a la lecture bulletin par bulletin
+      }
+    }
+  })();
+  /* categorie + echelon reels d UN mois (grille de ce mois) : salaire de base / 45 = indice minimum ; IEP / 45 = points */
+  function leadOf(e,gk,key,oe,ne,mEnd){
     var G=GRIDS[gk],ref=rpChooseRef(e.mat,gk,mEnd);
-    if(!ref){warnOnce(e.mat+" "+e.name+": aucun bulletin de reference pour la grille "+gk+" ("+dateFmt(mStart)+" - "+dateFmt(mEnd)+"); mois ignore.");return null;}
-    var baseP=rpReadBaseVals(ref.aid,ref.dbi),days=days30(mStart,mEnd),sbKey=null,iepKey=null,q,sbV=0,iepV=0,lr0;
-    for(q=0;q<rubs.length;q++){lr0=leadRank(rubs[q]);if(lr0===0&&sbKey===null)sbKey=rubs[q].key;if(lr0===1&&iepKey===null)iepKey=rubs[q].key;}
-    if(sbKey!==null)sbV=baseP[sbKey]||0;if(iepKey!==null)iepV=baseP[iepKey]||0;
-    /* Salaire de base / 45 = indice minimum -> categorie de cette periode ; IEP / 45 = points -> echelon */
+    if(!ref){warnOnce(e.mat+" "+e.name+": aucun bulletin de reference pour la grille "+gk+" (avant "+dateFmt(mEnd)+"); mois ignore.");return null;}
+    var tl=leadTL["k"+lc(e.mat)],t=tl?tl[ref.serial]:null,sbV=0,iepV=0,q,lr0,baseP;
+    if(t&&t.dbi===ref.dbi){sbV=t.sb;iepV=t.iep;}
+    else{
+      baseP=rpReadBaseVals(ref.aid,ref.dbi);fullReads++;
+      for(q=0;q<rubs.length;q++){lr0=leadRank(rubs[q]);if(lr0===0&&!sbV)sbV=baseP[rubs[q].key]||0;if(lr0===1&&!iepV)iepV=baseP[rubs[q].key]||0;}
+    }
     var catP=key,echP=oe,minT=Math.round(sbV/PTV),cand=[],gk2,catFound=false;
     if(minT>0)for(gk2 in G)if(G.hasOwnProperty(gk2)&&Math.abs(G[gk2][0]-minT)<=1)cand.push(gk2);
     if(cand.length){catFound=true;catP=cand[0];for(q=0;q<cand.length;q++)if(cand[q]===key){catP=key;break;}}
@@ -1826,37 +1862,44 @@ function doRappel() {
     if(newE===echP)return null;
     var oldIdx=rpIdx(G,catP,echP),newIdx=rpIdx(G,catP,newE);
     if(!oldIdx||!newIdx||oldIdx.total===0){warnOnce(e.mat+": indice impossible pour "+gk+", categorie "+catP+".");return null;}
-    var baseMin=(catFound&&Math.abs(sbV-oldIdx.min*PTV)<=PTV)?r2(sbV):r2(oldIdx.min*PTV);
+    return {lkey:gk+"|"+catP+"|"+echP+"|"+newE,gk:gk,ref:ref,catP:catP,echP:echP,newE:newE,oldIdx:oldIdx,newIdx:newIdx,catFound:catFound,sbV:sbV,iepV:iepV};
+  }
+  /* ---- Etape 2 : montants du bloc (le bulletin complet de reference n est lu qu ici). Montants par 30 jours conserves : le rappel = difference x jours / 30. ---- */
+  function fullCalc(ld,e,contPayKey,contAmount){
+    var baseP=rpReadBaseVals(ld.ref.aid,ld.ref.dbi),q,oldIdx=ld.oldIdx,newIdx=ld.newIdx,sbV=ld.sbV,iepV=ld.iepV;fullReads++;
+    var baseMin=(ld.catFound&&Math.abs(sbV-oldIdx.min*PTV)<=PTV)?r2(sbV):r2(oldIdx.min*PTV);
     var iepOld=(iepV>0&&Math.abs(iepV-oldIdx.pts*PTV)<=PTV)?r2(iepV):r2(oldIdx.pts*PTV),iepNew=r2(newIdx.pts*PTV);
-    var oldTot=r2(baseMin+iepOld),newTot=r2(baseMin+iepNew);
-    var oldSalary=[],newSalary=[],recall=[];
+    var oldTot=r2(baseMin+iepOld),newTot=r2(baseMin+iepNew),oldSalary=[],newSalary=[],unit=[];
     for(q=0;q<rubs.length;q++){
-      var actual=baseP[rubs[q].key]||0,oldAmount,newAmount,amount,lr=leadRank(rubs[q]);
-      if(q===irgIdx){oldAmount=0;newAmount=0;amount=0;}
-      else if(isContagieuxRubrique(rubs[q])){var fixedAmount=(rubs[q].key===contPayKey)?contAmount:0;oldAmount=r2(fixedAmount);newAmount=r2(fixedAmount);amount=0;}
-      else if(lr===0){oldAmount=baseMin;newAmount=baseMin;amount=0;}
-      else if(lr===1){oldAmount=iepOld;newAmount=iepNew;amount=r2((iepNew-iepOld)*days/30);}
+      var actual=baseP[rubs[q].key]||0,oldAmount,newAmount,lr=leadRank(rubs[q]);
+      if(q===irgIdx){oldAmount=0;newAmount=0;}
+      else if(isContagieuxRubrique(rubs[q])){var fixedAmount=(rubs[q].key===contPayKey)?contAmount:0;oldAmount=r2(fixedAmount);newAmount=oldAmount;}
+      else if(lr===0){oldAmount=baseMin;newAmount=baseMin;}
+      else if(lr===1){oldAmount=iepOld;newAmount=iepNew;}
       else if(rubs[q].calculated){
-        /* taux de CETTE periode = montant du bulletin / (base + IEP du bulletin) ; un taux entier (25, 30, 50 %...) est restitue exactement */
+        /* taux de CETTE periode = montant du bulletin / (base + IEP) ; un taux entier (25, 30, 50 %...) est restitue exactement */
         var pct=(oldTot>0)?(actual/oldTot):0,pr=Math.round(pct*100);
         if(pr>0&&Math.abs(pct*100-pr)<0.02)pct=pr/100;
-        oldAmount=r2(actual);newAmount=r2(pct*newTot);amount=r2((newAmount-oldAmount)*days/30);
-      } else {oldAmount=r2(actual);newAmount=r2(actual);amount=0;}
-      oldSalary.push(oldAmount);newSalary.push(newAmount);recall.push(amount);
+        oldAmount=r2(actual);newAmount=r2(pct*newTot);
+      } else {oldAmount=r2(actual);newAmount=oldAmount;}
+      oldSalary.push(oldAmount);newSalary.push(newAmount);unit.push(newAmount-oldAmount);
     }
     if(irgIdx>=0){
       var oBase=0,nBase=0,qq,oIrg,nIrg;
       for(qq=0;qq<nG;qq++)if(!isZoneOrLog(rubs[qq])&&!isAFRubrique(rubs[qq])){oBase+=oldSalary[qq];nBase+=newSalary[qq];}
       if(cotIdx>=0){oBase-=oldSalary[cotIdx];nBase-=newSalary[cotIdx];}
       oIrg=calculerIRG2022(oBase);nIrg=calculerIRG2022(nBase);
-      oldSalary[irgIdx]=r2(oIrg);newSalary[irgIdx]=r2(nIrg);recall[irgIdx]=r2((nIrg-oIrg)*days/30);
+      oldSalary[irgIdx]=r2(oIrg);newSalary[irgIdx]=r2(nIrg);unit[irgIdx]=nIrg-oIrg;
     }
-    return {sig:catP+"|"+echP+"|"+newE+"|"+oldSalary.join(",")+"|"+newSalary.join(","),catP:catP,echP:echP,newE:newE,oldIdx:oldIdx,newIdx:newIdx,oldSalary:oldSalary,newSalary:newSalary,recall:recall,days:days,refPeriod:ref.period,gk:gk};
+    return {sig:oldSalary.join(",")+"|"+newSalary.join(","),oldSalary:oldSalary,newSalary:newSalary,unit:unit,days:0,lkey:ld.lkey,gk:ld.gk,catP:ld.catP,echP:ld.echP,newE:ld.newE,oldIdx:oldIdx,newIdx:newIdx,refPeriod:ld.ref.period,e:e,cpk:contPayKey,cam:contAmount,ne:ld.newE};
   }
   var flushTot=null,flushEmp=null;
   function flushSeg(sg){
     var periodText=dateFmt(sg.start)+" - "+dateFmt(sg.end),qf;
+    sg.recall=[];for(qf=0;qf<rubs.length;qf++)sg.recall.push(r2(sg.unit[qf]*sg.days/30));
     for(qf=0;qf<rubs.length;qf++){flushTot[qf]+=sg.recall[qf];gsum[qf]+=sg.recall[qf];}
+    /* controle de fin de bloc : un bulletin du dernier mois doit donner les memes montants (sinon un taux a change en cours de periode) */
+    if(sg.lastLd&&sg.lastLd.ref.aid!==sg.firstAid){var chk=fullCalc(sg.lastLd,sg.e,sg.cpk,sg.cam);if(chk.sig!==sg.sig)warnOnce(flushEmp.mat+" "+flushEmp.name+": montants ou taux differents au sein de "+periodText+" (grille "+sg.gk+") ; verifiez ou scindez la periode.");}
     var ratio=sg.newIdx.total/sg.oldIdx.total,mat=flushEmp.mat,nm=flushEmp.name;
     var rOld=lineRow(mat,nm,"ANCIEN SALAIRE",sg.gk,periodText,null,sg.refPeriod,sg.oldSalary);rOld.ixc=["S"+sg.catP,"I"+sg.echP,"I"+sg.oldIdx.min,"I"+sg.oldIdx.pts,"I"+sg.oldIdx.total,"E"];rows.push(rOld);
     var rNew=lineRow(mat,nm,"NOUVEAU SALAIRE",sg.gk,periodText,null,sg.refPeriod,sg.newSalary);rNew.ixc=["S"+sg.catP,"I"+sg.newE,"I"+sg.newIdx.min,"I"+sg.newIdx.pts,"I"+sg.newIdx.total,"E"];rows.push(rNew);
@@ -1898,12 +1941,14 @@ function doRappel() {
       var gk=gridOrder[j],cur=null,mCur=new Date(pStart.getFullYear(),pStart.getMonth(),pStart.getDate()),mr,mEnd,gridHit=false;
       /* Mois par mois : la categorie, l echelon et les taux sont ceux du bulletin de CE mois
          (ou du plus proche de la meme grille) ; les mois identiques sont regroupes en une seule ligne. */
+      var ld,dd;
       while(mCur.getTime()<=pEnd.getTime()){
         mEnd=new Date(mCur.getFullYear(),mCur.getMonth()+1,0);if(mEnd.getTime()>pEnd.getTime())mEnd=new Date(pEnd.getTime());
-        mr=monthCalc(e,gk,key,oe,ne,mCur,mEnd,contPayKey,contAmount);
-        if(mr){
-          if(cur&&cur.sig===mr.sig){cur.end=mEnd;cur.days+=mr.days;for(q3=0;q3<rubs.length;q3++)cur.recall[q3]=r2(cur.recall[q3]+mr.recall[q3]);}
-          else{if(cur)flushSeg(cur);cur=mr;cur.start=new Date(mCur.getTime());cur.end=mEnd;}
+        ld=leadOf(e,gk,key,oe,ne,mEnd);
+        if(ld){
+          dd=days30(mCur,mEnd);
+          if(cur&&cur.lkey===ld.lkey){cur.end=mEnd;cur.days+=dd;cur.lastLd=ld;}
+          else{if(cur)flushSeg(cur);cur=fullCalc(ld,e,contPayKey,contAmount);cur.start=new Date(mCur.getTime());cur.end=mEnd;cur.days=dd;cur.firstAid=ld.ref.aid;cur.lastLd=ld;}
         }
         mCur=new Date(mCur.getFullYear(),mCur.getMonth()+1,1);
       }
