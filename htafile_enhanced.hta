@@ -1840,6 +1840,37 @@ function doRappel() {
     }
   })();
   /* categorie + echelon reels d UN mois (grille de ce mois) : salaire de base / 45 = indice minimum ; IEP / 45 = points */
+  /* categorie/echelon lus sur la grille PROPRE au bulletin (et non celle du mois calcule) */
+  function classify(sbV,iepV,gkRef,key,oe){
+    var RG=GRIDS[gkRef]||{},minT=Math.round(sbV/PTV),cand=[],g2,q,r={cat:key,ech:oe,catFound:false,echFound:false},gks=[gkRef,"2024","2023","2022","2007"],gi;
+    for(gi=0;gi<gks.length&&!cand.length;gi++){
+      if(!GRIDS[gks[gi]])continue;
+      RG=GRIDS[gks[gi]];
+      if(minT>0)for(g2 in RG)if(RG.hasOwnProperty(g2)&&Math.abs(RG[g2][0]-minT)<=1)cand.push(g2);
+    }
+    if(cand.length){r.catFound=true;r.cat=cand[0];for(q=0;q<cand.length;q++)if(cand[q]===key){r.cat=key;break;}}
+    var gg=RG[r.cat],ptsT=iepV/PTV,best=-1,bd=1e9,ee,pp;
+    if(gg&&iepV>0){for(ee=0;ee<=12;ee++){pp=(ee>0)?gg[1][ee-1]:0;if(Math.abs(pp-ptsT)<bd){bd=Math.abs(pp-ptsT);best=ee;}}}
+    if(best>=0&&bd<=1.5){r.ech=best;r.echFound=true;}
+    return r;
+  }
+  /* la carriere ne descend jamais : categorie (puis echelon a categorie egale) non decroissante dans le temps */
+  var monoCache={};
+  function monoFor(e,key,oe){
+    var mk="k"+lc(e.mat);if(monoCache[mk])return monoCache[mk];
+    var tl=leadTL[mk],out={},sers=[],s2,i2,run,t,c;
+    if(tl){for(s2 in tl)if(tl.hasOwnProperty(s2))sers.push(parseInt(s2,10));sers.sort(function(a,b){return a-b;});}
+    var arr=[];
+    for(i2=0;i2<sers.length;i2++){t=tl[sers[i2]];c=classify(t.sb,t.iep,rpGridAt(Math.floor((sers[i2]-1)/12),(sers[i2]-1)%12+1),key,oe);if(t.sb>0&&c.catFound)arr.push({ser:sers[i2],cat:parseInt(c.cat,10),ech:c.ech,echFound:c.echFound,raw:c.cat});}
+    var runC=parseInt(key,10),runE=99;
+    for(i2=arr.length-1;i2>=0;i2--){
+      if(arr[i2].cat>runC){arr[i2].cat=runC;arr[i2].ech=-1;arr[i2].fixed=true;}
+      else if(arr[i2].cat<runC){runC=arr[i2].cat;runE=99;}
+      if(arr[i2].cat===runC&&arr[i2].ech>=0){if(arr[i2].ech>runE){arr[i2].ech=runE;arr[i2].fixed=true;}else runE=arr[i2].ech;}
+      out[arr[i2].ser]=arr[i2];
+    }
+    monoCache[mk]=out;return out;
+  }
   function leadOf(e,gk,key,oe,ne,mEnd){
     var G=GRIDS[gk],ref=rpChooseRef(e.mat,gk,mEnd);
     if(!ref){warnOnce(e.mat+" "+e.name+": aucun bulletin de reference pour la grille "+gk+" (avant "+dateFmt(mEnd)+"); mois ignore.");return null;}
@@ -1849,15 +1880,16 @@ function doRappel() {
       baseP=rpReadBaseVals(ref.aid,ref.dbi);fullReads++;
       for(q=0;q<rubs.length;q++){lr0=leadRank(rubs[q]);if(lr0===0&&!sbV)sbV=baseP[rubs[q].key]||0;if(lr0===1&&!iepV)iepV=baseP[rubs[q].key]||0;}
     }
-    var catP=key,echP=oe,minT=Math.round(sbV/PTV),cand=[],gk2,catFound=false;
-    if(minT>0)for(gk2 in G)if(G.hasOwnProperty(gk2)&&Math.abs(G[gk2][0]-minT)<=1)cand.push(gk2);
-    if(cand.length){catFound=true;catP=cand[0];for(q=0;q<cand.length;q++)if(cand[q]===key){catP=key;break;}}
-    else warnOnce(e.mat+" "+e.name+": le salaire de base du bulletin "+ref.period+" ("+r2(sbV)+") ne correspond a aucune categorie de la grille "+gk+"; categorie actuelle "+key+" utilisee.");
+    var cl=classify(sbV,iepV,ref.gk||gk,key,oe),catP=cl.cat,echP=cl.ech,catFound=cl.catFound,mo=monoFor(e,key,oe)[ref.serial];
+    if(!catFound)warnOnce(e.mat+" "+e.name+": le salaire de base du bulletin "+ref.period+" ("+r2(sbV)+") ne correspond a aucune categorie de la grille "+(ref.gk||gk)+"; categorie actuelle "+key+" utilisee.");
+    if(mo&&mo.fixed){
+      if(String(mo.cat)!==String(catP)){warnOnce(e.mat+" "+e.name+": categorie "+catP+" lue au bulletin "+ref.period+" ramenee a "+mo.cat+" (la carriere ne descend pas).");catP=String(mo.cat);}
+      if(mo.ech>=0&&mo.ech!==echP&&String(mo.cat)===String(cl.cat)){warnOnce(e.mat+" "+e.name+": echelon "+echP+" lu au bulletin "+ref.period+" ramene a "+mo.ech+" (la carriere ne descend pas).");echP=mo.ech;}
+      else if(mo.ech<0){var g0=GRIDS[ref.gk||gk],g1=g0&&g0[catP];if(g1&&iepV>0){var bb=-1,bdd=1e9,e3,p3;for(e3=0;e3<=12;e3++){p3=(e3>0)?g1[1][e3-1]:0;if(Math.abs(p3-iepV/PTV)<bdd){bdd=Math.abs(p3-iepV/PTV);bb=e3;}}if(bb>=0)echP=bb;}}
+    }
     if(catFound&&catP!==key)warnOnce(e.mat+" "+e.name+": categorie "+catP+" (et non "+key+") sur la grille "+gk+" d apres les bulletins de reference.");
-    var gg=G[catP],ptsT=iepV/PTV,best=-1,bd=1e9,ee,pp;
-    if(gg&&iepV>0){for(ee=0;ee<=12;ee++){pp=(ee>0)?gg[1][ee-1]:0;if(Math.abs(pp-ptsT)<bd){bd=Math.abs(pp-ptsT);best=ee;}}}
-    if(best>=0&&bd<=1.5)echP=best;
-    else if(iepV>0)warnOnce(e.mat+" "+e.name+": l IEP du bulletin "+ref.period+" ne correspond a aucun echelon de la categorie "+catP+" ; echelon "+oe+" utilise.");
+    var gg=G[catP];
+    if(!cl.echFound&&iepV>0)warnOnce(e.mat+" "+e.name+": l IEP du bulletin "+ref.period+" ne correspond a aucun echelon de la categorie "+catP+" ; echelon "+oe+" utilise.");
     var newE=ne;
     if(echP!==oe){newE=Math.max(0,Math.min(12,echP+(ne-oe)));warnOnce(e.mat+" "+e.name+": echelon "+echP+" (et non "+oe+") sur la grille "+gk+" ; nouvel echelon "+newE+".");}
     if(newE===echP)return null;
