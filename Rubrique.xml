@@ -4,6 +4,8 @@
 <Code>AF</Code>
 <Libelle>Allocation familiale</Libelle>
 <Libelle_Arab>المنح العائلية</Libelle_Arab>
+<Description>Formule/montant : [nombre d'enfants]*300. Gain. Soumise a : ni cotisation ni impot. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>الصيغة/المبلغ: [عدد الأبناء]*300 — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>1</Code_Automatique>
@@ -25,6 +27,8 @@
 <Code>ASU</Code>
 <Libelle>Salaire unique</Libelle>
 <Libelle_Arab>الأجرة الوحيدة</Libelle_Arab>
+<Description>Calcul : 800 x [nombre de conjoints a charge]. Gain. Soumise a : ni cotisation ni impot. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>القاعدة 800 × [عدد الزوجات] — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>1</Code_Automatique>
@@ -47,6 +51,8 @@
 <Code>BONIF</Code>
 <Libelle>BONIF</Libelle>
 <Libelle_Arab>تعويض المجاهدين</Libelle_Arab>
+<Description>Montant saisi manuellement sur le bulletin (pas de formule). Gain. Soumise a : cotisable, imposable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>مبلغ يُدخل يدوياً في القسيمة (بلا صيغة) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -67,6 +73,8 @@
 <Code>contagieux</Code>
 <Libelle>contagieux</Libelle>
 <Libelle_Arab>العدوى</Libelle_Arab>
+<Description>Formule/montant : [I.Cont Sec1]+[I.Cont Sec2]+[I.Cont Sec3/1]+[I.Cont Sec3/2]+[I.Cont Sec3/3]. Gain. Soumise a : ni cotisation ni impot. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>الصيغة/المبلغ: [م.خ العدوى م1]+[م.خ.العدوى م2]+[م.خ.العدوى م1/3]+[م.خ.العدوى م 2/3]+[م.خ.العدوى م3/3] — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -88,6 +96,8 @@
 <Code>COTIS</Code>
 <Libelle>Cotisation Sociale</Libelle>
 <Libelle_Arab>المساهمة الإجتماعية</Libelle_Arab>
+<Description>Pourcentage : 9 % x ([Salaire brut]). Retenue. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>نسبة 9% من ([الأجر الخام]) — اقتطاع</Description_Arab>
 <Code_Impression_Bulletin>1</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>3</Code_Automatique>
@@ -110,6 +120,8 @@
 <Code>ExpForfi</Code>
 <Libelle>ExpForfi</Libelle>
 <Libelle_Arab>خبرة جزافية</Libelle_Arab>
+<Description>Montant saisi manuellement sur le bulletin (pas de formule). Gain. Soumise a : cotisable, imposable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>مبلغ يُدخل يدوياً في القسيمة (بلا صيغة) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -130,6 +142,8 @@
 <Code>HEURSUP</Code>
 <Libelle>HEURES SUPLTS. 75 %</Libelle>
 <Libelle_Arab>ساعات إضافية</Libelle_Arab>
+<Description>Montant saisi manuellement sur le bulletin (pas de formule). Gain. Soumise a : cotisable, imposable. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>مبلغ يُدخل يدوياً في القسيمة (بلا صيغة) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -150,6 +164,8 @@
 <Code>I.A.A.A.R25%</Code>
 <Libelle>I.A.A.A.R25%</Libelle>
 <Libelle_Arab>ت إ ن ت إ 25</Libelle_Arab>
+<Description>Pourcentage : 25 % x ([Salaire de base]+[IEP]). Gain. Soumise a : cotisable, imposable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>نسبة 25% من ([الأجر القاعدي]+[منحة الخبرة]) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -172,6 +188,8 @@
 <Code>I.A.S.O.S.R25%</Code>
 <Libelle>I.A.S.O.S.R25%</Libelle>
 <Libelle_Arab>ت إ ع ت ص إ25</Libelle_Arab>
+<Description>Pourcentage : 25 % x ([Salaire de base]+[IEP]). Gain. Soumise a : cotisable, imposable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>نسبة 25% من ([الأجر القاعدي]+[منحة الخبرة]) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -194,6 +212,8 @@
 <Code>I.A.S.S.PSY15%</Code>
 <Libelle>I.A.S.S.PSY15%</Libelle>
 <Libelle_Arab>ت خ إ ن نفسا 15</Libelle_Arab>
+<Description>Pourcentage : 15 % x ([Salaire de base]+[IEP]). Gain. Soumise a : cotisable, imposable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>نسبة 15% من ([الأجر القاعدي]+[منحة الخبرة]) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -216,6 +236,8 @@
 <Code>I.CONT</Code>
 <Libelle>I.CONT</Libelle>
 <Libelle_Arab>تعويض العدوى</Libelle_Arab>
+<Description>Montant saisi manuellement sur le bulletin (pas de formule). Gain. Soumise a : cotisable, imposable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>مبلغ يُدخل يدوياً في القسيمة (بلا صيغة) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -236,6 +258,8 @@
 <Code>I.Cont Sec1</Code>
 <Libelle>I.Cont Sec1</Libelle>
 <Libelle_Arab>م.خ العدوى م1</Libelle_Arab>
+<Description>Formule/montant : 7200. Gain. Soumise a : cotisable, imposable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>الصيغة/المبلغ: 7200 — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -257,6 +281,8 @@
 <Code>I.Cont Sec2</Code>
 <Libelle>I.Cont Sec2</Libelle>
 <Libelle_Arab>م.خ.العدوى م2</Libelle_Arab>
+<Description>Formule/montant : 5800. Gain. Soumise a : cotisable, imposable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>الصيغة/المبلغ: 5800 — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -278,6 +304,8 @@
 <Code>I.Cont Sec3/1</Code>
 <Libelle>I.Cont Sec3/1</Libelle>
 <Libelle_Arab>م.خ.العدوى م1/3</Libelle_Arab>
+<Description>Formule/montant : 4000. Gain. Soumise a : cotisable, imposable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>الصيغة/المبلغ: 4000 — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -299,6 +327,8 @@
 <Code>I.Cont Sec3/2</Code>
 <Libelle>I.Cont Sec3/2</Libelle>
 <Libelle_Arab>م.خ.العدوى م 2/3</Libelle_Arab>
+<Description>Formule/montant : 3000. Gain. Soumise a : cotisable, imposable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>الصيغة/المبلغ: 3000 — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -320,6 +350,8 @@
 <Code>I.Cont Sec3/3</Code>
 <Libelle>I.Cont Sec3/3</Libelle>
 <Libelle_Arab>م.خ.العدوى م3/3</Libelle_Arab>
+<Description>Formule/montant : 2500. Gain. Soumise a : cotisable, imposable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>الصيغة/المبلغ: 2500 — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -341,6 +373,8 @@
 <Code>I.D.S</Code>
 <Libelle>I.D.S</Libelle>
 <Libelle_Arab>تعويض عن المخاطر الخاصة </Libelle_Arab>
+<Description>Montant saisi manuellement sur le bulletin (pas de formule). Gain. Soumise a : cotisable, imposable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>مبلغ يُدخل يدوياً في القسيمة (بلا صيغة) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -361,6 +395,8 @@
 <Code>I.E.H</Code>
 <Libelle>Ind.Exp.Heur</Libelle>
 <Libelle_Arab>خبرة م.س</Libelle_Arab>
+<Description>Montant saisi manuellement sur le bulletin (pas de formule). Gain. Soumise a : cotisable, imposable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>مبلغ يُدخل يدوياً في القسيمة (بلا صيغة) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -381,6 +417,8 @@
 <Code>I.ENC</Code>
 <Libelle>I.ENC</Libelle>
 <Libelle_Arab>ت.التأطير</Libelle_Arab>
+<Description>Pourcentage : 50 % x ([Salaire de base]+[IEP]). Gain. Soumise a : cotisable, imposable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>نسبة 50% من ([الأجر القاعدي]+[منحة الخبرة]) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -403,6 +441,8 @@
 <Code>I.ENC MS %</Code>
 <Libelle>Ind d&apos;encadrement 35%</Libelle>
 <Libelle_Arab>ت.التأطير 35%</Libelle_Arab>
+<Description>Pourcentage : 35 % x ([Salaire de base]+[IEP]). Gain. Soumise a : cotisable, imposable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>نسبة 35% من ([الأجر القاعدي]+[منحة الخبرة]) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -425,6 +465,8 @@
 <Code>I.F.S CONT25%</Code>
 <Libelle>I.F.S CONT25%</Libelle>
 <Libelle_Arab>ت ج خ متع25</Libelle_Arab>
+<Description>Pourcentage : 25 % x ([Salaire de base]+[IEP]). Gain. Soumise a : cotisable, imposable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>نسبة 25% من ([الأجر القاعدي]+[منحة الخبرة]) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -447,6 +489,8 @@
 <Code>I.G.S.S10%</Code>
 <Libelle>I.G.S.S10%</Libelle>
 <Libelle_Arab>ت ت م ص 10</Libelle_Arab>
+<Description>Pourcentage : 10 % x ([Salaire de base]+[IEP]). Gain. Soumise a : cotisable, imposable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>نسبة 10% من ([الأجر القاعدي]+[منحة الخبرة]) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -469,6 +513,8 @@
 <Code>I.I.P.T</Code>
 <Libelle>Indem.I.P.T</Libelle>
 <Libelle_Arab>تعويض العجز الجزئي عن العمل</Libelle_Arab>
+<Description>Montant saisi manuellement sur le bulletin (pas de formule). Gain. Soumise a : reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>مبلغ يُدخل يدوياً في القسيمة (بلا صيغة) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -489,6 +535,8 @@
 <Code>I.INTER</Code>
 <Libelle>IND.INTERESSEMENT</Libelle>
 <Libelle_Arab>تعويض الإنتفاع</Libelle_Arab>
+<Description>Montant saisi manuellement sur le bulletin (pas de formule). Gain. Soumise a : cotisable, imposable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>مبلغ يُدخل يدوياً في القسيمة (بلا صيغة) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -509,6 +557,8 @@
 <Code>I.P.A.P</Code>
 <Libelle>I Performance</Libelle>
 <Libelle_Arab>م.ت الأداء</Libelle_Arab>
+<Description>Pourcentage : 30 % x ([Salaire de base]+[IEP]). Gain. Soumise a : cotisable, imposable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>نسبة 30% من ([الأجر القاعدي]+[منحة الخبرة]) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -531,6 +581,8 @@
 <Code>I.P.A.P MED</Code>
 <Libelle>I.P.A.P MED 30%</Libelle>
 <Libelle_Arab>ع ت خدمات طبية</Libelle_Arab>
+<Description>Pourcentage : 30 % x ([Salaire de base]+[IEP]). Gain. Soumise a : cotisable, imposable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>نسبة 30% من ([الأجر القاعدي]+[منحة الخبرة]) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -553,6 +605,8 @@
 <Code>I.P.Sup</Code>
 <Libelle>I.P.Sup</Libelle>
 <Libelle_Arab>م.م.عالي</Libelle_Arab>
+<Description>Montant saisi manuellement sur le bulletin (pas de formule). Gain. Soumise a : cotisable, imposable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>مبلغ يُدخل يدوياً في القسيمة (بلا صيغة) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -573,6 +627,8 @@
 <Code>I.Poste.S</Code>
 <Libelle>I.Poste.Sup</Libelle>
 <Libelle_Arab>ت.م.عالي</Libelle_Arab>
+<Description>Montant saisi manuellement sur le bulletin (pas de formule). Gain. Soumise a : cotisable, imposable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>مبلغ يُدخل يدوياً في القسيمة (بلا صيغة) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -593,6 +649,8 @@
 <Code>I.QUA M-S %</Code>
 <Libelle>Ind.Qualification %</Libelle>
 <Libelle_Arab>ت.التأهيل ط.م </Libelle_Arab>
+<Description>Pourcentage : 35 % x ([Salaire de base]+[IEP]). Gain. Soumise a : cotisable, imposable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>نسبة 35% من ([الأجر القاعدي]+[منحة الخبرة]) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -615,6 +673,8 @@
 <Code>I.Qual  MG</Code>
 <Libelle>I.Qual  MG 45%</Libelle>
 <Libelle_Arab>ت.التأهيل 45 % ط.ع</Libelle_Arab>
+<Description>Pourcentage : 45 % x ([Salaire de base]+[IEP]). Gain. Soumise a : cotisable, imposable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>نسبة 45% من ([الأجر القاعدي]+[منحة الخبرة]) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -637,6 +697,8 @@
 <Code>I.Qual MG Chef</Code>
 <Libelle>I.Qual MG Chef 50%</Libelle>
 <Libelle_Arab>ت تأهيل 50% ط.ع ر</Libelle_Arab>
+<Description>Pourcentage : 50 % x ([Salaire de base]+[IEP]). Gain. Soumise a : cotisable, imposable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>نسبة 50% من ([الأجر القاعدي]+[منحة الخبرة]) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -659,6 +721,8 @@
 <Code>I.QUAL PSY40%</Code>
 <Libelle>I.QUAL PSY40%</Libelle>
 <Libelle_Arab>ت تاهيل نفسا40</Libelle_Arab>
+<Description>Pourcentage : 40 % x ([Salaire de base]+[IEP]). Gain. Soumise a : cotisable, imposable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>نسبة 40% من ([الأجر القاعدي]+[منحة الخبرة]) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -681,6 +745,8 @@
 <Code>I.QUAL.MS</Code>
 <Libelle>I.QUAL.MS</Libelle>
 <Libelle_Arab>ت.ـاهيل ط.مختص</Libelle_Arab>
+<Description>Pourcentage : 50 % x ([Salaire de base]+[IEP]). Gain. Soumise a : cotisable, imposable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>نسبة 50% من ([الأجر القاعدي]+[منحة الخبرة]) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -703,6 +769,8 @@
 <Code>I.QUAL.MSP</Code>
 <Libelle>IND.QUL M.S.P %</Libelle>
 <Libelle_Arab>ت تأهيل مخ ر</Libelle_Arab>
+<Description>Pourcentage : 40 % x ([Salaire de base]+[IEP]). Gain. Soumise a : cotisable, imposable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>نسبة 40% من ([الأجر القاعدي]+[منحة الخبرة]) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -725,6 +793,8 @@
 <Code>I.RESPONSSA</Code>
 <Libelle>IND.RESPONSA</Libelle>
 <Libelle_Arab>تعويض المسؤولية</Libelle_Arab>
+<Description>Montant saisi manuellement sur le bulletin (pas de formule). Gain. Soumise a : cotisable, imposable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>مبلغ يُدخل يدوياً في القسيمة (بلا صيغة) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -745,6 +815,8 @@
 <Code>I.S</Code>
 <Libelle>INDEMNITES SUJETION </Libelle>
 <Libelle_Arab>تعويض التبعة</Libelle_Arab>
+<Description>Montant saisi manuellement sur le bulletin (pas de formule). Gain. Soumise a : cotisable, imposable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>مبلغ يُدخل يدوياً في القسيمة (بلا صيغة) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -765,6 +837,8 @@
 <Code>I.S.A.A 10%</Code>
 <Libelle>I.S.A.A 10%</Libelle>
 <Libelle_Arab>ت.د.ن.إ  10%</Libelle_Arab>
+<Description>Pourcentage : 10 % x ([Salaire de base]+[IEP]). Gain. Soumise a : cotisable, imposable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>نسبة 10% من ([الأجر القاعدي]+[منحة الخبرة]) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -787,6 +861,8 @@
 <Code>I.S.A.A.R25%</Code>
 <Libelle>I.S.A.A.R25%</Libelle>
 <Libelle_Arab>ت د ن ت إ 25</Libelle_Arab>
+<Description>Pourcentage : 25 % x ([Salaire de base]+[IEP]). Gain. Soumise a : cotisable, imposable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>نسبة 25% من ([الأجر القاعدي]+[منحة الخبرة]) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -809,6 +885,8 @@
 <Code>I.S.A.Boil.20%</Code>
 <Libelle>I.S.A.Boil.20%</Libelle>
 <Libelle_Arab>ت.دعم نش.ص 20 %</Libelle_Arab>
+<Description>Pourcentage : 20 % x ([Salaire de base]+[IEP]). Gain. Soumise a : cotisable, imposable, reduite par les absences. [A CONFIRMER] Famille : soutien aux activites paramedicales (ت.دعم ن.ش.ط) - taux 20/25/30 % avant 2024, 50/55 % apres ? [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>نسبة 20% من ([الأجر القاعدي]+[منحة الخبرة]) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -831,6 +909,8 @@
 <Code>I.S.A.C.S</Code>
 <Libelle>Ind.de soutien A.C.S</Libelle>
 <Libelle_Arab>ت.دعم ن.ص</Libelle_Arab>
+<Description>Montant saisi manuellement sur le bulletin (pas de formule). Gain. Soumise a : cotisable, imposable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>مبلغ يُدخل يدوياً في القسيمة (بلا صيغة) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -851,6 +931,8 @@
 <Code>I.S.A.C.S %</Code>
 <Libelle>Ind.de soutien A.C.S</Libelle>
 <Libelle_Arab>ت.دعم ن ص</Libelle_Arab>
+<Description>Pourcentage : 45 % x ([Salaire de base]+[IEP]). Gain. Soumise a : cotisable, imposable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>نسبة 45% من ([الأجر القاعدي]+[منحة الخبرة]) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -873,6 +955,8 @@
 <Code>I.S.A.PM</Code>
 <Libelle>I.S.A.PM</Libelle>
 <Libelle_Arab>ت.دعم.ن.ش.ط</Libelle_Arab>
+<Description>Montant saisi manuellement sur le bulletin (pas de formule). Gain. Soumise a : cotisable, imposable, reduite par les absences. [A CONFIRMER] Famille : soutien aux activites paramedicales (ت.دعم ن.ش.ط) - taux 20/25/30 % avant 2024, 50/55 % apres ? [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>مبلغ يُدخل يدوياً في القسيمة (بلا صيغة) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -893,6 +977,8 @@
 <Code>I.S.A.PM 25%</Code>
 <Libelle>I.S.A.PM 25%</Libelle>
 <Libelle_Arab>ت.دعم ن.ش.ط 25%</Libelle_Arab>
+<Description>Pourcentage : 25 % x ([Salaire de base]+[IEP]). Gain. Soumise a : cotisable, imposable, reduite par les absences. [A CONFIRMER] Famille : soutien aux activites paramedicales (ت.دعم ن.ش.ط) - taux 20/25/30 % avant 2024, 50/55 % apres ? [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>نسبة 25% من ([الأجر القاعدي]+[منحة الخبرة]) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -915,6 +1001,8 @@
 <Code>I.S.A.PM 30 %</Code>
 <Libelle>I.S.A.PM 30 %</Libelle>
 <Libelle_Arab>ت.دعم ن.ش.ط 30%</Libelle_Arab>
+<Description>Pourcentage : 30 % x ([Salaire de base]+[IEP]). Gain. Soumise a : cotisable, imposable, reduite par les absences. [A CONFIRMER] Famille : soutien aux activites paramedicales (ت.دعم ن.ش.ط) - taux 20/25/30 % avant 2024, 50/55 % apres ? [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>نسبة 30% من ([الأجر القاعدي]+[منحة الخبرة]) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -937,6 +1025,8 @@
 <Code>I.S.A.S.C 35 PH</Code>
 <Libelle>I.S.A.S.C 35 PH</Libelle>
 <Libelle_Arab>ت.دعم م ص 35</Libelle_Arab>
+<Description>Pourcentage : 35 % x ([Salaire de base]+[IEP]). Gain. Soumise a : cotisable, imposable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>نسبة 35% من ([الأجر القاعدي]+[منحة الخبرة]) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -959,6 +1049,8 @@
 <Code>I.S.S.A.S40%</Code>
 <Libelle>I.S.S.A.S40%</Libelle>
 <Libelle_Arab>ت م د ن ص 40</Libelle_Arab>
+<Description>Pourcentage : 40 % x ([Salaire de base]+[IEP]). Gain. Soumise a : cotisable, imposable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>نسبة 40% من ([الأجر القاعدي]+[منحة الخبرة]) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -981,6 +1073,8 @@
 <Code>I.S.S.M.E25%</Code>
 <Libelle>I.S.S.M.E25%</Libelle>
 <Libelle_Arab>ت د ص أ ط 25</Libelle_Arab>
+<Description>Pourcentage : 25 % x ([Salaire de base]+[IEP]). Gain. Soumise a : cotisable, imposable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>نسبة 25% من ([الأجر القاعدي]+[منحة الخبرة]) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -1003,6 +1097,8 @@
 <Code>I.S.S.P 10%</Code>
 <Libelle>I.S.S.P 10%</Libelle>
 <Libelle_Arab>ت م د نفسا 10</Libelle_Arab>
+<Description>Pourcentage : 10 % x ([Salaire de base]+[IEP]). Gain. Soumise a : cotisable, imposable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>نسبة 10% من ([الأجر القاعدي]+[منحة الخبرة]) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -1025,6 +1121,8 @@
 <Code>I.S.S.P 15%</Code>
 <Libelle>I.S.S.P 15%</Libelle>
 <Libelle_Arab>ت م د نفسا 15</Libelle_Arab>
+<Description>Pourcentage : 15 % x ([Salaire de base]+[IEP]). Gain. Soumise a : cotisable, imposable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>نسبة 15% من ([الأجر القاعدي]+[منحة الخبرة]) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -1047,6 +1145,8 @@
 <Code>I.S.S.P 20%</Code>
 <Libelle>I.S.S.P 20%</Libelle>
 <Libelle_Arab>ت م د نفسا 20</Libelle_Arab>
+<Description>Pourcentage : 20 % x ([Salaire de base]+[IEP]). Gain. Soumise a : cotisable, imposable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>نسبة 20% من ([الأجر القاعدي]+[منحة الخبرة]) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -1069,6 +1169,8 @@
 <Code>I.S.S.P 25%</Code>
 <Libelle>I.S.S.P 25%</Libelle>
 <Libelle_Arab>ت م د نفسا 25</Libelle_Arab>
+<Description>Pourcentage : 25 % x ([Salaire de base]+[IEP]). Gain. Soumise a : cotisable, imposable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>نسبة 25% من ([الأجر القاعدي]+[منحة الخبرة]) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -1091,6 +1193,8 @@
 <Code>I.S.S.P 40%</Code>
 <Libelle>I.S.S.P 40%</Libelle>
 <Libelle_Arab>ت م د نفسا 40</Libelle_Arab>
+<Description>Pourcentage : 40 % x ([Salaire de base]+[IEP]). Gain. Soumise a : cotisable, imposable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>نسبة 40% من ([الأجر القاعدي]+[منحة الخبرة]) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -1113,6 +1217,8 @@
 <Code>I.S.S.P 5%</Code>
 <Libelle>I.S.S.P 5%</Libelle>
 <Libelle_Arab>ت م د نفسا 5</Libelle_Arab>
+<Description>Pourcentage : 5 % x ([Salaire de base]+[IEP]). Gain. Soumise a : cotisable, imposable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>نسبة 5% من ([الأجر القاعدي]+[منحة الخبرة]) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -1135,6 +1241,8 @@
 <Code>I.S.T.C 25%</Code>
 <Libelle>I.S.T.C 25%</Libelle>
 <Libelle_Arab>ت خ ت م 25</Libelle_Arab>
+<Description>Pourcentage : 25 % x ([Salaire de base]+[IEP]). Gain. Soumise a : cotisable, imposable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>نسبة 25% من ([الأجر القاعدي]+[منحة الخبرة]) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -1157,6 +1265,8 @@
 <Code>I.T</Code>
 <Libelle>IND.T</Libelle>
 <Libelle_Arab>تعويض التمثيل</Libelle_Arab>
+<Description>Montant saisi manuellement sur le bulletin (pas de formule). Gain. Soumise a : cotisable, imposable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>مبلغ يُدخل يدوياً في القسيمة (بلا صيغة) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -1177,6 +1287,8 @@
 <Code>I.TECHNI </Code>
 <Libelle>I.TECHNI </Libelle>
 <Libelle_Arab>ت.التقنية ش.ط</Libelle_Arab>
+<Description>Montant saisi manuellement sur le bulletin (pas de formule). Gain. Soumise a : cotisable, imposable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>مبلغ يُدخل يدوياً في القسيمة (بلا صيغة) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -1197,6 +1309,8 @@
 <Code>I.TECHNI 10%</Code>
 <Libelle>I.TECHNI 10%</Libelle>
 <Libelle_Arab>ت.التقنية ش.ط 10%</Libelle_Arab>
+<Description>Pourcentage : 10 % x ([Salaire de base]+[IEP]). Gain. Soumise a : cotisable, imposable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>نسبة 10% من ([الأجر القاعدي]+[منحة الخبرة]) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -1219,6 +1333,8 @@
 <Code>I.TECHNI BIO35%</Code>
 <Libelle>I.TECHNI BIO35%</Libelle>
 <Libelle_Arab>ت التقتية 35 بيولو</Libelle_Arab>
+<Description>Pourcentage : 35 % x ([Salaire de base]+[IEP]). Gain. Soumise a : cotisable, imposable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>نسبة 35% من ([الأجر القاعدي]+[منحة الخبرة]) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -1241,6 +1357,8 @@
 <Code>I.TECHNI BIO40%</Code>
 <Libelle>I.TECHNI BIO40%</Libelle>
 <Libelle_Arab>ت التقنية40 بيولو</Libelle_Arab>
+<Description>Pourcentage : 40 % x ([Salaire de base]+[IEP]). Gain. Soumise a : cotisable, imposable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>نسبة 40% من ([الأجر القاعدي]+[منحة الخبرة]) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -1263,6 +1381,8 @@
 <Code>I.V.Forf</Code>
 <Libelle>I.Vuc.Forf</Libelle>
 <Libelle_Arab>م.س.جزافية</Libelle_Arab>
+<Description>Montant saisi manuellement sur le bulletin (pas de formule). Gain. Soumise a : ni cotisation ni impot. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>مبلغ يُدخل يدوياً في القسيمة (بلا صيغة) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -1283,6 +1403,8 @@
 <Code>I_Qual_Psycho45</Code>
 <Libelle>Ind Qualification de psychologus</Libelle>
 <Libelle_Arab>تعويض التأهيل 45 %</Libelle_Arab>
+<Description>Pourcentage : 45 % x ([Salaire de base]+[IEP]). Gain. Soumise a : cotisable, imposable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>نسبة 45% من ([الأجر القاعدي]+[منحة الخبرة]) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -1305,6 +1427,8 @@
 <Code>IASS</Code>
 <Libelle>Idemnité d&apos;astreinte SS </Libelle>
 <Libelle_Arab>ت.إلزام ع.م</Libelle_Arab>
+<Description>Pourcentage : 45 % x ([Salaire de base]+[IEP]). Gain. Soumise a : cotisable, imposable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>نسبة 45% من ([الأجر القاعدي]+[منحة الخبرة]) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -1327,6 +1451,8 @@
 <Code>IASS%</Code>
 <Libelle>Indemnité d&apos;astreinte S.S 30</Libelle>
 <Libelle_Arab>ت.إلزام ع.م 30</Libelle_Arab>
+<Description>Pourcentage : 30 % x ([Salaire de base]+[IEP]). Gain. Soumise a : cotisable, imposable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>نسبة 30% من ([الأجر القاعدي]+[منحة الخبرة]) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -1349,6 +1475,8 @@
 <Code>ICR</Code>
 <Libelle>I.C.R</Libelle>
 <Libelle_Arab>ع.م.دخل</Libelle_Arab>
+<Description>Valeur donnee par le bareme par classe/echelon (grille). Formule/montant : #01. Gain. Soumise a : cotisable, imposable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>الصيغة/المبلغ: #01 — منحة</Description_Arab>
 <Code_Impression_Bulletin>1</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>1</Code_Automatique>
@@ -1372,6 +1500,8 @@
 <Code>IDOC</Code>
 <Libelle>I.DOC</Libelle>
 <Libelle_Arab>تعويض التوثيق</Libelle_Arab>
+<Description>Montant saisi manuellement sur le bulletin (pas de formule). Gain. Soumise a : cotisable, imposable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>مبلغ يُدخل يدوياً في القسيمة (بلا صيغة) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -1392,6 +1522,8 @@
 <Code>IDR</Code>
 <Libelle>I.D.R</Libelle>
 <Libelle_Arab>علاوة الفارق</Libelle_Arab>
+<Description>Formule/montant : 16100-[Salaire brut]. Gain. Appliquer si : (16100-[Salaire brut])&gt;0. Soumise a : cotisable, imposable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>الصيغة/المبلغ: 16100-[الأجر الخام] — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -1414,6 +1546,8 @@
 <Code>IDR8</Code>
 <Libelle>IND DIF</Libelle>
 <Libelle_Arab>علاوة الفارق</Libelle_Arab>
+<Description>Montant saisi manuellement sur le bulletin (pas de formule). Gain. Soumise a : cotisable, imposable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>مبلغ يُدخل يدوياً في القسيمة (بلا صيغة) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -1434,6 +1568,8 @@
 <Code>IEP</Code>
 <Libelle>Indemnité d&apos;Experience </Libelle>
 <Libelle_Arab>منحة الخبرة المهنية</Libelle_Arab>
+<Description>Valeur donnee par le bareme IEP (anciennete). Gain. Soumise a : cotisable, imposable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>1</Code_Automatique>
@@ -1454,6 +1590,8 @@
 <Code>IEPVAC</Code>
 <Libelle>I.E.P 1.4</Libelle>
 <Libelle_Arab>خبرة مهنية بالنسبة 1.4</Libelle_Arab>
+<Description>Montant saisi manuellement sur le bulletin (pas de formule). Gain. Soumise a : cotisable, imposable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>مبلغ يُدخل يدوياً في القسيمة (بلا صيغة) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -1474,6 +1612,8 @@
 <Code>IFORF</Code>
 <Libelle>IND.FORFAITAIRE COMPLIM</Libelle>
 <Libelle_Arab>منحة جزافية تعويضية</Libelle_Arab>
+<Description>Montant saisi manuellement sur le bulletin (pas de formule). Gain. Soumise a : cotisable, imposable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>مبلغ يُدخل يدوياً في القسيمة (بلا صيغة) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -1494,6 +1634,8 @@
 <Code>IFS25</Code>
 <Libelle>IFS25</Libelle>
 <Libelle_Arab>ت.ج.خ 25</Libelle_Arab>
+<Description>Pourcentage : 25 % x ([Salaire de base]+[IEP]). Gain. Soumise a : cotisable, imposable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>نسبة 25% من ([الأجر القاعدي]+[منحة الخبرة]) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -1516,6 +1658,8 @@
 <Code>IFSP</Code>
 <Libelle>I.F.S.P</Libelle>
 <Libelle_Arab></Libelle_Arab>
+<Description>Pourcentage : 25 % x ([Salaire de base]+[IEP]). Gain. Soumise a : cotisable, imposable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>نسبة 25% من ([الأجر القاعدي]+[منحة الخبرة]) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -1538,6 +1682,8 @@
 <Code>IGARD</Code>
 <Libelle>I.GARDE</Libelle>
 <Libelle_Arab>ت.المناوبة</Libelle_Arab>
+<Description>Montant saisi manuellement sur le bulletin (pas de formule). Gain. Soumise a : cotisable, imposable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>مبلغ يُدخل يدوياً في القسيمة (بلا صيغة) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -1558,6 +1704,8 @@
 <Code>indAstreinte40</Code>
 <Libelle>ind.Astreinte 40%</Libelle>
 <Libelle_Arab>تعويض الإلزام</Libelle_Arab>
+<Description>Pourcentage : 40 % x ([Salaire de base]+[IEP]). Gain. Soumise a : cotisable, imposable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>نسبة 40% من ([الأجر القاعدي]+[منحة الخبرة]) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -1580,6 +1728,8 @@
 <Code>indEncadrement40</Code>
 <Libelle>ind.Encadrement 40%</Libelle>
 <Libelle_Arab>تعويض التأطير</Libelle_Arab>
+<Description>Pourcentage : 40 % x ([Salaire de base]+[IEP]). Gain. Soumise a : cotisable, imposable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>نسبة 40% من ([الأجر القاعدي]+[منحة الخبرة]) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -1602,6 +1752,8 @@
 <Code>INDLOG</Code>
 <Libelle>IND.LOG</Libelle>
 <Libelle_Arab>تعويض السكن </Libelle_Arab>
+<Description>Montant saisi manuellement sur le bulletin (pas de formule). Gain. Soumise a : reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>مبلغ يُدخل يدوياً في القسيمة (بلا صيغة) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -1622,6 +1774,8 @@
 <Code>IndQual40</Code>
 <Libelle>ind.Qualification 40%</Libelle>
 <Libelle_Arab>تعويض التأهيل</Libelle_Arab>
+<Description>Pourcentage : 40 % x ([Salaire de base]+[IEP]). Gain. Soumise a : cotisable, imposable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>نسبة 40% من ([الأجر القاعدي]+[منحة الخبرة]) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -1644,6 +1798,8 @@
 <Code>INUIS</Code>
 <Libelle>I.NUISSANCE</Libelle>
 <Libelle_Arab>ت الضرر</Libelle_Arab>
+<Description>Pourcentage : 25 % x ([Salaire de base]+[IEP]). Gain. Soumise a : cotisable, imposable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>نسبة 25% من ([الأجر القاعدي]+[منحة الخبرة]) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -1666,6 +1822,8 @@
 <Code>INUIS25%</Code>
 <Libelle>INUIS25% </Libelle>
 <Libelle_Arab>ت.الضرر 25  </Libelle_Arab>
+<Description>Pourcentage : 25 % x ([Salaire de base]+[IEP]). Gain. Soumise a : cotisable, imposable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>نسبة 25% من ([الأجر القاعدي]+[منحة الخبرة]) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -1688,6 +1846,8 @@
 <Code>INUISCONT25%</Code>
 <Libelle>INUISCONT25%</Libelle>
 <Libelle_Arab>ت.ضرر.متع 25   </Libelle_Arab>
+<Description>Pourcentage : 25 % x ([Salaire de base]+[IEP]). Gain. Soumise a : cotisable, imposable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>نسبة 25% من ([الأجر القاعدي]+[منحة الخبرة]) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -1710,6 +1870,8 @@
 <Code>IRA25</Code>
 <Libelle>IRA25</Libelle>
 <Libelle_Arab>ت.خطر إلزام</Libelle_Arab>
+<Description>Pourcentage : 25 % x ([Salaire de base]+[IEP]). Gain. Soumise a : cotisable, imposable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>نسبة 25% من ([الأجر القاعدي]+[منحة الخبرة]) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -1731,6 +1893,8 @@
 <Rubrique>
 <Code>IROBJ</Code>
 <Libelle>I.REAL.OBJ</Libelle>
+<Description>Montant saisi manuellement sur le bulletin (pas de formule). Gain. Soumise a : cotisable, imposable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>مبلغ يُدخل يدوياً في القسيمة (بلا صيغة) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -1751,6 +1915,8 @@
 <Code>ISAC 25</Code>
 <Libelle>ISAC 25</Libelle>
 <Libelle_Arab>ت خ ا م 25</Libelle_Arab>
+<Description>Pourcentage : 25 % x ([Salaire de base]+[IEP]). Gain. Soumise a : cotisable, imposable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>نسبة 25% من ([الأجر القاعدي]+[منحة الخبرة]) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -1773,6 +1939,8 @@
 <Code>ISAC 40</Code>
 <Libelle>ISAC 40</Libelle>
 <Libelle_Arab>ت خ إ م 40</Libelle_Arab>
+<Description>Pourcentage : 40 % x ([Salaire de base]+[IEP]). Gain. Soumise a : cotisable, imposable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>نسبة 40% من ([الأجر القاعدي]+[منحة الخبرة]) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -1795,6 +1963,8 @@
 <Code>ISG</Code>
 <Libelle>IND.SPF.G</Libelle>
 <Libelle_Arab>تعويض الإجمالي</Libelle_Arab>
+<Description>Montant saisi manuellement sur le bulletin (pas de formule). Gain. Soumise a : cotisable, imposable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>مبلغ يُدخل يدوياً في القسيمة (بلا صيغة) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -1815,6 +1985,8 @@
 <Code>ISP</Code>
 <Libelle>ISP</Libelle>
 <Libelle_Arab>ت.المنصب النوعي</Libelle_Arab>
+<Description>Pourcentage : 100 % x ([Salaire de base]+[IEP]). Gain. Soumise a : cotisable, imposable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>نسبة 100% من ([الأجر القاعدي]+[منحة الخبرة]) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -1837,6 +2009,8 @@
 <Code>ISP 30 %</Code>
 <Libelle>I.S.P 30 %</Libelle>
 <Libelle_Arab>ت المنصب النوعي 30 %</Libelle_Arab>
+<Description>Pourcentage : 30 % x ([Salaire de base]+[IEP]). Gain. Soumise a : cotisable, imposable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>نسبة 30% من ([الأجر القاعدي]+[منحة الخبرة]) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -1859,6 +2033,8 @@
 <Code>ISR</Code>
 <Libelle>I.S.R</Libelle>
 <Libelle_Arab>علاوة المحصل</Libelle_Arab>
+<Description>Montant saisi manuellement sur le bulletin (pas de formule). Gain. Soumise a : ni cotisation ni impot. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>مبلغ يُدخل يدوياً في القسيمة (بلا صيغة) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -1879,6 +2055,8 @@
 <Code>ISS</Code>
 <Libelle>I.S.S</Libelle>
 <Libelle_Arab>تعويض التبعة الخاصة</Libelle_Arab>
+<Description>Montant saisi manuellement sur le bulletin (pas de formule). Gain. Soumise a : cotisable, imposable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>مبلغ يُدخل يدوياً في القسيمة (بلا صيغة) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -1899,6 +2077,8 @@
 <Code>ISSUP</Code>
 <Libelle>IND.SUG.SUP</Libelle>
 <Libelle_Arab>تعويض التبعية </Libelle_Arab>
+<Description>Montant saisi manuellement sur le bulletin (pas de formule). Gain. Soumise a : cotisable, imposable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>مبلغ يُدخل يدوياً في القسيمة (بلا صيغة) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -1919,6 +2099,8 @@
 <Code>ISTC40%</Code>
 <Libelle>ISTC40%</Libelle>
 <Libelle_Arab>ت.خ ت م 40%</Libelle_Arab>
+<Description>Pourcentage : 40 % x ([Salaire de base]+[IEP]). Gain. Soumise a : cotisable, imposable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>نسبة 40% من ([الأجر القاعدي]+[منحة الخبرة]) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -1941,6 +2123,8 @@
 <Code>ITP</Code>
 <Libelle>I.T.P</Libelle>
 <Libelle_Arab>علاوة المنصب الثابت</Libelle_Arab>
+<Description>Montant saisi manuellement sur le bulletin (pas de formule). Gain. Soumise a : cotisable, imposable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>مبلغ يُدخل يدوياً في القسيمة (بلا صيغة) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -1961,6 +2145,8 @@
 <Code>IZONE</Code>
 <Libelle>I.ZONE</Libelle>
 <Libelle_Arab>علاوة المنطقة</Libelle_Arab>
+<Description>Montant saisi manuellement sur le bulletin (pas de formule). Gain. Soumise a : cotisable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>مبلغ يُدخل يدوياً في القسيمة (بلا صيغة) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -1980,6 +2166,8 @@
 <Rubrique>
 <Code>MIFR</Code>
 <Libelle>M.I.F.R.</Libelle>
+<Description>Calcul : 11.25 x [nombre d'enfants majeurs]. Gain. Soumise a : ni cotisation ni impot. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>القاعدة 11.25 × [عدد الأبناء البالغين] — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>1</Code_Automatique>
@@ -2001,6 +2189,8 @@
 <Rubrique>
 <Code>MRAP</Code>
 <Libelle>Montant rappel</Libelle>
+<Description>Montant saisi manuellement sur le bulletin (pas de formule). Gain. Soumise a : ni cotisation ni impot. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>مبلغ يُدخل يدوياً في القسيمة (بلا صيغة) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -2021,6 +2211,8 @@
 <Code>NETPAIE</Code>
 <Libelle>Net à Payer</Libelle>
 <Libelle_Arab>الربح الصافي</Libelle_Arab>
+<Description>Rubrique net a payer. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab></Description_Arab>
 <Code_Impression_Bulletin>1</Code_Impression_Bulletin>
 <Code_Nature>4</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -2041,6 +2233,8 @@
 <Code>NETSAF</Code>
 <Libelle>Net sans AF</Libelle>
 <Libelle_Arab>الربح دون المنح العائلية</Libelle_Arab>
+<Description>Formule/montant : [Net a payer]-[Allocation familiale]-[M.I.F.R.]-[Salaire unique]. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>الصيغة/المبلغ: [الربح الصافي]-[المنح العائلية]-[M.I.F.R.]-[الأجرة الوحيدة]</Description_Arab>
 <Code_Impression_Bulletin>1</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>1</Code_Automatique>
@@ -2062,6 +2256,8 @@
 <Code>NHABS</Code>
 <Libelle>Nombre total d&apos;heure d&apos;absence</Libelle>
 <Libelle_Arab>العدد الإجمالي لساعات الغيابات</Libelle_Arab>
+<Description>Rubrique variable de temps (jours/heures). Formule/montant : [jours absence normale]+[jours mise a pied]+[jours maladie]. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>الصيغة/المبلغ: [أيام الغياب العادي]+[أيام التوقيف]+[أيام المرض]</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>5</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -2083,6 +2279,8 @@
 <Code>NHAN</Code>
 <Libelle>Nombre d&apos;heure d&apos;absence normale</Libelle>
 <Libelle_Arab>عدد ساعات الغيابات العادية</Libelle_Arab>
+<Description>Rubrique variable de temps (jours/heures). [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab></Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>5</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -2103,6 +2301,8 @@
 <Code>NHMAL</Code>
 <Libelle>Nombre d&apos;heure de maladie</Libelle>
 <Libelle_Arab>عدد ساعات الغيابات المرضية</Libelle_Arab>
+<Description>Rubrique variable de temps (jours/heures). [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab></Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>5</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -2123,6 +2323,8 @@
 <Code>NHMAP</Code>
 <Libelle>Nombre d&apos;heure de mise à piéd</Libelle>
 <Libelle_Arab>عدد ساعات التوقيف</Libelle_Arab>
+<Description>Rubrique variable de temps (jours/heures). [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab></Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>5</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -2143,6 +2345,8 @@
 <Code>NHMOIS</Code>
 <Libelle>Nombre d&apos;heure du Mois</Libelle>
 <Libelle_Arab>عدد ساعات الشهر</Libelle_Arab>
+<Description>Rubrique variable de temps (jours/heures). Formule/montant : 108.33. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>الصيغة/المبلغ: 108.33</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>5</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -2164,6 +2368,8 @@
 <Code>NHT</Code>
 <Libelle>Nombre d&apos;heures Travaillées</Libelle>
 <Libelle_Arab>عدد ساعات العمل</Libelle_Arab>
+<Description>Rubrique variable de temps (jours/heures). [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab></Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>5</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -2184,6 +2390,8 @@
 <Code>NJABS</Code>
 <Libelle>Nombre total de jour d&apos;absence</Libelle>
 <Libelle_Arab>العدد الإجمالي للغيابات</Libelle_Arab>
+<Description>Rubrique variable de temps (jours/heures). Formule/montant : [jours absence normale]+[jours mise a pied]+[jours maladie]. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>الصيغة/المبلغ: [أيام الغياب العادي]+[أيام التوقيف]+[أيام المرض]</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>5</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -2205,6 +2413,8 @@
 <Code>NJAN</Code>
 <Libelle>Nombre de jour d&apos;absence normale</Libelle>
 <Libelle_Arab>عدد أيام الغيابات العادية</Libelle_Arab>
+<Description>Rubrique variable de temps (jours/heures). [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab></Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>5</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -2225,6 +2435,8 @@
 <Code>NJMAL</Code>
 <Libelle>Nombre de jour de maladie</Libelle>
 <Libelle_Arab>عدد أيام الغيابات المرضية</Libelle_Arab>
+<Description>Rubrique variable de temps (jours/heures). [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab></Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>5</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -2245,6 +2457,8 @@
 <Code>NJMAP</Code>
 <Libelle>Nombre de jour de mise à piéd</Libelle>
 <Libelle_Arab>عدد أيام التوقيف</Libelle_Arab>
+<Description>Rubrique variable de temps (jours/heures). [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab></Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>5</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -2265,6 +2479,8 @@
 <Code>NJMOIS</Code>
 <Libelle>Nombre de Jour du Mois</Libelle>
 <Libelle_Arab>عدد أيام الشهر</Libelle_Arab>
+<Description>Rubrique variable de temps (jours/heures). Formule/montant : EVAL(IFF([Code_Statut] = 4,26,30)). [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>الصيغة/المبلغ: EVAL(IFF([Code_Statut] = 4,26,30))</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>5</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -2286,6 +2502,8 @@
 <Code>NJT</Code>
 <Libelle>Nombre de Jours Travaillés</Libelle>
 <Libelle_Arab>عدد أيام العمل</Libelle_Arab>
+<Description>Rubrique variable de temps (jours/heures). [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab></Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>5</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -2306,6 +2524,8 @@
 <Code>P.A.PM</Code>
 <Libelle>Prime d&quot;astreinte PM </Libelle>
 <Libelle_Arab>ت.إلزام ش.ط</Libelle_Arab>
+<Description>Montant saisi manuellement sur le bulletin (pas de formule). Gain. Soumise a : cotisable, imposable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>مبلغ يُدخل يدوياً في القسيمة (بلا صيغة) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -2326,6 +2546,8 @@
 <Code>P.A.PM%</Code>
 <Libelle>Prime d&apos;astreinte PM 25%</Libelle>
 <Libelle_Arab>ت.إلزام ش.ط 25%</Libelle_Arab>
+<Description>Pourcentage : 25 % x ([Salaire de base]+[IEP]). Gain. Soumise a : cotisable, imposable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>نسبة 25% من ([الأجر القاعدي]+[منحة الخبرة]) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -2348,6 +2570,8 @@
 <Code>P.R</Code>
 <Libelle>P.Rendement</Libelle>
 <Libelle_Arab>م المردودية</Libelle_Arab>
+<Description>Montant saisi manuellement sur le bulletin (pas de formule). Gain. Soumise a : cotisable, imposable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>مبلغ يُدخل يدوياً في القسيمة (بلا صيغة) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -2368,6 +2592,8 @@
 <Code>IRG</Code>
 <Libelle>Impot sur le Revenu Global</Libelle>
 <Libelle_Arab>الضريبة على الدخل الاجمالي</Libelle_Arab>
+<Description>Valeur donnee par le grille personnalisee (IRG). Retenue. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>اقتطاع</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>3</Code_Automatique>
@@ -2388,6 +2614,8 @@
 <Code>NetIMPOS</Code>
 <Libelle>Net Imposable</Libelle>
 <Libelle_Arab>الاجر الخاضع للضريبة</Libelle_Arab>
+<Description>Rubrique net imposable. Formule/montant : 999. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>الصيغة/المبلغ: 999</Description_Arab>
 <Code_Impression_Bulletin>1</Code_Impression_Bulletin>
 <Code_Nature>3</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -2409,6 +2637,8 @@
 <Code>P.RENDEMENT30%</Code>
 <Libelle>P.RENDEMENT30%</Libelle>
 <Libelle_Arab>ع.مردودية 30%</Libelle_Arab>
+<Description>Pourcentage : 30 % x ([Salaire de base]+[IEP]). Gain. Soumise a : cotisable, imposable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>نسبة 30% من ([الأجر القاعدي]+[منحة الخبرة]) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -2430,6 +2660,8 @@
 <Rubrique>
 <Code>PINTER</Code>
 <Libelle>P.INTERES</Libelle>
+<Description>Montant saisi manuellement sur le bulletin (pas de formule). Gain. Soumise a : cotisable, imposable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>مبلغ يُدخل يدوياً في القسيمة (بلا صيغة) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -2450,6 +2682,8 @@
 <Code>PR_P</Code>
 <Libelle>PR_P</Libelle>
 <Libelle_Arab>مرد.م</Libelle_Arab>
+<Description>Montant saisi manuellement sur le bulletin (pas de formule). Gain. Soumise a : cotisable, imposable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>مبلغ يُدخل يدوياً في القسيمة (بلا صيغة) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -2469,6 +2703,8 @@
 <Rubrique>
 <Code>PRI</Code>
 <Libelle>P.R.I</Libelle>
+<Description>Montant saisi manuellement sur le bulletin (pas de formule). Gain. Soumise a : cotisable, imposable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>مبلغ يُدخل يدوياً في القسيمة (بلا صيغة) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -2489,6 +2725,8 @@
 <Code>Rapp</Code>
 <Libelle>Rap.Daver</Libelle>
 <Libelle_Arab>إستدراك م</Libelle_Arab>
+<Description>Montant saisi manuellement sur le bulletin (pas de formule). Gain. Soumise a : ni cotisation ni impot. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>مبلغ يُدخل يدوياً في القسيمة (بلا صيغة) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -2509,6 +2747,8 @@
 <Code>Rappel+</Code>
 <Libelle>Rappel+</Libelle>
 <Libelle_Arab>إستدراك</Libelle_Arab>
+<Description>Montant saisi manuellement sur le bulletin (pas de formule). Gain. Soumise a : ni cotisation ni impot. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>مبلغ يُدخل يدوياً في القسيمة (بلا صيغة) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -2529,6 +2769,8 @@
 <Code>RET.LOYER</Code>
 <Libelle>RETENUE LOYER</Libelle>
 <Libelle_Arab>خصم السكن</Libelle_Arab>
+<Description>Retenue. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>اقتطاع</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -2549,6 +2791,8 @@
 <Code>RET.SOLID.N</Code>
 <Libelle>RET.SOLID.NATIONALE</Libelle>
 <Libelle_Arab>خصم التضامن الوطني</Libelle_Arab>
+<Description>Retenue. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>اقتطاع</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -2569,6 +2813,8 @@
 <Code>RET.T.P</Code>
 <Libelle>RET.POUR TRESORIER PRINCIPAL</Libelle>
 <Libelle_Arab>حسم لصالح الخزينة الرئيسية</Libelle_Arab>
+<Description>Retenue. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>اقتطاع</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -2589,6 +2835,8 @@
 <Code>RET.TELEPHO</Code>
 <Libelle>RETENUE INDEMNITE TELEPHO</Libelle>
 <Libelle_Arab>خصم الهاتف</Libelle_Arab>
+<Description>Retenue. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>اقتطاع</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -2609,6 +2857,8 @@
 <Code>RETABS</Code>
 <Libelle>Retenue Absence</Libelle>
 <Libelle_Arab>خصم الغيابات</Libelle_Arab>
+<Description>Retenue. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>اقتطاع</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -2629,6 +2879,8 @@
 <Code>RETDIV</Code>
 <Libelle>RET.DIV</Libelle>
 <Libelle_Arab>خصم مختلف</Libelle_Arab>
+<Description>Retenue. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>اقتطاع</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -2649,6 +2901,8 @@
 <Code>ROS</Code>
 <Libelle>RET.O.S</Libelle>
 <Libelle_Arab>إقتطاع لصالح الخدمات .إ</Libelle_Arab>
+<Description>Retenue. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>اقتطاع</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -2668,6 +2922,8 @@
 <Rubrique>
 <Code>S.PERM</Code>
 <Libelle>S.PERMNT</Libelle>
+<Description>Montant saisi manuellement sur le bulletin (pas de formule). Gain. Soumise a : cotisable, imposable, reduite par les absences. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>مبلغ يُدخل يدوياً في القسيمة (بلا صيغة) — منحة</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -2688,6 +2944,8 @@
 <Code>SBASE</Code>
 <Libelle>Salaire de Base</Libelle>
 <Libelle_Arab>الأجر القاعدي</Libelle_Arab>
+<Description>Rubrique salaire de base. Valeur donnee par le bareme par classe/echelon (grille). Pourcentage : 25 % x ([Salaire de base]+[IEP 1.4 (vacataire)]). [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>نسبة 25% من ([الأجر القاعدي]+[خبرة 1.4])</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>1</Code_Nature>
 <Code_Automatique>1</Code_Automatique>
@@ -2710,6 +2968,8 @@
 <Code>SBRUT</Code>
 <Libelle>Salaire Brut</Libelle>
 <Libelle_Arab>الأجر الخام</Libelle_Arab>
+<Description>Rubrique total brut. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab></Description_Arab>
 <Code_Impression_Bulletin>1</Code_Impression_Bulletin>
 <Code_Nature>2</Code_Nature>
 <Code_Automatique>0</Code_Automatique>
@@ -2730,6 +2990,8 @@
 <Code>TOTAF</Code>
 <Libelle>TOTAL AF</Libelle>
 <Libelle_Arab>مجموع المنح العائلية</Libelle_Arab>
+<Description>Formule/montant : [M.I.F.R.]+[Salaire unique]+[Allocation familiale]. [A confirmer / corriger par l'utilisateur]</Description>
+<Description_Arab>الصيغة/المبلغ: [M.I.F.R.]+[الأجرة الوحيدة]+[المنح العائلية]</Description_Arab>
 <Code_Impression_Bulletin>0</Code_Impression_Bulletin>
 <Code_Nature>0</Code_Nature>
 <Code_Automatique>1</Code_Automatique>
