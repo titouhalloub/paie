@@ -1907,16 +1907,10 @@ function doRappel() {
       if(g7&&iepV>0){var bb2=-1,bd2=1e9,e4,p4;for(e4=0;e4<=12;e4++){p4=(e4>0)?g7[1][e4-1]:0;if(Math.abs(p4-iepV/PTV)<bd2){bd2=Math.abs(p4-iepV/PTV);bb2=e4;}}if(bb2>=0&&bd2<=1.5)echP=bb2;}
       catP=String(yc);cl.catAnchored=true;
     }
-    if(mo&&mo.fixed&&!cl.catAnchored){
-      if(String(mo.cat)!==String(catP)){warnOnce(e.mat+" "+e.name+": categorie "+catP+" lue au bulletin "+ref.period+" ramenee a "+mo.cat+" (la carriere ne descend pas).");catP=String(mo.cat);}
-      if(mo.ech>=0&&mo.ech!==echP&&String(mo.cat)===String(cl.cat)){warnOnce(e.mat+" "+e.name+": echelon "+echP+" lu au bulletin "+ref.period+" ramene a "+mo.ech+" (la carriere ne descend pas).");echP=mo.ech;}
-      else if(mo.ech<0){var g0=GRIDS[ref.gk||gk],g1=g0&&g0[catP];if(g1&&iepV>0){var bb=-1,bdd=1e9,e3,p3;for(e3=0;e3<=12;e3++){p3=(e3>0)?g1[1][e3-1]:0;if(Math.abs(p3-iepV/PTV)<bdd){bdd=Math.abs(p3-iepV/PTV);bb=e3;}}if(bb>=0)echP=bb;}}
-    }
+    if(mo&&mo.fixed&&!cl.catAnchored&&String(mo.cat)!==String(catP)){warnOnce(e.mat+" "+e.name+": categorie "+catP+" lue au bulletin "+ref.period+" ramenee a "+mo.cat+" (la carriere ne descend pas).");catP=String(mo.cat);}
     if(catFound&&catP!==key)warnOnce(e.mat+" "+e.name+": categorie "+catP+" (et non "+key+") sur la grille "+gk+" d apres les bulletins de reference.");
-    var gg=G[catP];
-    if(!cl.echFound&&iepV>0)warnOnce(e.mat+" "+e.name+": l IEP du bulletin "+ref.period+" ne correspond a aucun echelon de la categorie "+catP+" ; echelon "+oe+" utilise.");
-    var newE=ne;
-    if(echP!==oe){newE=Math.max(0,Math.min(12,echP+(ne-oe)));warnOnce(e.mat+" "+e.name+": echelon "+echP+" (et non "+oe+") sur la grille "+gk+" ; nouvel echelon "+newE+".");}
+    /* seule la DERNIERE promotion compte : l echelon paye autrefois est ignore, seules les categories evoluent selon les periodes des grilles */
+    echP=oe;var newE=ne;
     if(newE===echP)return null;
     var oldIdx=rpIdx(G,catP,echP),newIdx=rpIdx(G,catP,newE);
     if(!oldIdx||!newIdx||oldIdx.total===0){warnOnce(e.mat+": indice impossible pour "+gk+", categorie "+catP+".");return null;}
@@ -2414,6 +2408,7 @@ function rpBuildSheetsAt(prof) {
     if(d.rows[i].info){row.push(xr(d.rows[i][0]));row.push(xr(d.rows[i][1]));row.push(X("S",d.rows[i].info,"cxa",nc-3));row.h=ROWH;gRows.push(row);continue;}
     if(rv(d.rows[i][2])==="ANCIEN SALAIRE"){var pr=[X("S",T("Periode couverte")+" : "+rv(d.rows[i][4]),"cxa",nc-1)];pr.h=ROWH;gRows.push(pr);}
     for(j=0;j<nc;j++){c=keep[j]>=0?d.rows[i][keep[j]]:((d.rows[i].ixc||[])[-keep[j]-1]||"E");row.push(xr(c,bold?(rt(c)==="N"?"bn":"bf"):undefined));}
+    if(rv(d.rows[i][2])==='NOUVEAU SALAIRE'||rv(d.rows[i][2])==='RAPPEL')row[1]=X("E","");
     row.h=ROWH;gRows.push(row);
     if(bold){groups.push({rows:gRows,tot:d.rows[i],h:gRows.length*ROWH,mat:rv(d.rows[i][0])});gRows=[];}
   }
@@ -2444,6 +2439,7 @@ function rpBuildSheetsAt(prof) {
     return /admin|commun|ouvrier|professionnel|chauffeur|securite|secretaire/i.test(corpsOf["k"+mat]||"")?30:35;
   }
   function cellN(v,st){return X("N",""+r2(v),st);}
+  function rendSheet(srcR,nm,per){
   var rw=[58,135,50,95,55,45,55,95,85,85,95],rnc=rw.length,rg=[],curRows=[],acc=[0,0,0,0,0];
   var rcols=["Matricule","Nom et prenom","Jours rappel (base 30j)","Salaire principal (Base + IEP)","Taux max %","Note /40","Taux effectif %","Prime de rendement","Retenue C.S 9%","IRG 10%","Net a payer"];
   function pv(r){var s1=0;if(ib>=0)s1+=parseFloat(rv(r[ib]))||0;if(ie>=0)s1+=parseFloat(rv(r[ie]))||0;return s1;}
@@ -2452,19 +2448,19 @@ function rpBuildSheetsAt(prof) {
     var r=[X("S",l1+(l2&&l2!==l1&&l2!==T("TOTAL EMPLOYE")?"  "+l2:""),"bf"),X("E","","bf"),X("E","","bf"),cellN(v[0],"bn"),X("E","","bf"),X("E","","bf"),X("E","","bf"),cellN(v[1],"bn"),cellN(v[2],"bn"),cellN(v[3],"bn"),cellN(v[4],"bn")];
     r.h=ROWH;return r;
   }
-  for(i=0;i<d.detailRows.length;i++){
-    var dr=d.detailRows[i],nat=rv(dr[2]),mat=rv(dr[0]),eff=rateFor(mat)*note/40;
+  for(i=0;i<srcR.length;i++){
+    var dr=srcR[i],nat=rv(dr[2]),mat=rv(dr[0]),eff=rateFor(mat)*note/40;
     if(nat==="TOTAL EMPLOYE"){
       row=rendTot(rv(dr[0]),T("TOTAL EMPLOYE"),acc);
       row[1]=X("S",rv(dr[1]),"bf");curRows.push(row);
       var tr=[];tr[3]="N"+r2(acc[0]);tr[7]="N"+r2(acc[1]);tr[8]="N"+r2(acc[2]);tr[9]="N"+r2(acc[3]);tr[10]="N"+r2(acc[4]);
-      rg.push({rows:curRows,tot:tr,h:curRows.length*ROWH});curRows=[];acc=[0,0,0,0,0];continue;
+      rg.push({rows:curRows,tot:tr,h:curRows.length*ROWH,mat:mat});curRows=[];acc=[0,0,0,0,0];continue;
     }
     if(nat!=="ANCIEN SALAIRE"&&nat!=="NOUVEAU SALAIRE"&&nat!=="RAPPEL")continue;
     var princ=pv(dr),prime=r2(princ*eff/100),am=amounts(prime);
     if(nat==="RAPPEL"){acc[0]+=princ;acc[1]+=prime;acc[2]+=am.cs;acc[3]+=am.irg;acc[4]+=am.net;}
     if(nat==="ANCIEN SALAIRE"){var rpr=[X("S",T("Periode couverte")+" : "+rv(dr[4]),"cxa",rnc-1)];rpr.h=ROWH;curRows.push(rpr);}
-    row=[xr(dr[0]),xr(dr[1]),xr(dr[5]),cellN(princ,"n"),cellN(rateFor(mat),"n"),cellN(note,"n"),cellN(eff,"n"),cellN(prime,"n"),cellN(am.cs,"n"),cellN(am.irg,"n"),cellN(am.net,"n")];
+    row=[xr(dr[0]),(nat==="ANCIEN SALAIRE")?xr(dr[1]):X("E",""),xr(dr[5]),cellN(princ,"n"),cellN(rateFor(mat),"n"),cellN(note,"n"),cellN(eff,"n"),cellN(prime,"n"),cellN(am.cs,"n"),cellN(am.irg,"n"),cellN(am.net,"n")];
     row.h=ROWH;curRows.push(row);
   }
   function rtot(list,col){var s0=0,q;for(q=0;q<list.length;q++){var cc=list[q].tot[col];if(cc)s0+=parseFloat(rv(cc));}return r2(s0);}
@@ -2472,7 +2468,8 @@ function rpBuildSheetsAt(prof) {
   function rPageTotal(list,no,cnt){var r=rendTot(T("TOTAL PAGE"),no+" / "+cnt,rSums(list));r.h=TOTH;return r;}
   var rfoot=rendTot(T("TOTAL GENERAL"),T("TOTAL GENERAL"),rSums(rg));rfoot.h=FOOTH;
   var rHdr=[];for(i=0;i<rnc;i++)rHdr.push(X("S",T(rcols[i]),"h"));
-  var rSheet=rpBandSheet({name:T("Rendement"),label:T("Rendement"),nc:rnc,idN:2,groups:rg,hdr:rHdr,head:function(nn,rows){headBlock(nn,titleRend,rows);},pageTotal:rPageTotal,foot:rfoot,signoff:true},prof);
+  return rpBandSheet({name:nm,label:nm,nc:rnc,idN:2,groups:rg,hdr:rHdr,head:function(nn,rows){headBlock(nn,titleRend,rows,null,per);},pageTotal:rPageTotal,foot:rfoot,signoff:true},prof);
+  }
 
   /* ---------- recap sheet ---------- */
   var rkeep=[0,1,2,3,4,5,6,9,11];
@@ -2592,7 +2589,9 @@ function rpBuildSheetsAt(prof) {
       for(q=0;q<3;q++)cells.push(xr(rw0[cidx[q]],isTot?"bf":undefined));
       for(q=0;q<6;q++){if(q===4||q===5)continue;var xc=(rw0.ixc||[])[q]||"E";cells.push(xr(xc,isTot?"bf":undefined));}
       for(q=0;q<vs.length;q++)cells.push(cellN(vs[q],isTot?"bn":"n"));
-      cells.push(cellN(tot0,"bn"));cells.h=ROWH;cur.push(cells);
+      cells.push(cellN(tot0,"bn"));cells.h=ROWH;
+      if(rv(rw0[2])==="NOUVEAU SALAIRE"||rv(rw0[2])==="RAPPEL")cells[1]=X("E","");
+      cur.push(cells);
       if(isTot){
         tt=[];for(q=0;q<vs.length;q++){tt[7+q]="N"+vs[q];sums[q]+=vs[q];}tt[7+vs.length]="N"+tot0;sums[vs.length]+=tot0;
         gl.push({rows:cur,tot:tt,h:cur.length*ROWH,mat:rv(rw0[0])});cur=[];
@@ -2612,12 +2611,14 @@ function rpBuildSheetsAt(prof) {
   function paperNo(nn){return "\u0627\u0644\u0648\u0631\u0642\u0629 \u0631\u0642\u0645 "+nn;}
   var prevData=annualRows(previousYear,true),currData=annualRows(currentYear,false);
   var allDefs=[{label:"Total F2",idx:allIdx(d2)},{label:"Total F3",idx:allIdx(d3)},{label:"Total F4",idx:allIdx(d4)}];
-  var s2=famSheet("Feuille 2",paperNo(2),d2,prevData,annualPeriod(previousYear,true));
-  var s3=famSheet("Feuille 3",paperNo(3),d3,prevData,annualPeriod(previousYear,true));
-  var s4=famSheet("Feuille 4",paperNo(4),d4,prevData,annualPeriod(previousYear,true));
-  var s5=famSheet("Feuille 5",paperNo(5),allDefs,prevData,annualPeriod(previousYear,true));
+  /* feuilles 2-5 = ANNEE EN COURS ; feuille 6 = ANNEES PRECEDENTES (du debut du rappel au 31/12 de l annee precedente) */
+  var hasCur=currData.rows.length>0,hasPrev=prevData.rows.length>0;
+  var s2=hasCur?famSheet("Feuille 2",paperNo(2),d2,currData,annualPeriod(currentYear,false)):null;
+  var s3=hasCur?famSheet("Feuille 3",paperNo(3),d3,currData,annualPeriod(currentYear,false)):null;
+  var s4=hasCur?famSheet("Feuille 4",paperNo(4),d4,currData,annualPeriod(currentYear,false)):null;
+  var s5=hasCur?famSheet("Feuille 5",paperNo(5),allDefs,currData,annualPeriod(currentYear,false)):null;
   /* Feuille 6 = full كشف الاستدراك for the current year, with every salary rubrique. */
-  function annualJournalSheet(source,year){
+  function annualJournalSheet(source,year,fromStart){
     var p6keep=[0,1,5,-1,-2,-3,-4],p6w=[58,115,100,112,62,82,82],p6nc,q,z,rr,bb,sc,pgj,jbreaks=[],ki,tv,jcur=[],jgroups=[],jtot={};
     for(z=7;z<d.cols.length;z++)if(!rpHiddenPrintCol(d.cols[z])&&!rpZeroCol(d,z)){p6keep.push(z);p6w.push(62);}
     p6nc=p6keep.length;
@@ -2628,6 +2629,7 @@ function rpBuildSheetsAt(prof) {
         cells.push(xr(original,bb?(rt(original)==="N"?"bn":"bf"):undefined));
       }
       cells.h=ROWH;
+      if(rv(rr[2])==="NOUVEAU SALAIRE"||rv(rr[2])==="RAPPEL")cells[1]=X("E","");
       if(rv(rr[2])==="ANCIEN SALAIRE"){var ppr=[X("S",T("Periode couverte")+" : "+rv(rr[4]),"cxa",p6nc-1)];ppr.h=ROWH;jcur.push(ppr);}
       jcur.push(cells);
       if(bb){jgroups.push({rows:jcur,tot:rr,h:jcur.length*ROWH,mat:rv(rr[0])});jcur=[];}
@@ -2652,10 +2654,12 @@ function rpBuildSheetsAt(prof) {
     annualFoot.h=FOOTH;
     var p6Labels=[T("Categorie"),T("Echelon"),T("Indice min"),T("Points echelon")];
     var jh=[];for(z=0;z<p6nc;z++){ki=p6keep[z];jh.push(X("S",ki<0?p6Labels[-ki-1]:hdrT(d.cols[ki]),"h"));}
-    return rpBandSheet({name:T("Feuille 6"),label:T("Feuille 6"),nc:p6nc,idN:2,groups:jgroups,hdr:jh,head:function(nn,rows){headBlock(nn,title,rows,null,annualPeriod(year,false));},pageTotal:annualPageTotal,foot:annualFoot,signoff:true},prof);
+    return rpBandSheet({name:T("Feuille 6"),label:T("Feuille 6"),nc:p6nc,idN:2,groups:jgroups,hdr:jh,head:function(nn,rows){headBlock(nn,title,rows,null,annualPeriod(year,!!fromStart));},pageTotal:annualPageTotal,foot:annualFoot,signoff:true},prof);
   }
-  var s6=annualJournalSheet(currData,currentYear);
-  var sheets=[jSheet,s2,s3,s4,s5,s6,rSheet,rcSheet],infoT=[],warnT=[],si2,wi;
+  var s6=hasPrev?annualJournalSheet(prevData,previousYear,true):null;
+  var rCur=hasCur?rendSheet(currData.rows,T("Rendement")+" 2-5",annualPeriod(currentYear,false)):null;
+  var rPrev=hasPrev?rendSheet(prevData.rows,T("Rendement")+" 6",annualPeriod(previousYear,true)):null;
+  var sheets=[jSheet,s2,s3,s4,s5,rCur,s6,rPrev,rcSheet].filter(function(x){return !!x;}),infoT=[],warnT=[],si2,wi;
   for(si2=0;si2<sheets.length;si2++){
     infoT.push(esc(sheets[si2].name)+": "+sheets[si2].pages+" page(s), echelle "+sheets[si2].scale+"% (texte imprime ~"+sheets[si2].eff+" pt)");
     for(wi=0;wi<sheets[si2].warns.length;wi++)warnT.push(sheets[si2].warns[wi]);
