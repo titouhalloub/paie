@@ -1851,14 +1851,26 @@ function doRappel() {
       for(tol=0;tol<=1&&!cand.length;tol++)
         if(minT>0)for(g2 in RG)if(RG.hasOwnProperty(g2)&&Math.abs(RG[g2][0]-minT)<=tol)cand.push(g2);
     }
-    if(cand.length){r.catFound=true;r.cat=cand[0];for(q=0;q<cand.length;q++)if(cand[q]===key){r.cat=key;break;}}
+    if(cand.length){r.catFound=true;r.gkm=gks[gi-1];r.cat=cand[0];for(q=0;q<cand.length;q++)if(cand[q]===key){r.cat=key;break;}}
     var gg=RG[r.cat],ptsT=iepV/PTV,best=-1,bd=1e9,ee,pp;
     if(gg&&iepV>0){for(ee=0;ee<=12;ee++){pp=(ee>0)?gg[1][ee-1]:0;if(Math.abs(pp-ptsT)<bd){bd=Math.abs(pp-ptsT);best=ee;}}}
     if(best>=0&&bd<=1.5){r.ech=best;r.echFound=true;}
     return r;
   }
   /* la carriere ne descend jamais : categorie (puis echelon a categorie egale) non decroissante dans le temps */
-  var monoCache={};
+  var monoCache={},anchorCache={},GORD=["2007","2022","2023","2024"];
+  /* categorie telle que payee avec les valeurs PROPRES a la grille gk (premier bulletin du mois de cette grille qui s y rattache) */
+  function anchorFor(e,key,oe,gk){
+    var ck=lc(e.mat)+"|"+gk;if(anchorCache.hasOwnProperty(ck))return anchorCache[ck];
+    var tl=leadTL["k"+lc(e.mat)],sers=[],s2,i2,t,c,res=null;
+    if(tl){for(s2 in tl)if(tl.hasOwnProperty(s2))sers.push(parseInt(s2,10));sers.sort(function(a,b){return a-b;});}
+    for(i2=0;i2<sers.length&&!res;i2++){
+      if(rpGridAt(Math.floor((sers[i2]-1)/12),(sers[i2]-1)%12+1)!==gk)continue;
+      t=tl[sers[i2]];c=classify(t.sb,t.iep,gk,key,oe);
+      if(t.sb>0&&c.catFound&&c.gkm===gk)res={cat:c.cat};
+    }
+    anchorCache[ck]=res;return res;
+  }
   function monoFor(e,key,oe){
     var mk="k"+lc(e.mat);if(monoCache[mk])return monoCache[mk];
     var tl=leadTL[mk],out={},sers=[],s2,i2,run,t,c;
@@ -1885,7 +1897,18 @@ function doRappel() {
     }
     var cl=classify(sbV,iepV,ref.gk||gk,key,oe),catP=cl.cat,echP=cl.ech,catFound=cl.catFound,mo=monoFor(e,key,oe)[ref.serial];
     if(!catFound)warnOnce(e.mat+" "+e.name+": le salaire de base du bulletin "+ref.period+" ("+r2(sbV)+") ne correspond a aucune categorie de la grille "+(ref.gk||gk)+"; categorie actuelle "+key+" utilisee.");
-    if(mo&&mo.fixed){
+    /* paie versee en retard : le bulletin porte encore les valeurs d une grille plus ancienne que celle du mois.
+       Ce n est pas une periode a part : la categorie est celle de la grille qui couvre la periode (bulletins de cette grille), l echelon reste celui paye. */
+    if(catFound&&cl.gkm&&GORD.indexOf(cl.gkm)<GORD.indexOf(gk)){
+      var anc=anchorFor(e,key,oe,gk);
+      if(anc&&String(anc.cat)!==String(catP)){
+        var g9=GRIDS[ref.gk||gk],g8=GRIDS[cl.gkm],g7=g8&&g8[catP];
+        catP=String(anc.cat);
+        if(g7&&iepV>0){var gA=GRIDS[gk][catP],bb2=-1,bd2=1e9,e4,p4;if(gA){for(e4=0;e4<=12;e4++){p4=(e4>0)?g7[1][e4-1]:0;if(Math.abs(p4-iepV/PTV)<bd2){bd2=Math.abs(p4-iepV/PTV);bb2=e4;}}if(bb2>=0&&bd2<=1.5)echP=bb2;}}
+        cl.catAnchored=true;
+      }
+    }
+    if(mo&&mo.fixed&&!cl.catAnchored){
       if(String(mo.cat)!==String(catP)){warnOnce(e.mat+" "+e.name+": categorie "+catP+" lue au bulletin "+ref.period+" ramenee a "+mo.cat+" (la carriere ne descend pas).");catP=String(mo.cat);}
       if(mo.ech>=0&&mo.ech!==echP&&String(mo.cat)===String(cl.cat)){warnOnce(e.mat+" "+e.name+": echelon "+echP+" lu au bulletin "+ref.period+" ramene a "+mo.ech+" (la carriere ne descend pas).");echP=mo.ech;}
       else if(mo.ech<0){var g0=GRIDS[ref.gk||gk],g1=g0&&g0[catP];if(g1&&iepV>0){var bb=-1,bdd=1e9,e3,p3;for(e3=0;e3<=12;e3++){p3=(e3>0)?g1[1][e3-1]:0;if(Math.abs(p3-iepV/PTV)<bdd){bdd=Math.abs(p3-iepV/PTV);bb=e3;}}if(bb>=0)echP=bb;}}
