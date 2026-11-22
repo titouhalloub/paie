@@ -1,0 +1,53 @@
+{
+ "type": "rappel-projet",
+ "version": 2,
+ "no": "06",
+ "titre": "",
+ "date": "2026-11-23T00:00:00.000Z",
+ "baseDonnees": "E:\\eph\\2026.mdb",
+ "basesReference": [
+  "E:\\eph\\16-11-2026\\Paie September 2021 .mdb",
+  "E:\\eph\\16-11-2026\\Paie Oct 2022.mdb",
+  "E:\\eph\\16-11-2026\\Novembre 2023.mdb"
+ ],
+ "filtres": {
+  "corps": "",
+  "matricules": "",
+  "dateDefaut": "",
+  "finDefaut": "02/2026",
+  "bulletinGlobal": ""
+ },
+ "filtresListe": {
+  "corps": "",
+  "matricules": ""
+ },
+ "grilles": {
+  "g2022": "01/03/2022",
+  "g2023": "01/01/2023",
+  "g2024": "01/01/2024"
+ },
+ "calcul": {
+  "exclure": "",
+  "fixes": "",
+  "calculees": "",
+  "intermediaires": false,
+  "rendTaux": "",
+  "rendNote": "40",
+  "titreEtat": ""
+ },
+ "calcule": false,
+ "corpsNom": "الممارسين الطبيين العامين الصحة العمومية",
+ "source": [
+  "مستخرج الترقية 2025.txt"
+ ],
+ "rapprochement": "noms",
+ "agents": [
+{"mat":"","nom":"بن جقليل محمد","inclure":true,"nouvelEch":"7","dateEffet":"01/01/2026","fin":"12/2026","ech2":"","date2":"","bulletinRef":""},
+{"mat":"","nom":"خالدي عبد النور","inclure":true,"nouvelEch":"2","dateEffet":"01/12/2023","fin":"12/2026","ech2":"","date2":"","bulletinRef":""},
+{"mat":"","nom":"خرموش ضرار","inclure":true,"nouvelEch":"2","dateEffet":"01/02/2024","fin":"12/2026","ech2":"","date2":"","bulletinRef":""},
+{"mat":"","nom":"زوغة مصطفى","inclure":true,"nouvelEch":"4","dateEffet":"01/08/2025","fin":"12/2026","ech2":"","date2":"","bulletinRef":""},
+{"mat":"","nom":"سنقرة نجاة","inclure":true,"nouvelEch":"2","dateEffet":"01/06/2024","fin":"12/2026","ech2":"","date2":"","bulletinRef":""},
+{"mat":"","nom":"فار ورود","inclure":true,"nouvelEch":"2","dateEffet":"01/11/2025","fin":"12/2026","ech2":"","date2":"","bulletinRef":""},
+{"mat":"","nom":"مرزق الحسين","inclure":true,"nouvelEch":"4","dateEffet":"01/12/2025","fin":"12/2026","ech2":"","date2":"","bulletinRef":""}
+ ]
+}
