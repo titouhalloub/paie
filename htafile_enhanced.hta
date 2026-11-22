@@ -2913,11 +2913,11 @@ function rpApplyState(st){
   for(j=0;j<ags.length;j++){a=ags[j];if((a.mat===undefined||a.mat===""||byMat["k"+a.mat]===undefined)&&a.nom){nmv[j]=rpMatchName(a.nom,rpEmployees,taken);if(nmv[j]&&!nmv[j].amb)ncnt[nmv[j].idx]=(ncnt[nmv[j].idx]||0)+1;}}
   for(j=0;j<ags.length;j++){
     a=ags[j];idx=(a.mat!==undefined&&a.mat!=="")?byMat["k"+a.mat]:undefined;
-    var viaName=false,uncheck=false;
+    var viaName=false,uncheck=false;if(!seen.__n)seen.__n=0;
     if(idx===undefined&&a.nom){
       var mm=nmv[j];
       if(mm&&(mm.amb||ncnt[mm.idx]>1)){ambig.push(a.nom);continue;}
-      if(mm){idx=mm.idx;taken[idx]=true;viaName=true;if(mm.tier<3){uncheck=true;approx.push(a.nom+" = "+rpEmployees[idx].name+" ("+rpEmployees[idx].mat+")");}}
+      if(mm){idx=mm.idx;taken[idx]=true;viaName=true;seen.__n++;if(mm.tier<3){uncheck=true;approx.push(a.nom+" = "+rpEmployees[idx].name+" ("+rpEmployees[idx].mat+")");}}
     }
     if(idx===undefined){missing.push(a.mat||a.nom);continue;}
     seen[idx]=true;
@@ -2940,7 +2940,7 @@ function rpApplyState(st){
   setVal("rpRendRate",c.rendTaux);setVal("rpRendNote",c.rendNote);setVal("rpTitle",c.titreEtat);
   rpLastFilter={corps:lf.corps||"",matricules:lf.matricules||""};
   rpUpdateSelCount();
-  return {ok:true,warns:w,calc:!!st.calcule};
+  return {ok:true,warns:w,calc:!!st.calcule,byName:seen.__n||0};
 }
 function rpOpenProject(no){
   no=trim(no===undefined?$("rpProjNo").value:no);
@@ -2958,7 +2958,7 @@ function rpOpenProject(no){
   try{r=rpApplyState(st);}catch(e2){msg.innerHTML='<span class="err">Ouverture impossible : '+esc(errText(e2))+'</span>';return;}
   if(!r.ok){msg.innerHTML='<span class="err">'+esc(r.msg)+'</span>'+(r.warns.length?'<br><span class="muted">'+esc(r.warns.join(" | "))+'</span>':'');return;}
   rpCurrentProject=no;rpSetSelVal("rpProjSel",no);
-  msg.innerHTML='<span class="ok">Projet '+esc(no)+' charge ('+st.agents.length+' agent(s)).</span>'+(r.calc?' <span class="muted">Recalcul en cours...</span>':' <span class="muted">Vous pouvez continuer.</span>')+
+  msg.innerHTML='<span class="ok">Projet '+esc(no)+' charge ('+st.agents.length+' agent(s)'+(r.byName?', '+r.byName+' rapproche(s) par nom':'')+').</span>'+(r.calc?' <span class="muted">Recalcul en cours...</span>':' <span class="muted">Vous pouvez continuer.</span>')+
     (r.warns.length?'<br><span class="err">A verifier : '+esc(r.warns.join(" | "))+'</span>':'');
   if(r.calc)rpRun();                                        // the project was saved with results on screen: rebuild them
 }
