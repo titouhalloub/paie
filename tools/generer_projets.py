@@ -119,35 +119,52 @@ def main():
     upd['calcule'] = False
     write_project(os.path.join(a.sortie, '01.json'), upd)
 
-    # 3) un projet par سلك pour les agents qui ne sont pas dans le modele
-    groups = collections.OrderedDict()
+    # 3) un projet par CORPS de la base (et non par intitule de grade du decision) ; les paramedicaux (corps du modele) restent dans le projet 01
+    CORPS = collections.OrderedDict([
+        ('800', 'Biologistes S.P'), ('1200', 'Psychologues de santé publique'), ('1100', 'Auxiliaires médicaux en anesthesie - réanimation de santé publique'),
+        ('1000', 'Sages femmes de sante publique'), ('100', 'Praticiens Médicaux'), ('1400', 'Praticiens médicaux spécialistes s.p')])
+    def corps_code(t):
+        if 'التخذير' in t or 'التخدير' in t: return '1100'
+        if 'البيولوجي' in t: return '800'
+        if 'النفساني' in t: return '1200'
+        if 'القابلات' in t: return '1000'
+        if 'المتخصصين' in t: return '1400'
+        if 'الممارسين' in t: return '100'
+        return model['filtres'].get('corps') or '200'      # infirmiers, aides-soignants, laborantins... = paramedicaux
+    fin = model['agents'][0]['fin'] if model['agents'] else '12/2026'
+    def mk(r):
+        return dict(mat='', nom=r['nom'], inclure=True, nouvelEch=str(int(r['ech_new'])), dateEffet=r['eff_new'], fin=fin, ech2='', date2='', bulletinRef='')
+    extra = collections.defaultdict(list)
     for i, r in enumerate(recs):
-        if i in known:
-            continue
-        groups.setdefault(r['corps'], []).append(r)
-    order = sorted(groups.items(), key=lambda kv: -len(kv[1]))
+        if i not in known:
+            extra[corps_code(r['corps'])].append(r)
+    base_code = model['filtres'].get('corps') or '200'
+    n_extra = len(extra.get(base_code, []))
+    if n_extra:
+        upd['agents'] += [mk(r) for r in sorted(extra[base_code], key=lambda z: z['nom'])]
+        write_project(os.path.join(a.sortie, '01.json'), upd)
     summary = []
-    for k, (corps, lst) in enumerate(order):
-        no = '%02d' % (a.premier + k)
+    k = a.premier
+    for code, label in CORPS.items():
+        lst = extra.get(code)
+        if not lst:
+            continue
+        no = '%02d' % k; k += 1
         pr = json.loads(json.dumps(model))
         pr['no'] = no
         pr['titre'] = ''
         pr['date'] = '2026-11-23T00:00:00.000Z'
         pr['calcule'] = False
-        pr['filtres'] = dict(pr['filtres'], corps='', matricules='')
-        pr['filtresListe'] = dict(corps='', matricules='')
-        pr['corpsNom'] = corps
+        pr['filtres'] = dict(pr['filtres'], corps=code, matricules='')
+        pr['filtresListe'] = dict(corps=code, matricules='')
+        pr['corpsNom'] = label
         pr['source'] = sorted(set(x['fichier'] for x in lst))
         pr['rapprochement'] = 'noms'
-        fin = model['agents'][0]['fin'] if model['agents'] else '12/2026'
-        pr['agents'] = [dict(mat='', nom=x['nom'], inclure=True, nouvelEch=str(int(x['ech_new'])), dateEffet=x['eff_new'], fin=fin, ech2='', date2='', bulletinRef='') for x in sorted(lst, key=lambda z: z['nom'])]
+        pr['agents'] = [mk(x) for x in sorted(lst, key=lambda z: z['nom'])]
         write_project(os.path.join(a.sortie, no + '.json'), pr)
-        summary.append((no, corps, len(lst)))
-    print('Projet 01 (corps du modele) : %d agents rapproches, %d dates nouvellement renseignees' % (len(known), nb_new))
-    for d in diffs:
-        print('  ECART avec la saisie manuelle :', d)
-    for s in summary:
-        print('Projet %s : %s (%d agents)' % s)
+        summary.append((no, '%s [%s]' % (label, code), len(lst)))
+    if n_extra:
+        summary.insert(0, ('01', 'Paramedicaux [%s] : %d agents ajoutes par nom' % (base_code, n_extra), len(upd['agents'])))
     matched_ids = set(id(v) for v in known.values())
     for ag in model['agents']:
         if ag.get('inclure') and ag.get('dateEffet') and ag['mat'] in index and id(ag) not in matched_ids:

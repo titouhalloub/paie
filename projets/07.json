@@ -11,14 +11,14 @@
   "E:\\eph\\16-11-2026\\Novembre 2023.mdb"
  ],
  "filtres": {
-  "corps": "",
+  "corps": "1400",
   "matricules": "",
   "dateDefaut": "",
   "finDefaut": "02/2026",
   "bulletinGlobal": ""
  },
  "filtresListe": {
-  "corps": "",
+  "corps": "1400",
   "matricules": ""
  },
  "grilles": {
@@ -36,17 +36,23 @@
   "titreEtat": ""
  },
  "calcule": false,
- "corpsNom": "البيولوجيين في الصحة العمومية",
+ "corpsNom": "Praticiens médicaux spécialistes s.p",
  "source": [
-  "مستخرج الترقية شبه الطبيين 2025.txt"
+  "مستخرج الترقية 2025.txt"
  ],
  "rapprochement": "noms",
  "agents": [
-{"mat":"","nom":"بوالكور رفية","inclure":true,"nouvelEch":"5","dateEffet":"01/07/2024","fin":"12/2026","ech2":"","date2":"","bulletinRef":""},
-{"mat":"","nom":"قبلة أسماء","inclure":true,"nouvelEch":"2","dateEffet":"01/10/2025","fin":"12/2026","ech2":"","date2":"","bulletinRef":""},
-{"mat":"","nom":"كيدار بركانة","inclure":true,"nouvelEch":"1","dateEffet":"01/09/2024","fin":"12/2026","ech2":"","date2":"","bulletinRef":""},
-{"mat":"","nom":"لهزيل ايمان","inclure":true,"nouvelEch":"4","dateEffet":"01/07/2024","fin":"12/2026","ech2":"","date2":"","bulletinRef":""},
-{"mat":"","nom":"نجمة دنيا","inclure":true,"nouvelEch":"5","dateEffet":"01/11/2024","fin":"12/2026","ech2":"","date2":"","bulletinRef":""},
-{"mat":"","nom":"هلوب فطيمة","inclure":true,"nouvelEch":"4","dateEffet":"01/12/2024","fin":"12/2026","ech2":"","date2":"","bulletinRef":""}
+{"mat":"","nom":"بوغرارة محمد","inclure":true,"nouvelEch":"1","dateEffet":"01/12/2024","fin":"12/2026","ech2":"","date2":"","bulletinRef":""},
+{"mat":"","nom":"بولحبال صفاء","inclure":true,"nouvelEch":"3","dateEffet":"01/07/2025","fin":"12/2026","ech2":"","date2":"","bulletinRef":""},
+{"mat":"","nom":"سقال سناء","inclure":true,"nouvelEch":"2","dateEffet":"01/11/2025","fin":"12/2026","ech2":"","date2":"","bulletinRef":""},
+{"mat":"","nom":"سلمان جميلة","inclure":true,"nouvelEch":"6","dateEffet":"01/05/2024","fin":"12/2026","ech2":"","date2":"","bulletinRef":""},
+{"mat":"","nom":"شيبان محمد صديق","inclure":true,"nouvelEch":"1","dateEffet":"01/05/2025","fin":"12/2026","ech2":"","date2":"","bulletinRef":""},
+{"mat":"","nom":"عاشق نادية","inclure":true,"nouvelEch":"1","dateEffet":"01/02/2025","fin":"12/2026","ech2":"","date2":"","bulletinRef":""},
+{"mat":"","nom":"عبدو وليد","inclure":true,"nouvelEch":"2","dateEffet":"01/06/2025","fin":"12/2026","ech2":"","date2":"","bulletinRef":""},
+{"mat":"","nom":"غولة رابعة","inclure":true,"nouvelEch":"2","dateEffet":"01/07/2025","fin":"12/2026","ech2":"","date2":"","bulletinRef":""},
+{"mat":"","nom":"قدماني أميرة","inclure":true,"nouvelEch":"1","dateEffet":"01/06/2024","fin":"12/2026","ech2":"","date2":"","bulletinRef":""},
+{"mat":"","nom":"قعفازي صدام الحسين","inclure":true,"nouvelEch":"1","dateEffet":"01/10/2025","fin":"12/2026","ech2":"","date2":"","bulletinRef":""},
+{"mat":"","nom":"لشهب هجيرة","inclure":true,"nouvelEch":"3","dateEffet":"01/01/2025","fin":"12/2026","ech2":"","date2":"","bulletinRef":""},
+{"mat":"","nom":"محقن فيصل","inclure":true,"nouvelEch":"2","dateEffet":"01/11/2024","fin":"12/2026","ech2":"","date2":"","bulletinRef":""}
  ]
 }

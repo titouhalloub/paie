@@ -11,14 +11,14 @@
   "E:\\eph\\16-11-2026\\Novembre 2023.mdb"
  ],
  "filtres": {
-  "corps": "",
+  "corps": "100",
   "matricules": "",
   "dateDefaut": "",
   "finDefaut": "02/2026",
   "bulletinGlobal": ""
  },
  "filtresListe": {
-  "corps": "",
+  "corps": "100",
   "matricules": ""
  },
  "grilles": {
@@ -36,7 +36,7 @@
   "titreEtat": ""
  },
  "calcule": false,
- "corpsNom": "الممارسين الطبيين العامين الصحة العمومية",
+ "corpsNom": "Praticiens Médicaux",
  "source": [
   "مستخرج الترقية 2025.txt"
  ],

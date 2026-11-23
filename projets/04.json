@@ -11,14 +11,14 @@
   "E:\\eph\\16-11-2026\\Novembre 2023.mdb"
  ],
  "filtres": {
-  "corps": "",
+  "corps": "1100",
   "matricules": "",
   "dateDefaut": "",
   "finDefaut": "02/2026",
   "bulletinGlobal": ""
  },
  "filtresListe": {
-  "corps": "",
+  "corps": "1100",
   "matricules": ""
  },
  "grilles": {
@@ -36,21 +36,18 @@
   "titreEtat": ""
  },
  "calcule": false,
- "corpsNom": "مساعدو التمريض في الصحة العمومية",
+ "corpsNom": "Auxiliaires médicaux en anesthesie - réanimation de santé publique",
  "source": [
   "مستخرج الترقية شبه الطبيين 2025.txt"
  ],
  "rapprochement": "noms",
  "agents": [
-{"mat":"","nom":"بن سالم بشير","inclure":true,"nouvelEch":"4","dateEffet":"01/09/2024","fin":"12/2026","ech2":"","date2":"","bulletinRef":""},
-{"mat":"","nom":"بن مازوز عامر","inclure":true,"nouvelEch":"3","dateEffet":"01/01/2025","fin":"12/2026","ech2":"","date2":"","bulletinRef":""},
-{"mat":"","nom":"حلباوي فاطمة الزهراء","inclure":true,"nouvelEch":"4","dateEffet":"01/02/2024","fin":"12/2026","ech2":"","date2":"","bulletinRef":""},
-{"mat":"","nom":"حلفاية زهرة","inclure":true,"nouvelEch":"1","dateEffet":"01/09/2024","fin":"12/2026","ech2":"","date2":"","bulletinRef":""},
-{"mat":"","nom":"شيبوط ابراهيم","inclure":true,"nouvelEch":"3","dateEffet":"01/03/2024","fin":"12/2026","ech2":"","date2":"","bulletinRef":""},
-{"mat":"","nom":"عبد الآوي لخضر","inclure":true,"nouvelEch":"1","dateEffet":"01/08/2024","fin":"12/2026","ech2":"","date2":"","bulletinRef":""},
-{"mat":"","nom":"غويني عيشة","inclure":true,"nouvelEch":"3","dateEffet":"01/09/2025","fin":"12/2026","ech2":"","date2":"","bulletinRef":""},
-{"mat":"","nom":"لهزيل أيمن زين العابدين","inclure":true,"nouvelEch":"2","dateEffet":"01/10/2024","fin":"12/2026","ech2":"","date2":"","bulletinRef":""},
-{"mat":"","nom":"محمدي أسامة وحيد","inclure":true,"nouvelEch":"1","dateEffet":"01/11/2024","fin":"12/2026","ech2":"","date2":"","bulletinRef":""},
-{"mat":"","nom":"نوي بلقاسم","inclure":true,"nouvelEch":"5","dateEffet":"01/12/2024","fin":"12/2026","ech2":"","date2":"","bulletinRef":""}
+{"mat":"","nom":"الأشهبي شيماء نعيمة","inclure":true,"nouvelEch":"3","dateEffet":"01/01/2026","fin":"12/2026","ech2":"","date2":"","bulletinRef":""},
+{"mat":"","nom":"بوذينة أحمد","inclure":true,"nouvelEch":"3","dateEffet":"01/03/2024","fin":"12/2026","ech2":"","date2":"","bulletinRef":""},
+{"mat":"","nom":"خيراني بشير","inclure":true,"nouvelEch":"4","dateEffet":"01/05/2025","fin":"12/2026","ech2":"","date2":"","bulletinRef":""},
+{"mat":"","nom":"دحمان أحمد لخضر","inclure":true,"nouvelEch":"4","dateEffet":"01/09/2025","fin":"12/2026","ech2":"","date2":"","bulletinRef":""},
+{"mat":"","nom":"كشيدة بن عبد الله","inclure":true,"nouvelEch":"11","dateEffet":"01/12/2024","fin":"12/2026","ech2":"","date2":"","bulletinRef":""},
+{"mat":"","nom":"نائبة علي","inclure":true,"nouvelEch":"4","dateEffet":"01/11/2024","fin":"12/2026","ech2":"","date2":"","bulletinRef":""},
+{"mat":"","nom":"نوري علي","inclure":true,"nouvelEch":"10","dateEffet":"01/07/2024","fin":"12/2026","ech2":"","date2":"","bulletinRef":""}
  ]
 }

@@ -11,14 +11,14 @@
   "E:\\eph\\16-11-2026\\Novembre 2023.mdb"
  ],
  "filtres": {
-  "corps": "",
+  "corps": "800",
   "matricules": "",
   "dateDefaut": "",
   "finDefaut": "02/2026",
   "bulletinGlobal": ""
  },
  "filtresListe": {
-  "corps": "",
+  "corps": "800",
   "matricules": ""
  },
  "grilles": {
@@ -36,23 +36,17 @@
   "titreEtat": ""
  },
  "calcule": false,
- "corpsNom": "القابلات في الصحة العمومية",
+ "corpsNom": "Biologistes S.P",
  "source": [
   "مستخرج الترقية شبه الطبيين 2025.txt"
  ],
  "rapprochement": "noms",
  "agents": [
-{"mat":"","nom":"بلعباس هيفاء الشائعة","inclure":true,"nouvelEch":"10","dateEffet":"01/07/2024","fin":"12/2026","ech2":"","date2":"","bulletinRef":""},
-{"mat":"","nom":"بن حمزة سلمى","inclure":true,"nouvelEch":"4","dateEffet":"01/08/2025","fin":"12/2026","ech2":"","date2":"","bulletinRef":""},
-{"mat":"","nom":"بن خليفة سهيلة","inclure":true,"nouvelEch":"3","dateEffet":"01/01/2025","fin":"12/2026","ech2":"","date2":"","bulletinRef":""},
-{"mat":"","nom":"حميدة فاطنة","inclure":true,"nouvelEch":"8","dateEffet":"01/04/2024","fin":"12/2026","ech2":"","date2":"","bulletinRef":""},
-{"mat":"","nom":"دحمان خولة أمة الرحمان","inclure":true,"nouvelEch":"1","dateEffet":"01/08/2024","fin":"12/2026","ech2":"","date2":"","bulletinRef":""},
-{"mat":"","nom":"دراجي بختة","inclure":true,"nouvelEch":"7","dateEffet":"01/01/2025","fin":"12/2026","ech2":"","date2":"","bulletinRef":""},
-{"mat":"","nom":"سلامي نورة","inclure":true,"nouvelEch":"2","dateEffet":"01/11/2024","fin":"12/2026","ech2":"","date2":"","bulletinRef":""},
-{"mat":"","nom":"صالحي فضيلة","inclure":true,"nouvelEch":"3","dateEffet":"01/08/2025","fin":"12/2026","ech2":"","date2":"","bulletinRef":""},
-{"mat":"","nom":"قماري نعيمة","inclure":true,"nouvelEch":"10","dateEffet":"01/05/2025","fin":"12/2026","ech2":"","date2":"","bulletinRef":""},
-{"mat":"","nom":"قويسم زينب","inclure":true,"nouvelEch":"3","dateEffet":"01/02/2024","fin":"12/2026","ech2":"","date2":"","bulletinRef":""},
-{"mat":"","nom":"كيدار نعيمة","inclure":true,"nouvelEch":"8","dateEffet":"01/02/2025","fin":"12/2026","ech2":"","date2":"","bulletinRef":""},
-{"mat":"","nom":"ناجم خديجة","inclure":true,"nouvelEch":"2","dateEffet":"01/02/2024","fin":"12/2026","ech2":"","date2":"","bulletinRef":""}
+{"mat":"","nom":"بوالكور رفية","inclure":true,"nouvelEch":"5","dateEffet":"01/07/2024","fin":"12/2026","ech2":"","date2":"","bulletinRef":""},
+{"mat":"","nom":"قبلة أسماء","inclure":true,"nouvelEch":"2","dateEffet":"01/10/2025","fin":"12/2026","ech2":"","date2":"","bulletinRef":""},
+{"mat":"","nom":"كيدار بركانة","inclure":true,"nouvelEch":"1","dateEffet":"01/09/2024","fin":"12/2026","ech2":"","date2":"","bulletinRef":""},
+{"mat":"","nom":"لهزيل ايمان","inclure":true,"nouvelEch":"4","dateEffet":"01/07/2024","fin":"12/2026","ech2":"","date2":"","bulletinRef":""},
+{"mat":"","nom":"نجمة دنيا","inclure":true,"nouvelEch":"5","dateEffet":"01/11/2024","fin":"12/2026","ech2":"","date2":"","bulletinRef":""},
+{"mat":"","nom":"هلوب فطيمة","inclure":true,"nouvelEch":"4","dateEffet":"01/12/2024","fin":"12/2026","ech2":"","date2":"","bulletinRef":""}
  ]
 }
