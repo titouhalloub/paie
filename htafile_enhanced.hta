@@ -1934,6 +1934,9 @@ function doRappel() {
         var payTot=(sbV>0&&iepV>=0)?r2(sbV+iepV):oldTot;if(!(payTot>0))payTot=oldTot;
         var pct=(payTot>0)?(actual/payTot):0,pr=Math.round(pct*100);
         if(pr>0&&Math.abs(pct*100-pr)<0.02)pct=pr/100;
+        /* taux declare dans le catalogue des rubriques (Rubrique.Nombre_Taux, base SBASE+IEP) : il fait foi si le bulletin en est proche (arrondis, bulletin d un autre echelon) */
+        var decl=parseFloat(String(rubs[q].taux||"").replace("%","").replace(",","."));
+        if(actual!==0&&isFinite(decl)&&decl>0&&/sbase/i.test(String(rubs[q].base||""))&&Math.abs(pct*100-decl)<=1.5)pct=decl/100;
         oldAmount=(Math.abs(payTot-oldTot)<=1)?r2(actual):r2(pct*oldTot);newAmount=r2(pct*newTot);
       } else {oldAmount=r2(actual);newAmount=oldAmount;}
       oldSalary.push(oldAmount);newSalary.push(newAmount);unit.push(newAmount-oldAmount);
