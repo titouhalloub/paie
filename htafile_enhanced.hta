@@ -877,6 +877,7 @@ function rpSort(target, col) {
   if (!curR) return;
   var st = rpSortState[target] || (rpSortState[target] = { col: -1, asc: true }), i, dec = [], blocks = [], cur = [];
   if (st.col === col) st.asc = !st.asc; else { st.col = col; st.asc = true; }
+  curR.sortSrc = (target == "rpRecap") ? "recap" : "detail";
   if (target == "rpRecap") {
     for (i = 0; i < curR.recap.length; i++) dec.push({ k: rpSortKey(curR.recap[i][col] || "E"), i: i, v: curR.recap[i] });
     dec.sort(function (a, b) { var c = rpSortCmp(a.k, b.k, st.asc); return c !== 0 ? c : a.i - b.i; });
@@ -900,6 +901,30 @@ function rpSort(target, col) {
     curR.detailRows = nr; curR.compactRows = nc2;
   }
   rpRenderOut();
+}
+/* copie de curR dont TOUTES les feuilles d export (journal, feuilles 2-6, rendement, recap) suivent l ordre choisi a l ecran (nom, categorie, echelon...) */
+function rpOrderedCopy(src) {
+  var o = {}, k, i, j, blocks = [], cur = [], rowsIn = (src.detailRows && src.detailRows.length) ? src.detailRows : src.rows, order = [], pos = {}, mat;
+  for (k in src) if (src.hasOwnProperty(k)) o[k] = src[k];
+  for (i = 0; i < rowsIn.length; i++) { cur.push(rowsIn[i]); if (rv(rowsIn[i][4]) == "TOTAL EMPLOYE") { blocks.push(cur); cur = []; } }
+  if (cur.length) blocks.push(cur);
+  if (src.sortSrc == "recap" && src.recap) {
+    for (i = 0; i < src.recap.length; i++) { mat = rv(src.recap[i][0]); if (pos["k" + mat] === undefined) pos["k" + mat] = i; }
+    var bl = [];
+    for (i = 0; i < blocks.length; i++) { mat = rv(blocks[i][blocks[i].length - 1][0]); bl.push({ p: (pos["k" + mat] === undefined ? 1e9 + i : pos["k" + mat]), v: blocks[i] }); }
+    bl.sort(function (a, b) { return a.p - b.p; });
+    blocks = []; for (i = 0; i < bl.length; i++) blocks.push(bl[i].v);
+  } else if (src.recap) {
+    for (i = 0; i < blocks.length; i++) { mat = rv(blocks[i][blocks[i].length - 1][0]); if (pos["k" + mat] === undefined) pos["k" + mat] = i; }
+    var rc = [];
+    for (i = 0; i < src.recap.length; i++) { mat = rv(src.recap[i][0]); rc.push({ p: (pos["k" + mat] === undefined ? 1e9 + i : pos["k" + mat]), v: src.recap[i] }); }
+    rc.sort(function (a, b) { return a.p - b.p; });
+    o.recap = []; for (i = 0; i < rc.length; i++) o.recap.push(rc[i].v);
+  }
+  var nr = [];
+  for (i = 0; i < blocks.length; i++) for (j = 0; j < blocks[i].length; j++) nr.push(blocks[i][j]);
+  o.detailRows = nr; o.rows = nr;
+  return o;
 }
 function memTable(target, cols, rows, page, ps, foot) {
   mem[target] = { cols: cols, rows: rows, ps: ps, foot: foot };
@@ -2379,7 +2404,7 @@ function rpBuildSheets(prof) {
 }
 function rpBuildSheetsAt(prof) {
   var RTLX=(LANG==="ar");
-  var d=curR,out=[],i,j,k,row,c,bold;if(!d){$("rpMsg").innerHTML='<span class="err">Calculez d’abord le rappel.</span>';return null;}
+  var d=curR?rpOrderedCopy(curR):curR,out=[],i,j,k,row,c,bold;if(!d){$("rpMsg").innerHTML='<span class="err">Calculez d’abord le rappel.</span>';return null;}
   RP_FORCE=null;RP_FORCE_MATS=null;
   var keep=[0,1,5,-1,-2,-3,-4],IXK=["Categorie","Echelon","Indice min","Points echelon","Indice total","Coefficient"];for(j=7;j<d.cols.length;j++)if(!rpHiddenPrintCol(d.cols[j])&&!rpZeroCol(d,j))keep.push(j); // hide update coefficient, indices and total deductions
   var nc=keep.length;
