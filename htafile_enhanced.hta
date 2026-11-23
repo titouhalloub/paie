@@ -1348,6 +1348,12 @@ function rpLoadEmployees() {
       '<p><button type="button" onclick="rpSetSelection(true)">' + T("Tout selectionner") + '</button> ' +
       '<button type="button" onclick="rpSetSelection(false)">' + T("Tout deselectionner") + '</button> ' +
       '<span id="rpSelectionCount" class="muted"></span></p>' +
+      '<p>\u0628\u062d\u062b / Recherche (nom ou matricule) : <input id="rpSearch" size="28" oninput="rpFilterList()" onkeyup="rpFilterList()" placeholder="nom ou matricule"> ' +
+      '<label><input type="checkbox" id="rpOnlyChecked" onclick="rpFilterList()"> seulement les coches</label> ' +
+      '<button type="button" onclick="rpClearSearch()">Effacer</button> ' +
+      '<button type="button" onclick="rpSetVisible(true)">Cocher les visibles</button> ' +
+      '<button type="button" onclick="rpSetVisible(false)">Decocher les visibles</button> ' +
+      '<span id="rpSearchCount" class="muted"></span><span class="muted"> (la recherche masque seulement des lignes : rien n est recharge ni perdu)</span></p>' +
       '<div class="box" style="margin:8px 0;background:#f7f9fc"><b>تطبيق موحّد للتواريخ / Application groupée des dates</b><br>' +
       'تاريخ البداية / Date effet: <input id="rpBulkDate" size="10" value="'+esc(trim($("rpDefaultDate").value))+'" placeholder="jj/mm/aaaa"> &nbsp; ' +
       'تاريخ النهاية / Fin: <input id="rpBulkEnd" size="8" value="'+esc(trim($("rpUntil").value))+'" placeholder="MM/AAAA"> &nbsp; ' +
@@ -1407,7 +1413,7 @@ function rpLoadEmployees() {
       r=q.rows[i]; var nameAr=trim(rv(r[9])+" "+rv(r[10])), nameFr=trim(rv(r[1])+" "+rv(r[2]));
       var emp={mat:rv(r[0]), name:nameAr||nameFr, nameAr:nameAr, nameFr:nameFr, cat:rpCatKey(rv(r[3]),rv(r[4])), sec:rv(r[4]), old:rpEchNum(rv(r[5])), iep:rv(r[6]), corpsCode:rv(r[7]), corpsName:rv(r[8])};
       emp.id=i; rpEmployees.push(emp);
-      html += '<tr><td><input type="checkbox" id="rps_'+i+'" checked></td><td>'+esc(emp.mat)+'</td><td dir="'+(nameAr?'rtl':'auto')+'" lang="'+(nameAr?'ar':'')+'">'+esc(emp.name)+'</td><td>'+esc(emp.cat||rv(r[3]))+'</td><td>'+emp.old+'</td>'+
+      html += '<tr id="rpr_'+i+'"><td><input type="checkbox" id="rps_'+i+'" checked onclick="if($(\'rpOnlyChecked\')&&$(\'rpOnlyChecked\').checked)rpFilterList();"></td><td>'+esc(emp.mat)+'</td><td dir="'+(nameAr?'rtl':'auto')+'" lang="'+(nameAr?'ar':'')+'">'+esc(emp.name)+'</td><td>'+esc(emp.cat||rv(r[3]))+'</td><td>'+emp.old+'</td>'+
         '<td><input id="rpn_'+i+'" size="3" value="'+Math.min(12,emp.old+1)+'"></td>'+
         '<td><input id="rpd_'+i+'" size="10" value="'+esc(defDate)+'"></td>'+
         '<td><input id="rpe_'+i+'" size="8" value="'+esc(defEnd)+'"></td>'+
@@ -1421,6 +1427,25 @@ function rpLoadEmployees() {
     rpSetSelection(true);
     $("rpOut").innerHTML = '<p class="ok">Liste chargee. Selectionnez les agents puis calculez.</p>';
   } catch(e) { rpFail("Chargement des agents: "+errText(e)); }
+}
+/* recherche dans la liste chargee : masque/affiche les lignes, sans toucher aux valeurs saisies ni recharger */
+function rpFilterList() {
+  var q=rpNKey($("rpSearch")?$("rpSearch").value:"").toLowerCase(),tk=q?q.split(" "):[],only=!!($("rpOnlyChecked")&&$("rpOnlyChecked").checked),i,j,e,tr,cb,hay,ok,shown=0;
+  for(i=0;i<rpEmployees.length;i++){
+    e=rpEmployees[i];tr=$("rpr_"+i);if(!tr)continue;
+    hay=(String(e.mat)+" "+rpNKey(e.name)).toLowerCase();ok=true;
+    for(j=0;j<tk.length&&ok;j++)if(hay.indexOf(tk[j])<0)ok=false;
+    if(ok&&only){cb=$("rps_"+i);if(!cb||!cb.checked)ok=false;}
+    tr.style.display=ok?"":"none";if(ok)shown++;
+  }
+  if($("rpSearchCount"))$("rpSearchCount").innerHTML=(tk.length||only)?(shown+" / "+rpEmployees.length+" affiche(s)"):"";
+}
+function rpClearSearch(){if($("rpSearch"))$("rpSearch").value="";if($("rpOnlyChecked"))$("rpOnlyChecked").checked=false;rpFilterList();}
+function rpSetVisible(on){
+  var i,n=0,tr,el;
+  for(i=0;i<rpEmployees.length;i++){tr=$("rpr_"+i);el=$("rps_"+i);if(el&&tr&&tr.style.display!=="none")el.checked=!!on;if(el&&el.checked)n++;}
+  if($("rpSelectionCount"))$("rpSelectionCount").innerHTML=n+" / "+rpEmployees.length+" agent(s) selectionne(s)";
+  rpFilterList();
 }
 function rpSetSelection(on) {
   var i,n=0,el;
