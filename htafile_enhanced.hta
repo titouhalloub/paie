@@ -1674,7 +1674,10 @@ function doRappel() {
             {code:"I_A_A_A_R35",lib:"I.A.A.A.R 35%",rate:35,sup:["iaaar25"]},
             {code:"I_TECHNI 25",lib:"I.TECHNI 25%",rate:25,sup:["itechni10","itechni10%"]},
             {code:"ISP 30 %",lib:"I.S.P 30 %",rate:30,sup:[],all:true,minCat:11}],
-    "200":[{code:"I.TECHNI 10%",lib:"I.TECHNI 10%",rate:10,sup:[],all:true,minCat:12},
+    "200":[{code:"P.A.PM%",lib:"P.A.PM% 40",rate:40,sup:[]},
+           {code:"I.S.A.PM 50%",lib:"\u062a.\u062f\u0639\u0645 \u0646.\u0634.\u0637 50%",rate:50,sup:["isapm25","isapm30"],minCat:12},
+           {code:"I.S.A.PM 55 %",lib:"\u062a.\u062f\u0639\u0645 \u0646.\u0634.\u0637 55%",rate:55,sup:["isapm25","isapm30"],maxCat:11},
+           {code:"I.TECHNI 10%",lib:"I.TECHNI 10%",rate:10,sup:[],all:true,minCat:12},
            {code:"ISP 30 %",lib:"I.S.P 30 %",rate:30,sup:[],all:true,minCat:11}]
   };
   function nkRule(c){return String(c||"").toLowerCase().replace(/[\s._%]+/g,"");}
@@ -2017,7 +2020,7 @@ function doRappel() {
       else if(rubs[q].rule&&rubs[q].rule.corps["k"+e.corpsCode]!==undefined){
         /* rubrique de regle : taux x (base + IEP) ; a partir de la grille 2024, ou pour toutes les periodes si all ; minCat = categorie minimale */
         var rsl=rubs[q].rule.corps["k"+e.corpsCode],cn=parseInt(ld.catP,10);
-        if(rsl.minCat&&!isNaN(cn)&&cn<rsl.minCat){oldAmount=0;newAmount=0;}
+        if((rsl.minCat&&!isNaN(cn)&&cn<rsl.minCat)||(rsl.maxCat&&!isNaN(cn)&&cn>rsl.maxCat)||(rsl.maxCat&&isNaN(cn))){oldAmount=0;newAmount=0;}
         else if(ld.gk==="2024"||rsl.all){oldAmount=r2(rsl.rate/100*oldTot);newAmount=r2(rsl.rate/100*newTot);}
         else{oldAmount=r2(actual);newAmount=oldAmount;}
       }
