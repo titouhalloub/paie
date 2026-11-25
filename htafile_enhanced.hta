@@ -1668,10 +1668,14 @@ function doRappel() {
   var CORPS_RULES={
     "1000":[{code:"I_S_S_M_E40",lib:"\u062a.\u062f.\u0635.\u0623.\u0637 40",rate:40,sup:["isssme25","isssm25"]},
             {code:"I_A_S_O_S_R35",lib:"\u062a.\u0625.\u0639.\u062a.\u0635.\u0625 35",rate:35,sup:["iasosr25"]},
-            {code:"I_TECHNI 25",lib:"I.TECHNI 25%",rate:25,sup:["itechni10","itechni10%"]}],
+            {code:"I_TECHNI 25",lib:"I.TECHNI 25%",rate:25,sup:["itechni10","itechni10%"]},
+            {code:"ISP 30 %",lib:"I.S.P 30 %",rate:30,sup:[],all:true,minCat:11}],
     "1100":[{code:"I_S_A_A_R40",lib:"I.S.A.A.R 40%",rate:40,sup:["isaar25"]},
             {code:"I_A_A_A_R35",lib:"I.A.A.A.R 35%",rate:35,sup:["iaaar25"]},
-            {code:"I_TECHNI 25",lib:"I.TECHNI 25%",rate:25,sup:["itechni10","itechni10%"]}]
+            {code:"I_TECHNI 25",lib:"I.TECHNI 25%",rate:25,sup:["itechni10","itechni10%"]},
+            {code:"ISP 30 %",lib:"I.S.P 30 %",rate:30,sup:[],all:true,minCat:11}],
+    "200":[{code:"I.TECHNI 10%",lib:"I.TECHNI 10%",rate:10,sup:[],all:true},
+           {code:"ISP 30 %",lib:"I.S.P 30 %",rate:30,sup:[],all:true,minCat:11}]
   };
   function nkRule(c){return String(c||"").toLowerCase().replace(/[\s._%]+/g,"");}
   var ruleByKey={},ruleSup={},ruleWarn=[];
@@ -1682,7 +1686,7 @@ function doRappel() {
       for(si=0;si<CORPS_RULES[ci].length;si++){
         sl=CORPS_RULES[ci][si];ck=nkRule(sl.code);
         if(!ruleByKey[ck])ruleByKey[ck]={slot:sl,corps:{}};
-        ruleByKey[ck].corps["k"+ci]=sl.rate;
+        ruleByKey[ck].corps["k"+ci]=sl;
         for(ii=0;ii<sl.sup.length;ii++){sc=nkRule(sl.sup[ii]);if(!ruleSup[sc])ruleSup[sc]={};ruleSup[sc]["k"+ci]=true;}
       }
     }
@@ -2011,8 +2015,10 @@ function doRappel() {
       else if(lr===0){oldAmount=baseMin;newAmount=baseMin;}
       else if(lr===1){oldAmount=iepOld;newAmount=iepNew;}
       else if(rubs[q].rule&&rubs[q].rule.corps["k"+e.corpsCode]!==undefined){
-        /* rubrique du nouveau regime : taux de la regle x (base + IEP), uniquement a partir de la grille 2024 */
-        if(ld.gk==="2024"){oldAmount=r2(rubs[q].rule.corps["k"+e.corpsCode]/100*oldTot);newAmount=r2(rubs[q].rule.corps["k"+e.corpsCode]/100*newTot);}
+        /* rubrique de regle : taux x (base + IEP) ; a partir de la grille 2024, ou pour toutes les periodes si all ; minCat = categorie minimale */
+        var rsl=rubs[q].rule.corps["k"+e.corpsCode],cn=parseInt(ld.catP,10);
+        if(rsl.minCat&&!isNaN(cn)&&cn<rsl.minCat){oldAmount=0;newAmount=0;}
+        else if(ld.gk==="2024"||rsl.all){oldAmount=r2(rsl.rate/100*oldTot);newAmount=r2(rsl.rate/100*newTot);}
         else{oldAmount=r2(actual);newAmount=oldAmount;}
       }
       else if(rubs[q].sup&&rubs[q].sup["k"+e.corpsCode]&&ld.gk==="2024"){oldAmount=0;newAmount=0;}
