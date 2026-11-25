@@ -974,11 +974,45 @@ function xlsCellXml(c) {
   var st = ' ss:StyleID="' + sid + '"' + at;
   if (c.t == "E") return '<Cell' + st + '/>';
   if ((c.t == "N" || c.t == "I") && !isNaN(parseFloat(c.v)))
-    return '<Cell' + st + '><Data ss:Type="Number">' + parseFloat(c.v) + '</Data></Cell>';
+    return '<Cell' + st + (c.fx ? ' ss:Formula="' + xmlEsc(c.fx) + '"' : '') + '><Data ss:Type="Number">' + parseFloat(c.v) + '</Data></Cell>';
   if (c.t == "D") return '<Cell' + st + '><Data ss:Type="DateTime">' + c.v + 'T00:00:00.000</Data></Cell>';
   return '<Cell' + st + '><Data ss:Type="String">' + xmlEsc(c.v) + '</Data></Cell>';
 }
-function xCopy(c, ix) { return { t: c.t, v: c.v, s: c.s, m: c.m, ix: ix }; }
+/* Excel formulas (R1C1) : each cell may carry a descriptor f resolved here, once the final physical layout is known.
+   roles of rows: old / new / rap (one agent period), tot (TOTAL EMPLOYE), pt (TOTAL PAGE), ft (TOTAL GENERAL). */
+function rpResolveF(rows, n, mir) {
+  var rapR = [], totR = [], ptR = [], ri, r, k, c, pos, pc, role, f, txt, i, lst, o;
+  function ph(j) { return mir ? (n - 1 - j) : j; }
+  function sr(j) { var d = ph(j) - pc; return d === 0 ? "RC" : "RC[" + d + "]"; }
+  function listOf(a) { var q, z = []; for (q = 0; q < a.length; q++) z.push("R[" + (a[q] - ri) + "]C"); return z.join(","); }
+  for (ri = 0; ri < rows.length; ri++) {
+    r = rows[ri]; role = r.role;
+    if (!role) continue;
+    pos = 0;
+    for (k = 0; k < r.length; k++) {
+      c = r[k]; if (c.ix) pos = c.ix - 1; pc = pos; pos += 1 + (c.m || 0);
+      f = c.f; if (!f || (c.t !== "N" && c.t !== "I") || isNaN(parseFloat(c.v))) continue;
+      txt = null;
+      if (f.k === "rate") txt = "ROUND(" + f.p + "*(" + sr(f.a) + (f.b >= 0 ? "+" + sr(f.b) : "") + "),2)";
+      else if (f.k === "sum") {
+        lst = []; for (i = 0; i < f.c.length; i++) lst.push(sr(f.c[i]));
+        if (lst.length) { txt = "SUM(" + lst.join(",") + ")"; if (f.n && f.n.length) { o = []; for (i = 0; i < f.n.length; i++) o.push(sr(f.n[i])); txt += "-SUM(" + o.join(",") + ")"; } }
+        else if (f.n && f.n.length) { o = []; for (i = 0; i < f.n.length; i++) o.push(sr(f.n[i])); txt = "-SUM(" + o.join(",") + ")"; }
+      }
+      else if (f.k === "rap") txt = "ROUND((R[-1]C-R[-2]C)*" + sr(f.d) + "/30,2)";
+      else if (f.k === "expr") txt = f.t.replace(/\[(\d+)\]/g, function (m0, g) { return sr(parseInt(g, 10)); });
+      else if (f.k === "agg") {
+        lst = (role === "tot") ? rapR : (role === "pt" ? totR : (role === "ft" ? ptR : []));
+        if (lst.length) txt = "SUM(" + listOf(lst) + ")";
+      }
+      if (txt) c.fx = "=" + txt;
+    }
+    if (role === "rap") rapR.push(ri);
+    else if (role === "tot") { totR.push(ri); rapR = []; }
+    else if (role === "pt") { ptR.push(ri); totR = []; }
+  }
+}
+function xCopy(c, ix) { return { t: c.t, v: c.v, s: c.s, m: c.m, ix: ix, f: c.f }; }
 /* logical layout: column 1 = right-most. Physical layout for a left-to-right sheet: table rows reversed, heading rows re-anchored. */
 /* generic right-to-left mirror of a grid row (handles merged cells): logical column 1 = right-most */
 function mirrorGrid(r, n) {
@@ -997,7 +1031,7 @@ function mirrorRows(rows, n) {
   for (i = 0; i < rows.length; i++) {
     r = rows[i];
     if (!r.length) { out.push(r); continue; }
-    if (r.gr) { rr = mirrorGrid(r, n); rr.h = r.h; out.push(rr); continue; }
+    if (r.gr) { rr = mirrorGrid(r, n); rr.h = r.h; rr.role = r.role; out.push(rr); continue; }
     st = r[0].s || "";
     if (st === "e1" || st === "e4" || st === "e7") { out.push(r); continue; }
     if (st === "e2") { rr = [xCopy(r[0], n - r.length + 1)].concat(r.slice(1)); }
@@ -1006,7 +1040,7 @@ function mirrorRows(rows, n) {
     else if (st === "e5") { rr = [xCopy(r[0], 1)]; }
     else if (r.length === n) { rr = r.slice().reverse(); }
     else { rr = r; }
-    rr.h = r.h; out.push(rr);
+    rr.h = r.h; rr.role = r.role; out.push(rr);
   }
   return out;
 }
@@ -1046,6 +1080,7 @@ function buildXls(sheets) {
     var sName = xmlEsc(String(sh1.name).replace(/[\\/\?\*\[\]:]/g, " ").substring(0, 31));
     var rowsOut = sh1.rows, rowOff = 0, wOut = sh1.w;
     if (sh1.rtl && LANG === "ar") { rowsOut = mirrorRows(rowsOut, sh1.w.length); wOut = sh1.w.slice().reverse(); }
+    rpResolveF(rowsOut, sh1.w.length, !!(sh1.rtl && LANG === "ar"));
     if (sh1.entete) { rowsOut = [[X("S", ENTETE1, "et1")], [X("S", ENTETE2, "et2")]].concat(rowsOut); rowOff = 2; }
     o.push('<Worksheet ss:Name="' + sName + '">');
     if (sh1.printRow) o.push('<Names><NamedRange ss:Name="Print_Titles" ss:RefersTo="=\'' + sName + '\'!R' + sh1.printRow + ':R' + sh1.printRow + '"/></Names>');
@@ -1680,12 +1715,14 @@ function doRappel() {
            {code:"I.TECHNI 10%",lib:"I.TECHNI 10%",rate:10,sup:[],all:true,minCat:12},
            {code:"ISP 30 %",lib:"I.S.P 30 %",rate:30,sup:[],all:true,minCat:11}]
   };
+  var corpsHasRules={};
   function nkRule(c){return String(c||"").toLowerCase().replace(/[\s._%]+/g,"");}
-  var ruleByKey={},ruleSup={},ruleWarn=[];
+  var RULE_FROM_YEAR=2025,ruleByKey={},ruleSup={},ruleWarn=[];
   (function(){
     var ci,si,sl,ck,sc,ii;
     for(ci in CORPS_RULES)if(CORPS_RULES.hasOwnProperty(ci)){
       if(!corpsSeen["k"+ci])continue;
+      corpsHasRules["k"+ci]=true;
       for(si=0;si<CORPS_RULES[ci].length;si++){
         sl=CORPS_RULES[ci][si];ck=nkRule(sl.code);
         if(!ruleByKey[ck])ruleByKey[ck]={slot:sl,corps:{}};
@@ -1799,6 +1836,24 @@ function doRappel() {
       dispMap.push({type:"rub",idx:i});
     }
   }
+  /* nature de chaque colonne affichee (pour les formules Excel des totaux) et taux par colonne (pour les formules de rubriques calculees) */
+  var dispKind=[];
+  for(i=0;i<dispMap.length;i++){
+    var dmT=dispMap[i].type;
+    if(dmT==="af")dispKind.push("af");
+    else if(dmT==="cont"||dmT==="para")dispKind.push("gain");
+    else{var dix=dispMap[i].idx;dispKind.push(dix<nG?(isAFRubrique(rubs[dix])?"af":(isHousingRubrique(rubs[dix])?"gainH":"gain")):(dix<nG+nR?"ret":"int"));}
+  }
+  function dfxOf(rateArr,amounts){
+    var out=[],jj,list,ci,hit,nz;
+    for(jj=0;jj<dispMap.length;jj++){
+      if(dispMap[jj].type==="rub"){out.push((rateArr[dispMap[jj].idx]&&amounts[dispMap[jj].idx]!==0)?rateArr[dispMap[jj].idx]:null);continue;}
+      list=(dispMap[jj].type==="cont")?contIdx:(dispMap[jj].type==="para"?paraIdx:afIdx);hit=null;nz=0;
+      for(ci=0;ci<list.length;ci++)if(amounts[list[ci]]!==0){nz++;if(rateArr[list[ci]])hit=rateArr[list[ci]];}
+      out.push(nz===1?hit:null);
+    }
+    return out;
+  }
   var rubKinds=[];
   for(i=0;i<rubs.length;i++)rubKinds.push(i>=nG?"ret":(leadRank(rubs[i])>=0?"lead":(isAFRubrique(rubs[i])?"af":"gain")));
   var cols=["Matricule","Nom et prenom","Nature","Grille","Periode couverte","Jours rappel (base 30j)","Bulletin salaire de reference"];
@@ -1880,7 +1935,7 @@ function doRappel() {
   }
   var warnSeen={};
   function warnOnce(t){if(!warnSeen[t]){warnSeen[t]=true;warns.push(t);}}
-  for(var rwi=0;rwi<ruleWarn.length;rwi++)warnOnce("Rubrique "+ruleWarn[rwi]+" absente du catalogue Rubrique : ajoutee selon la regle du corps (taux x base+IEP, a partir de la grille 2024).");
+  for(var rwi=0;rwi<ruleWarn.length;rwi++)warnOnce("Rubrique "+ruleWarn[rwi]+" absente du catalogue Rubrique : ajoutee selon la regle du corps (taux x base+IEP, a partir du 01/01/"+RULE_FROM_YEAR+").");
   function rpChooseRef(mat,gk,pEnd){
     var list=candByMat["k"+lc(mat)];
     if(!list||!list.length)return null;
@@ -2003,16 +2058,19 @@ function doRappel() {
     if(newE===echP)return null;
     var oldIdx=rpIdx(G,catP,echP),newIdx=rpIdx(G,catP,newE);
     if(!oldIdx||!newIdx||oldIdx.total===0){warnOnce(e.mat+": indice impossible pour "+gk+", categorie "+catP+".");return null;}
-    return {lkey:gk+"|"+catP+"|"+echP+"|"+newE,gk:gk,ref:ref,catP:catP,echP:echP,newE:newE,oldIdx:oldIdx,newIdx:newIdx,catFound:catFound,sbV:sbV,iepV:iepV};
+    var regNew=(mEnd.getFullYear()>=RULE_FROM_YEAR),hasRules=!!corpsHasRules["k"+e.corpsCode];
+    return {lkey:gk+"|"+catP+"|"+echP+"|"+newE+(hasRules?(regNew?"|N":"|O"):""),regNew:regNew,gk:gk,ref:ref,catP:catP,echP:echP,newE:newE,oldIdx:oldIdx,newIdx:newIdx,catFound:catFound,sbV:sbV,iepV:iepV};
   }
   /* ---- Etape 2 : montants du bloc (le bulletin complet de reference n est lu qu ici). Montants par 30 jours conserves : le rappel = difference x jours / 30. ---- */
   function fullCalc(ld,e,contPayKey,contAmount){
     var baseP=rpReadBaseVals(ld.ref.aid,ld.ref.dbi),q,oldIdx=ld.oldIdx,newIdx=ld.newIdx,sbV=ld.sbV,iepV=ld.iepV;fullReads++;
     var baseMin=(ld.catFound&&Math.abs(sbV-oldIdx.min*PTV)<=PTV)?r2(sbV):r2(oldIdx.min*PTV);
     var iepOld=(iepV>0&&Math.abs(iepV-oldIdx.pts*PTV)<=PTV)?r2(iepV):r2(oldIdx.pts*PTV),iepNew=r2(newIdx.pts*PTV);
-    var oldTot=r2(baseMin+iepOld),newTot=r2(baseMin+iepNew),oldSalary=[],newSalary=[],unit=[];
+    var oldTot=r2(baseMin+iepOld),newTot=r2(baseMin+iepNew),oldSalary=[],newSalary=[],unit=[],rateArr=[];
+    function setRate(q0,pctFrac){var fr=Math.round(pctFrac*1e6)/1e6;if(fr>0&&r2(fr*oldTot)===oldSalary[q0]&&r2(fr*newTot)===newSalary[q0]&&(oldSalary[q0]!==0||newSalary[q0]!==0))rateArr[q0]=fr;}
     for(q=0;q<rubs.length;q++){
       var actual=baseP[rubs[q].key]||0,oldAmount,newAmount,lr=leadRank(rubs[q]);
+      var pct=null;
       if(q===irgIdx){oldAmount=0;newAmount=0;}
       else if(isContagieuxRubrique(rubs[q])){var fixedAmount=(rubs[q].key===contPayKey)?contAmount:0;oldAmount=r2(fixedAmount);newAmount=oldAmount;}
       else if(lr===0){oldAmount=baseMin;newAmount=baseMin;}
@@ -2021,10 +2079,10 @@ function doRappel() {
         /* rubrique de regle : taux x (base + IEP) ; a partir de la grille 2024, ou pour toutes les periodes si all ; minCat = categorie minimale */
         var rsl=rubs[q].rule.corps["k"+e.corpsCode],cn=parseInt(ld.catP,10);
         if((rsl.minCat&&!isNaN(cn)&&cn<rsl.minCat)||(rsl.maxCat&&!isNaN(cn)&&cn>rsl.maxCat)||(rsl.maxCat&&isNaN(cn))){oldAmount=0;newAmount=0;}
-        else if(ld.gk==="2024"||rsl.all){oldAmount=r2(rsl.rate/100*oldTot);newAmount=r2(rsl.rate/100*newTot);}
+        else if(ld.regNew||rsl.all){oldAmount=r2(rsl.rate/100*oldTot);newAmount=r2(rsl.rate/100*newTot);}
         else{oldAmount=r2(actual);newAmount=oldAmount;}
       }
-      else if(rubs[q].sup&&rubs[q].sup["k"+e.corpsCode]&&ld.gk==="2024"){oldAmount=0;newAmount=0;}
+      else if(rubs[q].sup&&rubs[q].sup["k"+e.corpsCode]&&ld.regNew){oldAmount=0;newAmount=0;}
       else if(rubs[q].calculated){
         /* taux de CETTE periode = montant du bulletin / (base + IEP) ; un taux entier (25, 30, 50 %...) est restitue exactement */
         /* le taux se calcule sur le salaire PORTE PAR LE BULLETIN (base + IEP de ce bulletin), pas sur l echelon theorique : le bulletin peut dater d un echelon anterieur */
@@ -2036,7 +2094,11 @@ function doRappel() {
         if(actual!==0&&isFinite(decl)&&decl>0&&/sbase/i.test(String(rubs[q].base||""))&&Math.abs(pct*100-decl)<=1.5)pct=decl/100;
         oldAmount=(Math.abs(payTot-oldTot)<=1)?r2(actual):r2(pct*oldTot);newAmount=r2(pct*newTot);
       } else {oldAmount=r2(actual);newAmount=oldAmount;}
-      oldSalary.push(oldAmount);newSalary.push(newAmount);unit.push(newAmount-oldAmount);
+      oldSalary.push(oldAmount);newSalary.push(newAmount);unit.push(newAmount-oldAmount);rateArr.push(null);
+      if(q!==irgIdx&&lr<0&&!isContagieuxRubrique(rubs[q])){
+        if(rubs[q].rule&&rubs[q].rule.corps["k"+e.corpsCode]!==undefined){var rs2=rubs[q].rule.corps["k"+e.corpsCode];if(rs2.rate>0&&(oldAmount!==0||newAmount!==0))setRate(q,rs2.rate/100);}
+        else if(rubs[q].calculated&&typeof pct==="number")setRate(q,pct);
+      }
     }
     if(irgIdx>=0){
       var oBase=0,nBase=0,qq,oIrg,nIrg;
@@ -2045,7 +2107,7 @@ function doRappel() {
       oIrg=calculerIRG2022(oBase);nIrg=calculerIRG2022(nBase);
       oldSalary[irgIdx]=r2(oIrg);newSalary[irgIdx]=r2(nIrg);unit[irgIdx]=nIrg-oIrg;
     }
-    return {sig:oldSalary.join(",")+"|"+newSalary.join(","),oldSalary:oldSalary,newSalary:newSalary,unit:unit,days:0,lkey:ld.lkey,gk:ld.gk,catP:ld.catP,echP:ld.echP,newE:ld.newE,oldIdx:oldIdx,newIdx:newIdx,refPeriod:ld.ref.period,e:e,cpk:contPayKey,cam:contAmount,ne:ld.newE};
+    return {rate:rateArr,sig:oldSalary.join(",")+"|"+newSalary.join(","),oldSalary:oldSalary,newSalary:newSalary,unit:unit,days:0,lkey:ld.lkey,gk:ld.gk,catP:ld.catP,echP:ld.echP,newE:ld.newE,oldIdx:oldIdx,newIdx:newIdx,refPeriod:ld.ref.period,e:e,cpk:contPayKey,cam:contAmount,ne:ld.newE};
   }
   var flushTot=null,flushEmp=null;
   function flushSeg(sg){
@@ -2055,8 +2117,8 @@ function doRappel() {
     /* controle de fin de bloc : un bulletin du dernier mois doit donner les memes montants (sinon un taux a change en cours de periode) */
     if(sg.lastLd&&sg.lastLd.ref.aid!==sg.firstAid){var chk=fullCalc(sg.lastLd,sg.e,sg.cpk,sg.cam);if(chk.sig!==sg.sig)warnOnce(flushEmp.mat+" "+flushEmp.name+": montants ou taux differents au sein de "+periodText+" (grille "+sg.gk+") ; verifiez ou scindez la periode.");}
     var ratio=sg.newIdx.total/sg.oldIdx.total,mat=flushEmp.mat,nm=flushEmp.name;
-    var rOld=lineRow(mat,nm,"ANCIEN SALAIRE",sg.gk,periodText,null,sg.refPeriod,sg.oldSalary);rOld.ixc=["S"+sg.catP,"I"+sg.echP,"I"+sg.oldIdx.min,"I"+sg.oldIdx.pts,"I"+sg.oldIdx.total,"E"];rows.push(rOld);
-    var rNew=lineRow(mat,nm,"NOUVEAU SALAIRE",sg.gk,periodText,null,sg.refPeriod,sg.newSalary);rNew.ixc=["S"+sg.catP,"I"+sg.newE,"I"+sg.newIdx.min,"I"+sg.newIdx.pts,"I"+sg.newIdx.total,"E"];rows.push(rNew);
+    var rOld=lineRow(mat,nm,"ANCIEN SALAIRE",sg.gk,periodText,null,sg.refPeriod,sg.oldSalary);rOld.ixc=["S"+sg.catP,"I"+sg.echP,"I"+sg.oldIdx.min,"I"+sg.oldIdx.pts,"I"+sg.oldIdx.total,"E"];rOld.dfx=dfxOf(sg.rate,sg.oldSalary);rows.push(rOld);
+    var rNew=lineRow(mat,nm,"NOUVEAU SALAIRE",sg.gk,periodText,null,sg.refPeriod,sg.newSalary);rNew.ixc=["S"+sg.catP,"I"+sg.newE,"I"+sg.newIdx.min,"I"+sg.newIdx.pts,"I"+sg.newIdx.total,"E"];rNew.dfx=dfxOf(sg.rate,sg.newSalary);rows.push(rNew);
     var rRap=lineRow(mat,nm,"RAPPEL",sg.gk,periodText,sg.days,sg.refPeriod,sg.recall);rRap.ixc=["E","E","E","E","E","N"+(Math.round(ratio*1000000)/1000000)];rows.push(rRap);
     flushEmp.rows++;if(flushEmp.grids.indexOf(sg.gk)<0)flushEmp.grids.push(sg.gk);
   }
@@ -2126,7 +2188,7 @@ function doRappel() {
     var nature=rv(rows[i][2]);
     if(nature==="RAPPEL"||nature==="TOTAL EMPLOYE")compactRows.push(rows[i]);
   }
-  curR={empTotals:empTotals,rubKinds:rubKinds,cols:cols,rows:rows,detailRows:rows,compactRows:compactRows,foot:foot,rcols:rcols,recap:recap,rubs:rubs,warns:warns.slice(0),contIdx:contIdx.slice(0),date:"individuelle par agent",until:"individuel par agent"};
+  curR={dispKind:dispKind,nDisp:dispMap.length,empTotals:empTotals,rubKinds:rubKinds,cols:cols,rows:rows,detailRows:rows,compactRows:compactRows,foot:foot,rcols:rcols,recap:recap,rubs:rubs,warns:warns.slice(0),contIdx:contIdx.slice(0),date:"individuelle par agent",until:"individuel par agent"};
     rpRenderOut();
   }
   /* calcul par tranches de ~120 ms : la fenetre reste vivante et affiche la progression */
@@ -2395,12 +2457,12 @@ function rpBandSheet(spec, prof) {
       for (gg = 0; gg < pages[p].length; gg++) {
         for (k = 0; k < pages[p][gg].rows.length; k++) {
           rr = pages[p][gg].rows[k];
-          row = rpPadTo(rpSliceRow(rr, cols), n); row.h = rr.h; row.gr = true; rows.push(row);
+          row = rpPadTo(rpSliceRow(rr, cols), n); row.h = rr.h; row.gr = true; row.role = rr.role; rows.push(row);
         }
       }
-      row = rpPadTo(rpSliceRow(pt, cols), n); row.h = TOTH; row.gr = true; rows.push(row);
+      row = rpPadTo(rpSliceRow(pt, cols), n); row.h = TOTH; row.gr = true; row.role = "pt"; rows.push(row);
       if (p === pages.length - 1) {
-        row = rpPadTo(rpSliceRow(ft, cols), n); row.h = FOOTH; row.gr = true; rows.push(row);
+        row = rpPadTo(rpSliceRow(ft, cols), n); row.h = FOOTH; row.gr = true; row.role = "ft"; rows.push(row);
         if (b === nb - 1 && signRows) { row = []; row.h = 10; rows.push(row); for (q = 0; q < signRows.length; q++) rows.push(signRows[q]); }
       }
     }
@@ -2502,15 +2564,47 @@ function rpBuildSheetsAt(prof) {
   function hdrT(l){return arabMap["k"+l]?arabMap["k"+l]:T(l);}
   function sumTot(list,tcol){var s0=0,q;for(q=0;q<list.length;q++){var cc=list[q].tot[tcol];if(cc&&rt(cc)==="N")s0+=parseFloat(rv(cc));}return r2(s0);}
 
+  /* ---------- formules Excel : rubriques calculees (taux x base+IEP), totaux, rappel = (nouveau - ancien) x jours / 30 ---------- */
+  function jfxPlan(keepArr){
+    var P={keep:keepArr,disp:[],base:-1,iep:-1,days:keepArr.indexOf(5),gAll:[],gNoAF:[],gNoAFH:[],rets:[],tcol:[],nd:d.nDisp||0},jj,pp,kd,tt;
+    for(jj=0;jj<keepArr.length;jj++){if(keepArr[jj]>=7){var nl=rpNrm(d.cols[keepArr[jj]]);if(nl==="salairedebase"&&P.base<0)P.base=jj;if(/^indemnitedexperience/.test(nl)&&P.iep<0)P.iep=jj;}}
+    for(jj=0;jj<P.nd;jj++){
+      pp=keepArr.indexOf(7+jj);P.disp.push(pp);if(pp<0)continue;kd=(d.dispKind||[])[jj];
+      if(kd==="gain"){P.gAll.push(pp);P.gNoAF.push(pp);P.gNoAFH.push(pp);}
+      else if(kd==="gainH"){P.gAll.push(pp);P.gNoAF.push(pp);}
+      else if(kd==="af"){P.gAll.push(pp);}
+      else if(kd==="ret")P.rets.push(pp);
+    }
+    for(tt=0;tt<4;tt++)P.tcol.push(keepArr.indexOf(7+P.nd+tt));
+    return P;
+  }
+  function jfxRow(cells,src,P){
+    var nat=rv(src[2]),role=(nat==="ANCIEN SALAIRE")?"old":(nat==="NOUVEAU SALAIRE"?"new":(nat==="RAPPEL"?"rap":(rv(src[4])==="TOTAL EMPLOYE"?"tot":null))),jj,pp;
+    if(!role||!P.nd)return;
+    cells.role=role;
+    if(role==="old"||role==="new"){
+      if(P.base>=0&&src.dfx)for(jj=0;jj<P.nd;jj++){pp=P.disp[jj];if(pp>=0&&src.dfx[jj])cells[pp].f={k:"rate",p:src.dfx[jj],a:P.base,b:P.iep};}
+      if(P.tcol[0]>=0)cells[P.tcol[0]].f={k:"sum",c:P.gNoAF};
+      if(P.tcol[1]>=0)cells[P.tcol[1]].f={k:"sum",c:P.gNoAFH};
+      if(P.tcol[2]>=0)cells[P.tcol[2]].f={k:"sum",c:P.rets};
+      if(P.tcol[3]>=0)cells[P.tcol[3]].f={k:"sum",c:P.gAll,n:P.rets};
+    }else if(role==="rap"){
+      if(P.days>=0)for(pp=0;pp<P.keep.length;pp++)if(P.keep[pp]>=7)cells[pp].f={k:"rap",d:P.days};
+    }else if(role==="tot"){
+      for(pp=0;pp<P.keep.length;pp++)if(P.keep[pp]>=7)cells[pp].f={k:"agg"};
+    }
+  }
+  function jfxAgg(r,keepArr,role){r.role=role;var q;for(q=0;q<keepArr.length;q++)if(keepArr[q]>=7&&r[q]&&r[q].t==="N")r[q].f={k:"agg"};return r;}
   /* ---------- journal sheet ---------- */
   var w=[58,115,100,112,62];for(j=5;j<nc;j++)w.push(62);
-  var groups=[],gRows=[],gTot=null;
+  var groups=[],gRows=[],gTot=null,JP=jfxPlan(keep);
   for(i=0;i<d.rows.length;i++){
     bold=(rv(d.rows[i][4])==="TOTAL EMPLOYE");row=[];
     if(d.rows[i].info){row.push(xr(d.rows[i][0]));row.push(xr(d.rows[i][1]));row.push(X("S",d.rows[i].info,"cxa",nc-3));row.h=ROWH;gRows.push(row);continue;}
     if(rv(d.rows[i][2])==="ANCIEN SALAIRE"){var pr=[X("S",T("Periode couverte")+" : "+rv(d.rows[i][4]),"cxa",nc-1)];pr.h=ROWH;gRows.push(pr);}
     for(j=0;j<nc;j++){c=keep[j]>=0?d.rows[i][keep[j]]:((d.rows[i].ixc||[])[-keep[j]-1]||"E");row.push(xr(c,bold?(rt(c)==="N"?"bn":"bf"):undefined));}
     if(rv(d.rows[i][2])==='NOUVEAU SALAIRE'||rv(d.rows[i][2])==='RAPPEL')row[1]=X("E","");
+    jfxRow(row,d.rows[i],JP);
     row.h=ROWH;gRows.push(row);
     if(bold){groups.push({rows:gRows,tot:d.rows[i],h:gRows.length*ROWH,mat:rv(d.rows[i][0])});gRows=[];}
   }
@@ -2522,9 +2616,9 @@ function rpBuildSheetsAt(prof) {
       else if(kj<7)r.push(X("E","","bf"));
       else r.push(X("N",""+sumTot(list,kj),"bn"));
     }
-    r.h=TOTH;return r;
+    r.h=TOTH;return jfxAgg(r,keep,"pt");
   }
-  var footRow=[];for(j=0;j<nc;j++)footRow.push(keep[j]<0?X("E","","bf"):xr(d.foot[keep[j]],rt(d.foot[keep[j]])==="N"?"bn":"bf"));footRow.h=FOOTH;
+  var footRow=[];for(j=0;j<nc;j++)footRow.push(keep[j]<0?X("E","","bf"):xr(d.foot[keep[j]],rt(d.foot[keep[j]])==="N"?"bn":"bf"));footRow.h=FOOTH;jfxAgg(footRow,keep,"ft");
   var jHdr=[];for(i=0;i<nc;i++)jHdr.push(X("S",keep[i]<0?T(IXK[-keep[i]-1]):hdrT(d.cols[keep[i]]),"h"));
   var jSheet=rpBandSheet({name:T("Journal rappel"),label:T("Journal rappel"),nc:nc,idN:2,groups:groups,hdr:jHdr,head:function(nn,rows){headBlock(nn,title,rows);},pageTotal:jPageTotal,foot:footRow,signoff:true},prof);
   RP_FORCE=jSheet.counts;RP_FORCE_MATS=jSheet.matPages; /* le journal fixe la pagination : les autres feuilles la suivent */
@@ -2548,13 +2642,14 @@ function rpBuildSheetsAt(prof) {
   function amounts(brut){var cs=r2(brut*0.09),irg=r2((brut-cs)*0.10);return {cs:cs,irg:irg,net:r2(brut-cs-irg)};}
   function rendTot(l1,l2,v,st){
     var r=[X("S",l1+(l2&&l2!==l1&&l2!==T("TOTAL EMPLOYE")?"  "+l2:""),"bf"),X("E","","bf"),X("E","","bf"),cellN(v[0],"bn"),X("E","","bf"),X("E","","bf"),X("E","","bf"),cellN(v[1],"bn"),cellN(v[2],"bn"),cellN(v[3],"bn"),cellN(v[4],"bn")];
+    var ag=[3,7,8,9,10],az;for(az=0;az<ag.length;az++)r[ag[az]].f={k:"agg"};
     r.h=ROWH;return r;
   }
   for(i=0;i<srcR.length;i++){
     var dr=srcR[i],nat=rv(dr[2]),mat=rv(dr[0]),eff=rateFor(mat)*note/40;
     if(nat==="TOTAL EMPLOYE"){
       row=rendTot(rv(dr[0]),T("TOTAL EMPLOYE"),acc);
-      row[1]=X("S",rv(dr[1]),"bf");curRows.push(row);
+      row[1]=X("S",rv(dr[1]),"bf");row.role="tot";curRows.push(row);
       var tr=[];tr[3]="N"+r2(acc[0]);tr[7]="N"+r2(acc[1]);tr[8]="N"+r2(acc[2]);tr[9]="N"+r2(acc[3]);tr[10]="N"+r2(acc[4]);
       rg.push({rows:curRows,tot:tr,h:curRows.length*ROWH,mat:mat});curRows=[];acc=[0,0,0,0,0];continue;
     }
@@ -2563,12 +2658,14 @@ function rpBuildSheetsAt(prof) {
     if(nat==="RAPPEL"){acc[0]+=princ;acc[1]+=prime;acc[2]+=am.cs;acc[3]+=am.irg;acc[4]+=am.net;}
     if(nat==="ANCIEN SALAIRE"){var rpr=[X("S",T("Periode couverte")+" : "+rv(dr[4]),"cxa",rnc-1)];rpr.h=ROWH;curRows.push(rpr);}
     row=[xr(dr[0]),(nat==="ANCIEN SALAIRE")?xr(dr[1]):X("E",""),xr(dr[5]),cellN(princ,"n"),cellN(rateFor(mat),"n"),cellN(note,"n"),cellN(eff,"n"),cellN(prime,"n"),cellN(am.cs,"n"),cellN(am.irg,"n"),cellN(am.net,"n")];
-    row.h=ROWH;curRows.push(row);
+    row.h=ROWH;row.role=(nat==="ANCIEN SALAIRE")?"old":(nat==="NOUVEAU SALAIRE"?"new":"rap");
+    row[6].f={k:"expr",t:"[4]*[5]/40"};row[7].f={k:"expr",t:"ROUND([3]*[4]*[5]/40/100,2)"};row[8].f={k:"expr",t:"ROUND([7]*0.09,2)"};row[9].f={k:"expr",t:"ROUND(([7]-[8])*0.1,2)"};row[10].f={k:"expr",t:"[7]-[8]-[9]"};
+    curRows.push(row);
   }
   function rtot(list,col){var s0=0,q;for(q=0;q<list.length;q++){var cc=list[q].tot[col];if(cc)s0+=parseFloat(rv(cc));}return r2(s0);}
   function rSums(list){return [rtot(list,3),rtot(list,7),rtot(list,8),rtot(list,9),rtot(list,10)];}
-  function rPageTotal(list,no,cnt){var r=rendTot(T("TOTAL PAGE"),no+" / "+cnt,rSums(list));r.h=TOTH;return r;}
-  var rfoot=rendTot(T("TOTAL GENERAL"),T("TOTAL GENERAL"),rSums(rg));rfoot.h=FOOTH;
+  function rPageTotal(list,no,cnt){var r=rendTot(T("TOTAL PAGE"),no+" / "+cnt,rSums(list));r.h=TOTH;r.role="pt";return r;}
+  var rfoot=rendTot(T("TOTAL GENERAL"),T("TOTAL GENERAL"),rSums(rg));rfoot.h=FOOTH;rfoot.role="ft";
   var rHdr=[];for(i=0;i<rnc;i++)rHdr.push(X("S",T(rcols[i]),"h"));
   return rpBandSheet({name:nm,label:nm,nc:rnc,idN:2,groups:rg,hdr:rHdr,head:function(nn,rows){headBlock(nn,titleRend,rows,null,per);},pageTotal:rPageTotal,foot:rfoot,signoff:true},prof);
   }
@@ -2579,15 +2676,15 @@ function rpBuildSheetsAt(prof) {
   var rcGroups=[],rcGrand=[0,0];
   for(i=0;i<d.recap.length;i++){
     row=[];for(j=0;j<rkeep.length;j++)row.push(xr(d.recap[i][rkeep[j]]));
-    row.h=ROWH;rcGroups.push({rows:[row],tot:d.recap[i],h:ROWH});
+    row.h=ROWH;row.role="tot";rcGroups.push({rows:[row],tot:d.recap[i],h:ROWH});
     rcGrand[0]+=parseFloat(rv(d.recap[i][9]))||0;rcGrand[1]+=parseFloat(rv(d.recap[i][11]))||0;
   }
   function rcTotal(list,no,cnt){
     var a=[X("S",T("TOTAL PAGE"),"bf"),X("E","","bf"),X("S",no+" / "+cnt,"bf"),X("E","","bf"),X("E","","bf"),X("E","","bf"),X("E","","bf"),X("N","0","bn"),X("N","0","bn")],q,v0=0,v1=0;
     for(q=0;q<list.length;q++){v0+=parseFloat(rv(list[q].tot[9]))||0;v1+=parseFloat(rv(list[q].tot[11]))||0;}
-    a[7]=X("N",""+r2(v0),"bn");a[8]=X("N",""+r2(v1),"bn");a.h=TOTH;return a;
+    a[7]=X("N",""+r2(v0),"bn");a[8]=X("N",""+r2(v1),"bn");a[7].f={k:"agg"};a[8].f={k:"agg"};a.role="pt";a.h=TOTH;return a;
   }
-  var rcFoot=[X("S",T("TOTAL GENERAL"),"bf"),X("E","","bf"),X("E","","bf"),X("E","","bf"),X("E","","bf"),X("E","","bf"),X("E","","bf"),X("N",""+r2(rcGrand[0]),"bn"),X("N",""+r2(rcGrand[1]),"bn")];rcFoot.h=FOOTH;
+  var rcFoot=[X("S",T("TOTAL GENERAL"),"bf"),X("E","","bf"),X("E","","bf"),X("E","","bf"),X("E","","bf"),X("E","","bf"),X("E","","bf"),X("N",""+r2(rcGrand[0]),"bn"),X("N",""+r2(rcGrand[1]),"bn")];rcFoot.h=FOOTH;rcFoot.role="ft";rcFoot[7].f={k:"agg"};rcFoot[8].f={k:"agg"};
   var rcSheet=rpBandSheet({name:T("Recap agents"),label:T("Recap agents"),nc:rkeep.length,idN:2,idCap:[120,200],groups:rcGroups,hdr:rcHdr,head:function(nn,rows){entete(nn,rows);rows.push(hr(21,[X("S",T("Recapitulatif par agent"),"e5",nn-1)]));rows.push(hr(10,[]));},pageTotal:rcTotal,foot:rcFoot,signoff:true},prof);
   /* file name from the contents */
   var fcodes=[],fseen={};
@@ -2645,7 +2742,7 @@ function rpBuildSheetsAt(prof) {
         a=rg.a>periodStart?rg.a:periodStart;b=rg.b<periodEnd?rg.b:periodEnd;
         if(a>b)continue;
         originalDays=annualDays30(rg.a,rg.b);partDays=annualDays30(a,b);factor=originalDays>0?partDays/originalDays:0;
-        cp=src.slice(0);cp.raw=(src.raw||[]).slice(0);
+        cp=src.slice(0);cp.raw=(src.raw||[]).slice(0);cp.dfx=src.dfx;
         cp[4]=annualDateFmt(a)+" - "+annualDateFmt(b);cp[5]="I"+partDays;cp.ixc=(src.ixc||[]).slice(0);
         if(kind==="RAPPEL"){
           for(jj=0;jj<cp.raw.length;jj++)cp.raw[jj]=r2(cp.raw[jj]*factor);
@@ -2692,6 +2789,14 @@ function rpBuildSheetsAt(prof) {
       for(q=0;q<6;q++){if(q===4||q===5)continue;var xc=(rw0.ixc||[])[q]||"E";cells.push(xr(xc,isTot?"bf":undefined));}
       for(q=0;q<vs.length;q++)cells.push(cellN(vs[q],isTot?"bn":"n"));
       cells.push(cellN(tot0,"bn"));cells.h=ROWH;
+      (function(){
+        var nt=rv(rw0[2]),rl=(nt==="ANCIEN SALAIRE")?"old":(nt==="NOUVEAU SALAIRE"?"new":(nt==="RAPPEL"?"rap":(isTot?"tot":null))),a0,lc0=[];
+        if(!rl)return;cells.role=rl;
+        for(a0=0;a0<defs.length;a0++)lc0.push(7+a0);
+        if(rl==="rap"){for(a0=7;a0<cells.length;a0++)cells[a0].f={k:"rap",d:2};}
+        else if(rl==="tot"){for(a0=7;a0<cells.length;a0++)cells[a0].f={k:"agg"};}
+        else cells[7+defs.length].f={k:"sum",c:lc0};
+      })();
       if(rv(rw0[2])==="NOUVEAU SALAIRE"||rv(rw0[2])==="RAPPEL")cells[1]=X("E","");
       cur.push(cells);
       if(isTot){
@@ -2700,13 +2805,13 @@ function rpBuildSheetsAt(prof) {
       }
     }
     if(cur.length)gl.push({rows:cur,tot:[],h:cur.length*ROWH});
-    function sumRow(l1,l2,vs3){var r=[X("S",l1+(l2&&l2!==l1?"  "+l2:""),"bf"),X("E","","bf"),X("E","","bf"),X("E","","bf"),X("E","","bf"),X("E","","bf"),X("E","","bf")],z3;for(z3=0;z3<vs3.length;z3++)r.push(cellN(vs3[z3],"bn"));r.h=ROWH;return r;}
+    function sumRow(l1,l2,vs3){var r=[X("S",l1+(l2&&l2!==l1?"  "+l2:""),"bf"),X("E","","bf"),X("E","","bf"),X("E","","bf"),X("E","","bf"),X("E","","bf"),X("E","","bf")],z3;for(z3=0;z3<vs3.length;z3++){var cn3=cellN(vs3[z3],"bn");cn3.f={k:"agg"};r.push(cn3);}r.h=ROWH;return r;}
     function pageSums(list){var vs4=[],z4,y,s0;for(z4=0;z4<defs.length+1;z4++){s0=0;for(y=0;y<list.length;y++){var c0=list[y].tot[7+z4];if(c0)s0+=parseFloat(rv(c0));}vs4.push(r2(s0));}return vs4;}
     var tg=[];for(z=0;z<sums.length;z++)tg.push(r2(sums[z]));
-    var fr=sumRow(T("TOTAL GENERAL"),T("TOTAL GENERAL"),tg);fr.h=FOOTH;
+    var fr=sumRow(T("TOTAL GENERAL"),T("TOTAL GENERAL"),tg);fr.h=FOOTH;fr.role="ft";
     var row2=[X("S",T("Matricule"),"h"),X("S",T("Nom et prenom"),"h"),X("S",T("Jours rappel (base 30j)"),"h"),X("S",T("Categorie"),"h"),X("S",T("Echelon"),"h"),X("S",T("Indice min"),"h"),X("S",T("Points echelon"),"h")];
     for(q=0;q<defs.length;q++)row2.push(X("S",hdrT(defs[q].label),"h"));row2.push(X("S",T("Total"),"h"));
-    return rpBandSheet({name:T(sheetName),label:T(sheetName),nc:n,idN:2,groups:gl,hdr:row2,head:function(nn,rows){headBlock(nn,title,rows,corner,periodLabel);},pageTotal:function(list,no,cnt){var r=sumRow(T("TOTAL PAGE"),no+" / "+cnt,pageSums(list));r.h=TOTH;return r;},foot:fr,signoff:true},prof);
+    return rpBandSheet({name:T(sheetName),label:T(sheetName),nc:n,idN:2,groups:gl,hdr:row2,head:function(nn,rows){headBlock(nn,title,rows,corner,periodLabel);},pageTotal:function(list,no,cnt){var r=sumRow(T("TOTAL PAGE"),no+" / "+cnt,pageSums(list));r.h=TOTH;r.role="pt";return r;},foot:fr,signoff:true},prof);
   }
   var d2=defsFor("lead",false),d3=defsFor("gain",true),d4=defsFor("af",false);
   function allIdx(defs){var o5=[],q,z;for(q=0;q<defs.length;q++)for(z=0;z<defs[q].idx.length;z++)o5.push(defs[q].idx[z]);return o5;}
@@ -2723,7 +2828,7 @@ function rpBuildSheetsAt(prof) {
   function annualJournalSheet(source,year,fromStart){
     var p6keep=[0,1,5,-1,-2,-3,-4],p6w=[58,115,100,112,62,82,82],p6nc,q,z,rr,bb,sc,pgj,jbreaks=[],ki,tv,jcur=[],jgroups=[],jtot={};
     for(z=7;z<d.cols.length;z++)if(!rpHiddenPrintCol(d.cols[z])&&!rpZeroCol(d,z)){p6keep.push(z);p6w.push(62);}
-    p6nc=p6keep.length;
+    p6nc=p6keep.length;var P6=jfxPlan(p6keep);
     for(q=0;q<source.rows.length;q++){
       rr=source.rows[q];bb=(rv(rr[4])==="TOTAL EMPLOYE");var cells=[];
       for(z=0;z<p6nc;z++){
@@ -2732,6 +2837,7 @@ function rpBuildSheetsAt(prof) {
       }
       cells.h=ROWH;
       if(rv(rr[2])==="NOUVEAU SALAIRE"||rv(rr[2])==="RAPPEL")cells[1]=X("E","");
+      jfxRow(cells,rr,P6);
       if(rv(rr[2])==="ANCIEN SALAIRE"){var ppr=[X("S",T("Periode couverte")+" : "+rv(rr[4]),"cxa",p6nc-1)];ppr.h=ROWH;jcur.push(ppr);}
       jcur.push(cells);
       if(bb){jgroups.push({rows:jcur,tot:rr,h:jcur.length*ROWH,mat:rv(rr[0])});jcur=[];}
@@ -2749,11 +2855,11 @@ function rpBuildSheetsAt(prof) {
         else if(k2<7)ar.push(X("E","","bf"));
         else ar.push(X("N",""+sumTot(list,k2),"bn"));
       }
-      ar.h=TOTH;return ar;
+      ar.h=TOTH;return jfxAgg(ar,p6keep,"pt");
     }
     var annualFoot=[];
     for(z=0;z<p6nc;z++){ki=p6keep[z];annualFoot.push(ki<0?X("E","","bf"):xr(jtot[ki]||"E",rt(jtot[ki]||"E")==="N"?"bn":"bf"));}
-    annualFoot.h=FOOTH;
+    annualFoot.h=FOOTH;jfxAgg(annualFoot,p6keep,"ft");
     var p6Labels=[T("Categorie"),T("Echelon"),T("Indice min"),T("Points echelon")];
     var jh=[];for(z=0;z<p6nc;z++){ki=p6keep[z];jh.push(X("S",ki<0?p6Labels[-ki-1]:hdrT(d.cols[ki]),"h"));}
     return rpBandSheet({name:T("Feuille 6"),label:T("Feuille 6"),nc:p6nc,idN:2,groups:jgroups,hdr:jh,head:function(nn,rows){headBlock(nn,title,rows,null,annualPeriod(year,!!fromStart));},pageTotal:annualPageTotal,foot:annualFoot,signoff:true},prof);
