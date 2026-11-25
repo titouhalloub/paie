@@ -1,0 +1,783 @@
+{
+  "metadata": {
+    "title": "Algerian Public Health Paramedical Indemnities — Legal Knowledge Base",
+    "version": "1.0.0",
+    "release_date": "2026-11-25",
+    "language": [
+      "ar",
+      "fr",
+      "en"
+    ],
+    "jurisdiction": "Algeria",
+    "scope": "Allowances and indemnities applicable to public-health paramedical corps; salary index grids are intentionally excluded and remain in Algeria_Public_Service_Grids_Official_Extraction.json.",
+    "legal_cutoff": "2026-11-25",
+    "status": "research_release_with_explicit_open_items",
+    "disclaimer": "This is a structured research aid, not an official consolidated legal text or legal opinion. Where later continuity, implementing decisions, annex values, or repeal status could not be conclusively established from the cited official publications, the record is marked unresolved rather than inferred.",
+    "linked_salary_grid_file": "https://github.com/titouhalloub/paie/blob/main/Algeria_Public_Service_Grids_Official_Extraction.json",
+    "calculation_conventions": {
+      "traitement": "The principal salary base used by the 2011/2024 paramedical indemnity regime; do not substitute salaire de base.",
+      "salaire_de_base": "The basic salary reference used by older instruments such as Decree 91-113; do not substitute traitement.",
+      "masse_salariale": "Payroll mass; a ceiling expressed as a share of payroll mass is not an individual employee rate.",
+      "beneficiary_quota": "A share of headcount eligible for a measure is not an individual payment rate."
+    }
+  },
+  "legal_terms": [
+    {
+      "term": "Indemnité d'astreinte paramédicale",
+      "ar": "تعويض الإلزام شبه الطبي",
+      "definition": "Monthly paramedical on-call/constraint indemnity under Decree 11-200, Article 4. Distinct from the older indemnité de sujétion spéciale."
+    },
+    {
+      "term": "Indemnité de sujétion spéciale",
+      "ar": "تعويض التبعة الخاصة",
+      "definition": "Older health-sector indemnity under Decree 91-113, calculated on the basic salary of the original grade. It is not the 2011 paramedical astreinte indemnity."
+    },
+    {
+      "term": "Traitement",
+      "ar": "الراتب الرئيسي",
+      "definition": "Calculation base named in Decree 11-200 as amended."
+    },
+    {
+      "term": "Salaire de base du grade d'origine",
+      "ar": "الراتب الأساسي للرتبة الأصلية",
+      "definition": "Calculation base named in Decree 91-113."
+    }
+  ],
+  "indemnities": [
+    {
+      "id": "paramedical_performance_11_200_art3",
+      "name_ar": "علاوة تحسين الأداء",
+      "name_fr": "Prime d'amélioration des performances",
+      "legal_basis": [
+        {
+          "instrument": "Décret exécutif 11-200",
+          "date": "2011-05-24",
+          "article": "3",
+          "url": "https://www.joradp.dz/FTP/JO-FRANCAIS/2011/F2011030.pdf"
+        },
+        {
+          "instrument": "Décret exécutif 24-425",
+          "date": "2024-12-28",
+          "article": "2",
+          "url": "https://www.joradp.dz/FTP/jo-arabe/2024/A2024087.pdf"
+        }
+      ],
+      "effective_history": [
+        {
+          "from": "2008-01-01",
+          "to": "2024-12-31",
+          "rate_min_percent": 0,
+          "rate_max_percent": 30,
+          "calculation_base": "traitement",
+          "frequency_calculation": "monthly",
+          "payment_frequency": "quarterly"
+        },
+        {
+          "from": "2025-01-01",
+          "to": null,
+          "rate_min_percent": 0,
+          "rate_max_percent": 35,
+          "calculation_base": "traitement",
+          "frequency_calculation": "monthly",
+          "payment_frequency": "quarterly"
+        }
+      ],
+      "beneficiaries": "Civil servants belonging to the public-health paramedical corps defined in Article 2 of Decree 11-200.",
+      "conditions": "Variable rate according to performance/evaluation rules and applicable implementing arrangements; not an automatic fixed-rate entitlement.",
+      "cumulation": "No specific non-cumulation rule established in the provisions cited here; verify any applicable implementing text.",
+      "legal_status": "Current rate range under 24-425 from 2025-01-01.",
+      "confidence": "high_for_rate_and_effective_date; medium_for_operational_scoring_details",
+      "notes": [
+        "The maximum percentage is not a guaranteed individual rate.",
+        "The percentage is applied to traitement, not salaire de base."
+      ]
+    },
+    {
+      "id": "paramedical_astreinte_11_200_art4",
+      "name_ar": "تعويض الإلزام شبه الطبي",
+      "name_fr": "Indemnité d'astreinte paramédicale",
+      "legal_basis": [
+        {
+          "instrument": "Décret exécutif 11-200",
+          "date": "2011-05-24",
+          "article": "4",
+          "url": "https://www.joradp.dz/FTP/JO-FRANCAIS/2011/F2011030.pdf"
+        },
+        {
+          "instrument": "Décret exécutif 24-425",
+          "date": "2024-12-28",
+          "article": "2",
+          "url": "https://www.joradp.dz/FTP/jo-arabe/2024/A2024087.pdf"
+        }
+      ],
+      "effective_history": [
+        {
+          "from": "2008-01-01",
+          "to": "2024-12-31",
+          "rate_percent": 25,
+          "calculation_base": "traitement",
+          "payment_frequency": "monthly"
+        },
+        {
+          "from": "2025-01-01",
+          "to": null,
+          "rate_percent": 40,
+          "calculation_base": "traitement",
+          "payment_frequency": "monthly"
+        }
+      ],
+      "beneficiaries": "Civil servants cited in Article 2 of Decree 11-200, belonging to the public-health paramedical corps.",
+      "conditions": "Statutory entitlement under the paramedical indemnity regime; detailed scope follows Article 2 and the applicable special status.",
+      "cumulation": "No separate non-cumulation clause identified in Articles 3–6 of Decree 11-200; do not infer compatibility with unrelated legacy indemnities without checking the employee's legal status and later instruments.",
+      "legal_status": "Current 40% from 2025-01-01 under Decree 24-425. Original 25% applied retrospectively from 2008-01-01 under Article 15 of Decree 11-200.",
+      "confidence": "high",
+      "notes": [
+        "CRITICAL DISTINCTION: 25% (2008–2024) and 40% (from 2025) are the rates for indemnité d'astreinte paramédicale.",
+        "Do not confuse with the separate 45%/40% indemnité de sujétion spéciale created by Decree 91-113 and amended by Presidential Decree 02-340.",
+        "Calculation base is traitement, not salaire de base."
+      ]
+    },
+    {
+      "id": "paramedical_support_11_200_art5",
+      "name_ar": "تعويض دعم النشاطات شبه الطبية",
+      "name_fr": "Indemnité de soutien aux activités paramédicales",
+      "legal_basis": [
+        {
+          "instrument": "Décret exécutif 11-200",
+          "date": "2011-05-24",
+          "article": "5",
+          "url": "https://www.joradp.dz/FTP/JO-FRANCAIS/2011/F2011030.pdf"
+        },
+        {
+          "instrument": "Décret exécutif 24-425",
+          "date": "2024-12-28",
+          "article": "2",
+          "url": "https://www.joradp.dz/FTP/jo-arabe/2024/A2024087.pdf"
+        }
+      ],
+      "effective_history": [
+        {
+          "from": "2008-01-01",
+          "to": "2024-12-31",
+          "rates": [
+            {
+              "grade_category_max": 10,
+              "rate_percent": 30
+            },
+            {
+              "grade_category_min": 11,
+              "rate_percent": 25
+            }
+          ],
+          "calculation_base": "traitement",
+          "payment_frequency": "monthly"
+        },
+        {
+          "from": "2025-01-01",
+          "to": null,
+          "rates": [
+            {
+              "grade_category_max": 10,
+              "rate_percent": 55
+            },
+            {
+              "grade_category_min": 12,
+              "rate_percent": 50
+            }
+          ],
+          "calculation_base": "traitement",
+          "payment_frequency": "monthly"
+        }
+      ],
+      "beneficiaries": "Public-health paramedical civil servants covered by Article 2 of Decree 11-200.",
+      "conditions": "Rate depends on grade category. In the 2025 amended text, category 11 is not assigned a rate: the provision names categories 10 and below, and 12 and above only.",
+      "cumulation": "No specific non-cumulation rule established in the cited amendment.",
+      "legal_status": "Current wording from 2025 leaves category 11 unaddressed; do not interpolate or assign 50%/55% absent an authoritative correction or implementing text.",
+      "confidence": "high_for_express_rates; unresolved_for_category_11",
+      "notes": [
+        "Category 11 was expressly covered at 25% in the original text (11 and above).",
+        "Category 11 omission in 24-425 is a legal-text gap, not permission to assume a rate."
+      ]
+    },
+    {
+      "id": "paramedical_technicite_11_200_art6",
+      "name_ar": "تعويض التقنية",
+      "name_fr": "Indemnité de technicité",
+      "legal_basis": [
+        {
+          "instrument": "Décret exécutif 11-200",
+          "date": "2011-05-24",
+          "article": "6",
+          "url": "https://www.joradp.dz/FTP/JO-FRANCAIS/2011/F2011030.pdf"
+        },
+        {
+          "instrument": "Décret exécutif 24-425",
+          "date": "2024-12-28",
+          "article": "2",
+          "url": "https://www.joradp.dz/FTP/jo-arabe/2024/A2024087.pdf"
+        }
+      ],
+      "effective_history": [
+        {
+          "from": "2008-01-01",
+          "to": "2024-12-31",
+          "rate_percent": 10,
+          "grade_category_min": 11,
+          "calculation_base": "traitement",
+          "payment_frequency": "monthly"
+        },
+        {
+          "from": "2025-01-01",
+          "to": null,
+          "rate_percent": 10,
+          "grade_category_min": 12,
+          "calculation_base": "traitement",
+          "payment_frequency": "monthly"
+        }
+      ],
+      "beneficiaries": "Paramedical civil servants of public health in the grade categories expressly covered by Article 6.",
+      "conditions": "Grade category threshold applies; threshold changed from 11+ to 12+ in 2025.",
+      "cumulation": "No specific non-cumulation rule established in the cited provisions.",
+      "legal_status": "Current 10% for categories 12 and above from 2025-01-01.",
+      "confidence": "high"
+    },
+    {
+      "id": "special_sujეტion_91_113",
+      "name_ar": "تعويض التبعة الخاصة",
+      "name_fr": "Indemnité de sujétion spéciale",
+      "legal_basis": [
+        {
+          "instrument": "Décret exécutif 91-113",
+          "date": "1991-04-27",
+          "article": "1-4",
+          "url": "https://www.joradp.dz/FTP/Jo-Francais/1991/F1991022.pdf"
+        },
+        {
+          "instrument": "Décret présidentiel 02-340",
+          "date": "2002-10-16",
+          "article": "1-3",
+          "url": "https://www.joradp.dz/FTP/jo-francais/2002/F2002069.PDF"
+        }
+      ],
+      "effective_history": [
+        {
+          "from": "1991-01-01",
+          "to": "2002-09-30",
+          "rates": [
+            {
+              "beneficiary_group": "paramedical hospital services",
+              "rate_percent": 15
+            },
+            {
+              "beneficiary_group": "paramedical medico-technical and extra-hospital services",
+              "rate_percent": 10
+            }
+          ],
+          "calculation_base": "salaire de base du grade d'origine"
+        },
+        {
+          "from": "2002-10-01",
+          "to": "unknown",
+          "rates": [
+            {
+              "beneficiary_group": "paramedical hospital services",
+              "rate_percent": 45
+            },
+            {
+              "beneficiary_group": "paramedical medico-technical and extra-hospital services",
+              "rate_percent": 40
+            }
+          ],
+          "calculation_base": "salaire de base du grade d'origine"
+        }
+      ],
+      "beneficiaries": "Paramedical staff of hospitalisation services, and paramedical staff of medico-technical and extra-hospital services, as distinguished by the decree table.",
+      "conditions": "The work/service category determines 45% or 40% under the 2002 amendment.",
+      "cumulation": "Original Article 2 excluded nuisance and permanent-service indemnities; subsequent 1996 amendment to Article 2 must be consulted for the consolidated rule. Do not apply the original exclusion wording without checking the amendment.",
+      "legal_status": "Rates in 2002 amendment verified. Whether and to what extent this instrument continued to coexist with the post-2008 special paramedical regime is not conclusively established in this release. Do not add it automatically to a post-2008 payslip calculation.",
+      "confidence": "high_for_2002_rates_and_base; unresolved_for_post_2008_continuity",
+      "notes": [
+        "This is NOT the indemnité d'astreinte paramédicale.",
+        "The 45%/40% figures are calculated on salaire de base du grade d'origine, not traitement.",
+        "Do not assume the omission of Decree 91-113 from the list of expressly repealed texts in Article 14 of Decree 11-200 proves continued entitlement."
+      ]
+    },
+    {
+      "id": "shift_work_81_14",
+      "name_ar": "تعويض العمل بالتناوب",
+      "name_fr": "Indemnité de travail posté",
+      "legal_basis": [
+        {
+          "instrument": "Décret 81-14",
+          "date": "1981-01-31",
+          "url": "https://www.joradp.dz/FTP/Jo-Francais/1981/F1981005.pdf"
+        },
+        {
+          "instrument": "Décret 88-220",
+          "date": "1988-11-02",
+          "url": "https://www.joradp.dz/FTP/jo-francais/1988/F1988046.PDF"
+        },
+        {
+          "instrument": "Décret 11-200",
+          "date": "2011-05-24",
+          "article": "14",
+          "url": "https://www.joradp.dz/FTP/JO-FRANCAIS/2011/F2011030.pdf"
+        }
+      ],
+      "historical_rates": [
+        {
+          "schedule": "continuous 3x8, 24h, all week",
+          "rate_percent": 25
+        },
+        {
+          "schedule": "semi-continuous 3 teams, weekend stop",
+          "rate_percent": 15
+        },
+        {
+          "schedule": "discontinuous 2 teams, morning/evening, weekend stop",
+          "rate_percent": 10
+        },
+        {
+          "schedule": "with idle periods: continuous/semi/discontinuous",
+          "rates_percent": [
+            15,
+            10,
+            5
+          ]
+        }
+      ],
+      "calculation_base": "salaire de base",
+      "payment_frequency": "monthly",
+      "beneficiaries": "Employees formally assigned to eligible shift-work posts under the applicable designation procedure.",
+      "conditions": "The list of eligible posts is determined under Article 7 and applicable joint/administrative decisions.",
+      "cumulation": "Original Decree 91-113 Article 2 excluded the nuisance and permanent-service indemnities in the specified context; Decree 11-200 Article 14 expressly abrogates Decree 81-14 provisions contrary to the new paramedical regime for the covered corps.",
+      "legal_status": "Historical rates only for covered public-health paramedical corps from the effective date of Decree 11-200; do not continue paying under 81-14 without a separate current legal basis.",
+      "confidence": "high_for_historical_rates_and_2011_abrogation"
+    },
+    {
+      "id": "professional_experience_85_58",
+      "name_ar": "تعويض الخبرة المهنية",
+      "name_fr": "Indemnité d'expérience professionnelle",
+      "legal_basis": [
+        {
+          "instrument": "Décret 85-58",
+          "date": "1985-03-23",
+          "url": "https://www.joradp.dz/FTP/Jo-Francais/1985/F1985013.pdf"
+        },
+        {
+          "instrument": "Décret 11-200",
+          "date": "2011-05-24",
+          "article": "14",
+          "url": "https://www.joradp.dz/FTP/JO-FRANCAIS/2011/F2011030.pdf"
+        }
+      ],
+      "historical_rules": {
+        "public_administration_max_percent": 50,
+        "other_sectors_max_percent": 25,
+        "annual_rate_public_administration_percent": 1.4,
+        "annual_rate_other_sectors_percent": 0.7,
+        "first_three_years": "accumulate and become payable at the end of the third year; application subject to the governing rules"
+      },
+      "calculation_base": "salaire de base",
+      "beneficiaries": "Employees within the scope of Decree 85-58, subject to their applicable statutory seniority/grade rules.",
+      "conditions": "Do not treat 50% as an annual rate or automatic payment. The decree provides ceilings and calculation rules; verify the applicable special statute and seniority valuation.",
+      "legal_status": "Decree 85-58 is expressly listed among provisions contrary to the new paramedical regime repealed for the corps covered by Article 14 of Decree 11-200.",
+      "confidence": "high_for_general_historical_rules_and_2011_abrogation"
+    },
+    {
+      "id": "health_performance_90_415",
+      "name_ar": "تعويض الأداء وتحسين الخدمات",
+      "name_fr": "Indemnité de performance et d'amélioration des prestations",
+      "legal_basis": [
+        {
+          "instrument": "Décret exécutif 90-415",
+          "date": "1990-12-22",
+          "url": "https://www.joradp.dz/FTP/jo-arabe/1991/A1991001.PDF"
+        },
+        {
+          "instrument": "Décret présidentiel 02-337",
+          "date": "2002-10-16",
+          "article": "1-2",
+          "url": "https://www.joradp.dz/FTP/jo-francais/2002/F2002069.PDF"
+        },
+        {
+          "instrument": "Décret exécutif 11-200",
+          "date": "2011-05-24",
+          "article": "14",
+          "url": "https://www.joradp.dz/FTP/JO-FRANCAIS/2011/F2011030.pdf"
+        }
+      ],
+      "historical_rules": {
+        "maximum_share_of_payroll_mass_percent": 15,
+        "effective_from": "2002-10-01",
+        "individual_rate": "set under joint ministerial implementing decision; not equal to 15% of each employee's salary"
+      },
+      "beneficiaries": "Workers in health-sector institutions within the original decree's scope, subject to exclusions for workers benefiting from a special and specific remuneration regime.",
+      "conditions": "Original decree required a joint ministerial decision to set criteria and individual maximum rates. Joint decision No. 21/MS/CAB/MIN dated 25-03-1991 and its detailed application have not been fully retrieved in this release.",
+      "cumulation": "Original decree excluded combination with similar indemnities; Article 14 of Decree 11-200 expressly abrogates contrary provisions for covered paramedical corps.",
+      "legal_status": "Historical regime for covered paramedical corps superseded by the dedicated 11-200 performance allowance from 2008 effective date.",
+      "confidence": "high_for_15_percent_payroll_ceiling_and_2011_abrogation; medium_for_operational_details"
+    },
+    {
+      "id": "guard_duty_97_437",
+      "name_ar": "تعويض الحراسة",
+      "name_fr": "Indemnité de garde",
+      "legal_basis": [
+        {
+          "instrument": "Décret exécutif 97-437",
+          "date": "1997-11-17",
+          "url": "https://www.joradp.dz/FTP/Jo-Francais/1997/F1997078.pdf"
+        },
+        {
+          "instrument": "Décret exécutif 03-38",
+          "date": "2003-01-19",
+          "url": "https://www.joradp.dz/FTP/jo-francais/2003/F2003004.pdf"
+        },
+        {
+          "instrument": "Décret exécutif 13-195",
+          "date": "2013-05-20",
+          "url": "https://www.joradp.dz/FTP/JO-FRANCAIS/2013/F2013027.pdf"
+        }
+      ],
+      "historical_amounts_2003_DZD": {
+        "paramedical_major": {
+          "ordinary_day": 750,
+          "thursday_friday": 900,
+          "holiday": 1100
+        },
+        "paramedical_state_diploma": {
+          "ordinary_day": 600,
+          "thursday_friday": 700,
+          "holiday": 800
+        },
+        "paramedical_brevet_or_biomedical_technician": {
+          "ordinary_day": 500,
+          "thursday_friday": 600,
+          "holiday": 700
+        },
+        "specified_assistant_grades": {
+          "ordinary_day": 400,
+          "thursday_friday": 500,
+          "holiday": 600
+        }
+      },
+      "beneficiaries": "Eligible staff of public health structures performing formally scheduled guard duty, according to the applicable decree and annex.",
+      "conditions": "The former 97-437 regime capped the number of guards for the relevant staff (generally six monthly, subject to specified exceptions). Exact current conditions and amounts must be read from Decree 13-195 and its annex.",
+      "cumulation": "Article 8 of former Decree 97-437 prohibited combination with shift-work indemnity.",
+      "legal_status": "Decree 13-195 of 20 May 2013 is the later instrument governing guard indemnity for public health establishment personnel and repeals the former 97-437 framework. The 2003 table above is historical only and must not be used as a current rate.",
+      "confidence": "high_for_2013_replacement_and_historical_table; current annex application_requires_case_check",
+      "notes": [
+        "The 2013 decree requires actual and permanent presence in the relevant structure/service, subject to its express exceptions.",
+        "Do not reuse 2003 amounts for 2013 onward."
+      ]
+    },
+    {
+      "id": "contagion_risk_03_52",
+      "name_ar": "تعويض خطر العدوى",
+      "name_fr": "Indemnité de risque de contagion",
+      "legal_basis": [
+        {
+          "instrument": "Décret exécutif 03-52",
+          "date": "2003-02-04",
+          "url": "https://www.joradp.dz/JO2000/2003/008/FP5.pdf"
+        }
+      ],
+      "beneficiaries": "Personnel exercising permanently in certain public health structures and exposed to contagion risk, within the classes and lists determined under the decree.",
+      "conditions": "Article 4 sets a quota of 25% of the paramedical headcount; the ministry determines allocations by institution and the head of institution issues periodic nominative lists after the required medical/scientific opinion.",
+      "calculation_base": "The individual allowance amount is set in the decree annex; this release has not reliably transcribed the annex amount.",
+      "rate_or_amount": "unresolved_amount_not_25_percent_of_salary",
+      "cumulation": "Not conclusively established in this release.",
+      "legal_status": "Post-2011 continuity and any later amendment/repeal not conclusively established. Verify before applying to current payroll.",
+      "confidence": "high_for_scope_and_25_percent_headcount_quota; unresolved_for_amount_and_current_continuity",
+      "notes": [
+        "25% is the eligible headcount quota, NOT the employee's salary percentage."
+      ]
+    },
+    {
+      "id": "rural_mobile_incentive_02_119",
+      "name_ar": "منحة التحفيز للمناطق المعزولة والفرق المتنقلة",
+      "name_fr": "Indemnités d'encouragement — jumelage et équipes mobiles",
+      "legal_basis": [
+        {
+          "instrument": "Décret exécutif 02-119",
+          "date": "2002-04-06",
+          "url": "https://www.joradp.dz/FTP/Jo-Francais/2002/F2002023.PDF"
+        }
+      ],
+      "historical_rules": {
+        "isolated_or_underserved_area_jumelage": {
+          "amount_dzd_per_actual_workday": 300,
+          "monthly_day_cap": 5
+        },
+        "mobile_teams_for_scattered_or_nomadic_populations": {
+          "amount_dzd_per_actual_workday": 300,
+          "monthly_day_cap": 7
+        },
+        "high_intensity_high_risk_services": {
+          "monthly_amount_dzd": 2500,
+          "designation_by_ministerial_order": true
+        }
+      },
+      "beneficiaries": "Only the paramedical categories and work settings expressly named in the decree; not a general payment to all paramedical employees.",
+      "conditions": "Actual workdays, qualifying assignment, service designation and monthly caps apply. The 2,500 DZD monthly incentive applies only to designated high-intensity/high-risk services.",
+      "cumulation": "Article 5's exclusive cumulation rule relates to the performance component for medical practitioners and the 90-415 indemnity; do not generalize that clause to every paramedical payment.",
+      "legal_status": "Not named in Article 14's list of abrogated instruments in Decree 11-200; that omission alone does not prove current continued entitlement. Later status remains to be verified.",
+      "confidence": "high_for_original_amounts_and_conditions; unresolved_for_post_2011_continuity"
+    },
+    {
+      "id": "pedagogical_experience_91_269",
+      "name_ar": "تعويض الخبرة البيداغوجية",
+      "name_fr": "Indemnité d'expérience pédagogique",
+      "legal_basis": [
+        {
+          "instrument": "Décret exécutif 91-269",
+          "date": "1991-08-10",
+          "url": "https://www.joradp.dz/FTP/Jo-Francais/1991/F1991038.pdf"
+        }
+      ],
+      "historical_rules": {
+        "rate_percent": 20,
+        "calculation_base": "salary corresponding to the average index number",
+        "staged_implementation": [
+          {
+            "from": "1991-01-01",
+            "cumulative_percent": 5
+          },
+          {
+            "from": "1991-07-01",
+            "cumulative_percent": 10
+          },
+          {
+            "from": "1992-01-01",
+            "cumulative_percent": 15
+          },
+          {
+            "from": "1992-07-01",
+            "cumulative_percent": 20
+          }
+        ]
+      },
+      "beneficiaries": "Only teaching and specialized-education staff expressly listed in the decree annex, including designated health-sector teaching categories.",
+      "conditions": "Not a general paramedical allowance; annex-based grade eligibility is essential.",
+      "legal_status": "Current continuity not conclusively established in this release; do not generalize to ordinary clinical paramedical grades.",
+      "confidence": "high_for_original_scope_and_rate; unresolved_for_current_continuity"
+    },
+    {
+      "id": "paramedical_documentation_02_330",
+      "name_ar": "تعويض التوثيق البيداغوجي",
+      "name_fr": "Indemnité de documentation pédagogique",
+      "legal_basis": [
+        {
+          "instrument": "Décret exécutif 02-330",
+          "date": "2002-10-16",
+          "url": "https://www.joradp.dz/FTP/jo-francais/2002/F2002069.PDF"
+        }
+      ],
+      "historical_rules": {
+        "monthly_amount_dzd": 1700
+      },
+      "beneficiaries": "Specified paramedical teaching staff and named educational leadership posts in the health-sector annex.",
+      "conditions": "Annex-specific eligibility only; not for ordinary clinical paramedical staff.",
+      "legal_status": "Decree 02-330 is expressly listed among provisions contrary to the new paramedical regime abrogated by Article 14 of Decree 11-200 for covered paramedical corps; confirm applicability to the specific teaching grade before relying on it.",
+      "confidence": "medium; annex categories and overlap require individual check"
+    },
+    {
+      "id": "teaching_qualification_03_495",
+      "name_ar": "تعويض التأهيل لفئات التعليم",
+      "name_fr": "Indemnité de qualification des personnels de l'enseignement et de l'éducation spécialisée",
+      "legal_basis": [
+        {
+          "instrument": "Décret exécutif 03-495",
+          "date": "2003-12-21",
+          "url": "https://www.joradp.dz/JO2000/2003/081/FP4.pdf"
+        }
+      ],
+      "beneficiaries": "Only teaching/specialized education grades listed in the annex.",
+      "conditions": "Health-sector annex amount and grade list have not been completely extracted in this release.",
+      "legal_status": "Decree 03-495 is expressly listed in Article 14 of Decree 11-200 among contrary provisions abrogated for the covered paramedical corps.",
+      "confidence": "high_for_abrogation_reference; incomplete_for_annex_values"
+    }
+  ],
+  "transition_rules": [
+    {
+      "date": "2008-01-01",
+      "event": "Decree 11-200 effective date under Article 15, although published in Official Gazette No. 30 on 2011-06-01.",
+      "impact": "Dedicated paramedical regime applies retrospectively from 2008; Article 14 lists certain contrary earlier instruments as abrogated for covered paramedical corps."
+    },
+    {
+      "date": "2011-06-01",
+      "event": "Publication of Decree 11-200 in Official Gazette No. 30.",
+      "impact": "Use the special regime and its Article 14 repeal list; do not infer repeal of every older health-sector instrument not named there."
+    },
+    {
+      "date": "2013-05-22",
+      "event": "Publication of Decree 13-195 in Official Gazette No. 27.",
+      "impact": "New guard indemnity framework replaces Decree 97-437."
+    },
+    {
+      "date": "2025-01-01",
+      "event": "Effective date of Decree 24-425.",
+      "impact": "Performance ceiling becomes 35%; astreinte becomes 40%; support becomes 55% for categories <=10 and 50% for categories >=12; technicity remains 10% for categories >=12."
+    }
+  ],
+  "agent_rules": [
+    "Always distinguish indemnité d'astreinte paramédicale from indemnité de sujétion spéciale.",
+    "For astreinte paramédicale: 25% of traitement from 2008-01-01 through 2024-12-31; 40% of traitement from 2025-01-01.",
+    "Never apply the 45%/40% rates of Decree 91-113 / Presidential Decree 02-340 as the astreinte rate.",
+    "Never substitute salaire de base for traitement, or vice versa.",
+    "Never convert the 15% payroll-mass ceiling in Decree 90-415 into an individual 15% salary rate.",
+    "Never convert the 25% headcount quota in Decree 03-52 into a 25% salary rate.",
+    "Do not generalize guard, contagion-risk, rural/mobile-team, pedagogical or teaching-only benefits to every paramedical employee.",
+    "Do not use the old 2003 guard table after the 2013 Decree 13-195 framework.",
+    "Do not assume a decree remains applicable merely because it is absent from Article 14 of Decree 11-200; verify later legislation and scope.",
+    "For 2025 support indemnity, category 11 is omitted from the amended Article 5; mark it unresolved instead of inventing a rate.",
+    "Use the linked salary-grid file only to map grade/category and index values; do not duplicate its salary grids in this knowledge base.",
+    "When a legal annex or implementing joint decision has not been transcribed, do not fabricate the missing amount or condition."
+  ],
+  "open_issues": [
+    {
+      "id": "OI-01",
+      "issue": "Post-2008 legal continuity of Decree 91-113 / 02-340 special sujétion indemnity for paramedical corps.",
+      "required_evidence": "Consolidated amendment/repeal chain and official legal interpretation or payroll circular."
+    },
+    {
+      "id": "OI-02",
+      "issue": "Post-2011 status of Decree 02-119 incentives.",
+      "required_evidence": "Later amending/repealing instruments and official ministry/finance instructions."
+    },
+    {
+      "id": "OI-03",
+      "issue": "Individual amount in the annex to Decree 03-52.",
+      "required_evidence": "Legible official annex table and later amendments."
+    },
+    {
+      "id": "OI-04",
+      "issue": "Joint ministerial Decision 21/MS/CAB/MIN of 25-03-1991 implementing Decree 90-415.",
+      "required_evidence": "Full decision text and later amendments."
+    },
+    {
+      "id": "OI-05",
+      "issue": "Full health-sector annex of Decree 03-495.",
+      "required_evidence": "Complete official annex transcription."
+    },
+    {
+      "id": "OI-06",
+      "issue": "Current guard amounts and precise application of Decree 13-195 annex to each paramedical grade.",
+      "required_evidence": "Full official annex transcription and any subsequent amendments."
+    },
+    {
+      "id": "OI-07",
+      "issue": "Category 11 omission in Article 5 as amended by Decree 24-425.",
+      "required_evidence": "Official corrigendum, amending decree, or authoritative administrative interpretation."
+    },
+    {
+      "id": "OI-08",
+      "issue": "Any amendments published after the source set checked for this release through 2026-11-25.",
+      "required_evidence": "Review of all Official Gazette issues after 2024-12-30 through the stated legal cutoff; this release does not claim an exhaustive Gazette-by-Gazette audit."
+    }
+  ],
+  "sources": [
+    {
+      "id": "S-01",
+      "title": "Decree 11-200 (Official Gazette No. 30/2011), Arabic/French official issue",
+      "url": "https://www.joradp.dz/FTP/JO-FRANCAIS/2011/F2011030.pdf",
+      "official": true
+    },
+    {
+      "id": "S-02",
+      "title": "Decree 24-425 (Official Gazette No. 87/2024), Arabic official PDF",
+      "url": "https://www.joradp.dz/FTP/jo-arabe/2024/A2024087.pdf",
+      "official": true
+    },
+    {
+      "id": "S-03",
+      "title": "Decree 91-113 (Official Gazette No. 22/1991)",
+      "url": "https://www.joradp.dz/FTP/Jo-Francais/1991/F1991022.pdf",
+      "official": true
+    },
+    {
+      "id": "S-04",
+      "title": "Presidential Decree 02-340 amending Decree 91-113 (Official Gazette No. 69/2002)",
+      "url": "https://www.joradp.dz/FTP/jo-francais/2002/F2002069.PDF",
+      "official": true
+    },
+    {
+      "id": "S-05",
+      "title": "Decree 81-14 on shift work",
+      "url": "https://www.joradp.dz/FTP/Jo-Francais/1981/F1981005.pdf",
+      "official": true
+    },
+    {
+      "id": "S-06",
+      "title": "Decree 85-58 on professional experience",
+      "url": "https://www.joradp.dz/FTP/Jo-Francais/1985/F1985013.pdf",
+      "official": true
+    },
+    {
+      "id": "S-07",
+      "title": "Decree 90-415 on performance and service improvement",
+      "url": "https://www.joradp.dz/FTP/jo-arabe/1991/A1991001.PDF",
+      "official": true
+    },
+    {
+      "id": "S-08",
+      "title": "Presidential Decree 02-337 amending Decree 90-415 (Official Gazette No. 69/2002)",
+      "url": "https://www.joradp.dz/FTP/jo-francais/2002/F2002069.PDF",
+      "official": true
+    },
+    {
+      "id": "S-09",
+      "title": "Decree 03-52 on contagion-risk indemnity (Official Gazette No. 8/2003)",
+      "url": "https://www.joradp.dz/JO2000/2003/008/FP5.pdf",
+      "official": true
+    },
+    {
+      "id": "S-10",
+      "title": "Decree 02-119 on incentives (Official Gazette No. 23/2002)",
+      "url": "https://www.joradp.dz/FTP/Jo-Francais/2002/F2002023.PDF",
+      "official": true
+    },
+    {
+      "id": "S-11",
+      "title": "Decree 97-437 on guard indemnity (Official Gazette No. 78/1997)",
+      "url": "https://www.joradp.dz/FTP/Jo-Francais/1997/F1997078.pdf",
+      "official": true
+    },
+    {
+      "id": "S-12",
+      "title": "Decree 03-38 amending guard indemnity amounts",
+      "url": "https://www.joradp.dz/FTP/jo-francais/2003/F2003004.pdf",
+      "official": true
+    },
+    {
+      "id": "S-13",
+      "title": "Decree 13-195 on guard indemnity (Official Gazette No. 27/2013)",
+      "url": "https://www.joradp.dz/FTP/JO-FRANCAIS/2013/F2013027.pdf",
+      "official": true
+    },
+    {
+      "id": "S-14",
+      "title": "Decree 91-269 on pedagogical experience indemnity",
+      "url": "https://www.joradp.dz/FTP/Jo-Francais/1991/F1991038.pdf",
+      "official": true
+    },
+    {
+      "id": "S-15",
+      "title": "Decree 02-330 on pedagogical documentation indemnity",
+      "url": "https://www.joradp.dz/FTP/jo-francais/2002/F2002069.PDF",
+      "official": true
+    },
+    {
+      "id": "S-16",
+      "title": "Decree 03-495 on qualification indemnity for teaching/specialized education staff",
+      "url": "https://www.joradp.dz/JO2000/2003/081/FP4.pdf",
+      "official": true
+    },
+    {
+      "id": "S-17",
+      "title": "Decree 88-220 amending shift-work arrangements",
+      "url": "https://www.joradp.dz/FTP/jo-francais/1988/F1988046.PDF",
+      "official": true
+    }
+  ]
+}
