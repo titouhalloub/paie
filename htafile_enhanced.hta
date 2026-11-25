@@ -1663,18 +1663,49 @@ function doRappel() {
   for(i=0;i<clList.length;i++)forceCalc["k"+lc(clList[i])]=true;
   rpStage="classement des rubriques du bulletin de reference";
   rpStage="preparation du journal de rappel";
+  /* ---- Regles par corps (modeles Quick Report Modele_Etat) : rubriques du NOUVEAU regime (grille 2024) calculees meme si absentes des bulletins archives.
+     rate = % de (base + IEP) ; sup = rubriques de l ancien regime (codes normalises) mises a zero dans le nouveau regime. ---- */
+  var CORPS_RULES={
+    "1000":[{code:"I_S_S_M_E40",lib:"\u062a.\u062f.\u0635.\u0623.\u0637 40",rate:40,sup:["isssme25","isssm25"]},
+            {code:"I_A_S_O_S_R35",lib:"\u062a.\u0625.\u0639.\u062a.\u0635.\u0625 35",rate:35,sup:["iasosr25"]},
+            {code:"I_TECHNI 25",lib:"I.TECHNI 25%",rate:25,sup:["itechni10","itechni10%"]}],
+    "1100":[{code:"I_S_A_A_R40",lib:"I.S.A.A.R 40%",rate:40,sup:["isaar25"]},
+            {code:"I_A_A_A_R35",lib:"I.A.A.A.R 35%",rate:35,sup:["iaaar25"]},
+            {code:"I_TECHNI 25",lib:"I.TECHNI 25%",rate:25,sup:["itechni10","itechni10%"]}]
+  };
+  function nkRule(c){return String(c||"").toLowerCase().replace(/[\s._%]+/g,"");}
+  var ruleByKey={},ruleSup={},ruleWarn=[];
+  (function(){
+    var ci,si,sl,ck,sc,ii;
+    for(ci in CORPS_RULES)if(CORPS_RULES.hasOwnProperty(ci)){
+      if(!corpsSeen["k"+ci])continue;
+      for(si=0;si<CORPS_RULES[ci].length;si++){
+        sl=CORPS_RULES[ci][si];ck=nkRule(sl.code);
+        if(!ruleByKey[ck])ruleByKey[ck]={slot:sl,corps:{}};
+        ruleByKey[ck].corps["k"+ci]=sl.rate;
+        for(ii=0;ii<sl.sup.length;ii++){sc=nkRule(sl.sup[ii]);if(!ruleSup[sc])ruleSup[sc]={};ruleSup[sc]["k"+ci]=true;}
+      }
+    }
+  })();
   var gains=[],rets=[],ints=[],known={};
   for(i=0;i<meta.rows.length;i++) {
     var code=rv(meta.rows[i][0]),key0="k"+lc(code),lib=rv(meta.rows[i][1])||code,ty=parseFloat(rv(meta.rows[i][2]));
     var lr=leadRank({code:code,lib:lib});
-    known[key0]=true;if(excl[key0]||(!corpRubSet[key0]&&lr<0)||isAlwaysOut(code,lib))continue;
+    var nkc=nkRule(code),ruleHit=ruleByKey[nkc]||null;
+    known[key0]=true;if(excl[key0]||(!corpRubSet[key0]&&lr<0&&!ruleHit)||isAlwaysOut(code,lib))continue;
     var it={key:key0,code:code,lib:lib,mode:rv(meta.rows[i][4]),automatic:rv(meta.rows[i][5]),bareme:rv(meta.rows[i][6]),base:rv(meta.rows[i][7]),taux:rv(meta.rows[i][8]),imposable:(rv(meta.rows[i][9])==="Oui"),cotisable:(rv(meta.rows[i][10])==="Oui"),arab:(meta.rows[i].length>11?trim(rv(meta.rows[i][11])):"")};
     it.calculated=isCalculatedRubrique(it);
+    if(ruleHit){it.rule=ruleHit;it.calculated=true;ruleHit.used=true;}
+    if(ruleSup[nkc])it.sup=ruleSup[nkc];
     if(isAFRubrique(it))it.calculated=false;               // allocations familiales / M.I.F.R. / salaire unique: fixed amounts
     if(isContagieuxRubrique(it))it.calculated=false;      // I.Cont is always fixed
     if(forceFixed[key0])it.calculated=false;
     if(forceCalc[key0]&&!isContagieuxRubrique(it))it.calculated=true;
     if(ty===0||lr>=0)gains.push(it);else if(ty===1)rets.push(it);else ints.push(it);
+  }
+  for(var rk in ruleByKey)if(ruleByKey.hasOwnProperty(rk)&&!ruleByKey[rk].used){
+    var vs=ruleByKey[rk].slot,vit={key:"k"+lc(vs.code),code:vs.code,lib:vs.lib,mode:"2",automatic:"",bareme:"",base:"[SBASE]+[IEP]",taux:String(vs.rate),imposable:true,cotisable:true,arab:vs.lib,calculated:true,rule:ruleByKey[rk],virtual:true};
+    gains.push(vit);ruleWarn.push(vs.code);
   }
   var gLead=[],gRest=[];
   for(i=0;i<gains.length;i++){if(leadRank(gains[i])>=0)gLead.push(gains[i]);else gRest.push(gains[i]);}
@@ -1842,6 +1873,7 @@ function doRappel() {
   }
   var warnSeen={};
   function warnOnce(t){if(!warnSeen[t]){warnSeen[t]=true;warns.push(t);}}
+  for(var rwi=0;rwi<ruleWarn.length;rwi++)warnOnce("Rubrique "+ruleWarn[rwi]+" absente du catalogue Rubrique : ajoutee selon la regle du corps (taux x base+IEP, a partir de la grille 2024).");
   function rpChooseRef(mat,gk,pEnd){
     var list=candByMat["k"+lc(mat)];
     if(!list||!list.length)return null;
@@ -1978,6 +2010,12 @@ function doRappel() {
       else if(isContagieuxRubrique(rubs[q])){var fixedAmount=(rubs[q].key===contPayKey)?contAmount:0;oldAmount=r2(fixedAmount);newAmount=oldAmount;}
       else if(lr===0){oldAmount=baseMin;newAmount=baseMin;}
       else if(lr===1){oldAmount=iepOld;newAmount=iepNew;}
+      else if(rubs[q].rule&&rubs[q].rule.corps["k"+e.corpsCode]!==undefined){
+        /* rubrique du nouveau regime : taux de la regle x (base + IEP), uniquement a partir de la grille 2024 */
+        if(ld.gk==="2024"){oldAmount=r2(rubs[q].rule.corps["k"+e.corpsCode]/100*oldTot);newAmount=r2(rubs[q].rule.corps["k"+e.corpsCode]/100*newTot);}
+        else{oldAmount=r2(actual);newAmount=oldAmount;}
+      }
+      else if(rubs[q].sup&&rubs[q].sup["k"+e.corpsCode]&&ld.gk==="2024"){oldAmount=0;newAmount=0;}
       else if(rubs[q].calculated){
         /* taux de CETTE periode = montant du bulletin / (base + IEP) ; un taux entier (25, 30, 50 %...) est restitue exactement */
         /* le taux se calcule sur le salaire PORTE PAR LE BULLETIN (base + IEP de ce bulletin), pas sur l echelon theorique : le bulletin peut dater d un echelon anterieur */
