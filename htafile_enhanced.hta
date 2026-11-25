@@ -1701,33 +1701,42 @@ function doRappel() {
   /* ---- Regles par corps (modeles Quick Report Modele_Etat) : rubriques du NOUVEAU regime (grille 2024) calculees meme si absentes des bulletins archives.
      rate = % de (base + IEP) ; sup = rubriques de l ancien regime (codes normalises) mises a zero dans le nouveau regime. ---- */
   var CORPS_RULES={
-    "1000":[{code:"I_S_S_M_E40",lib:"\u062a.\u062f.\u0635.\u0623.\u0637 40",rate:40,sup:["isssme25","isssm25"]},
-            {code:"I_A_S_O_S_R35",lib:"\u062a.\u0625.\u0639.\u062a.\u0635.\u0625 35",rate:35,sup:["iasosr25"]},
-            {code:"I_TECHNI 25",lib:"I.TECHNI 25%",rate:25,sup:["itechni10","itechni10%"]},
-            {code:"ISP 30 %",lib:"I.S.P 30 %",rate:30,sup:[],all:true,minCat:11}],
-    "1100":[{code:"I_S_A_A_R40",lib:"I.S.A.A.R 40%",rate:40,sup:["isaar25"]},
-            {code:"I_A_A_A_R35",lib:"I.A.A.A.R 35%",rate:35,sup:["iaaar25"]},
-            {code:"I_TECHNI 25",lib:"I.TECHNI 25%",rate:25,sup:["itechni10","itechni10%"]},
-            {code:"ISP 30 %",lib:"I.S.P 30 %",rate:30,sup:[],all:true,minCat:11}],
-    "200":[{code:"P.A.PM%",lib:"P.A.PM% 40",rate:40,sup:[]},
-           {code:"I.S.A.PM 50%",lib:"\u062a.\u062f\u0639\u0645 \u0646.\u0634.\u0637 50%",rate:50,sup:["isapm25","isapm30"],minCat:12},
-           {code:"I.S.A.PM 55 %",lib:"\u062a.\u062f\u0639\u0645 \u0646.\u0634.\u0637 55%",rate:55,sup:["isapm25","isapm30"],maxCat:11},
-           {code:"I.TECHNI 10%",lib:"I.TECHNI 10%",rate:10,sup:[],all:true,minCat:12},
-           {code:"ISP 30 %",lib:"I.S.P 30 %",rate:30,sup:[],all:true,minCat:11}]
+    "1000":[{code:"I.S.S.M.E40%",alt:["I.S.S.M.E40"],lib:"\u062a.\u062f.\u0635.\u0623.\u0637 40",rate:40,reg:"new",sup:["I.S.S.M.E25"]},
+            {code:"I.A.S.O.S.R35%",alt:["I.A.S.O.S.R35"],lib:"\u062a.\u0625.\u0639.\u062a.\u0635.\u0625 35",rate:35,reg:"new",sup:["I.A.S.O.S.R25"]},
+            {code:"I.TECHNI 25%",alt:["I.TECHNI 25"],lib:"I.TECHNI 25%",rate:25,reg:"new",sup:["I.TECHNI 10"]},
+            {code:"ISP 30 %",lib:"I.S.P 30 %",rate:30,all:true,minCat:11,sup:[]}],
+    "1100":[{code:"I.S.A.A.R40%",alt:["I.S.A.A.R40"],lib:"I.S.A.A.R 40%",rate:40,reg:"new",sup:["I.S.A.A.R25"]},
+            {code:"I.A.A.A.R35%",alt:["I.A.A.A.R35"],lib:"I.A.A.A.R 35%",rate:35,reg:"new",sup:["I.A.A.A.R25"]},
+            {code:"I.TECHNI 25%",alt:["I.TECHNI 25"],lib:"I.TECHNI 25%",rate:25,reg:"new",sup:["I.TECHNI 10"]},
+            {code:"ISP 30 %",lib:"I.S.P 30 %",rate:30,all:true,minCat:11,sup:[]}],
+    /* paramedicaux : obligation 25% -> 40% ; soutien 30% (cat<=10) / 25% (cat>=11) -> 55% (cat<=11) / 50% (cat>=12) ; technicite 10% (cat>=12) ; ISP 30% (cat>=11) */
+    "200":[{code:"P.A.PM%",lib:"P.A.PM%",rateOld:25,rate:40,all:true,sup:["P.A.PM"],supAll:true},
+           {code:"I.S.A.PM 30 %",lib:"\u062a.\u062f\u0639\u0645 \u0646.\u0634.\u0637 30%",rate:30,reg:"old",all:true,maxCat:10,sup:[]},
+           {code:"I.S.A.PM 25%",lib:"\u062a.\u062f\u0639\u0645 \u0646.\u0634.\u0637 25%",rate:25,reg:"old",all:true,minCat:11,sup:[]},
+           {code:"I.S.A.PM 55 %",lib:"\u062a.\u062f\u0639\u0645 \u0646.\u0634.\u0637 55%",rate:55,reg:"new",all:true,maxCat:11,sup:[]},
+           {code:"I.S.A.PM 50%",lib:"\u062a.\u062f\u0639\u0645 \u0646.\u0634.\u0637 50%",rate:50,reg:"new",all:true,minCat:12,sup:[]},
+           {code:"I.TECHNI 10%",lib:"I.TECHNI 10%",rate:10,all:true,minCat:12,sup:[]},
+           {code:"ISP 30 %",lib:"I.S.P 30 %",rate:30,all:true,minCat:11,sup:[]}]
   };
   var corpsHasRules={};
-  function nkRule(c){return String(c||"").toLowerCase().replace(/[\s._%]+/g,"");}
-  var RULE_FROM_YEAR=2025,ruleByKey={},ruleSup={},ruleWarn=[];
+  /* cle de rubrique : sans espaces ni points ni _ ; le % est conserve (P.A.PM et P.A.PM% sont deux rubriques distinctes) */
+  function nkRule(c){return String(c||"").toLowerCase().replace(/[\s._]+/g,"");}
+  function nkSup(c){return nkRule(c).replace(/%/g,"");}
+  var RULE_FROM_YEAR=2025,ruleByKey={},ruleSup={},ruleWarn=[],ruleSlots=[];
   (function(){
-    var ci,si,sl,ck,sc,ii;
+    var ci,si,sl,ii,forms,ro,fi;
     for(ci in CORPS_RULES)if(CORPS_RULES.hasOwnProperty(ci)){
       if(!corpsSeen["k"+ci])continue;
       corpsHasRules["k"+ci]=true;
       for(si=0;si<CORPS_RULES[ci].length;si++){
-        sl=CORPS_RULES[ci][si];ck=nkRule(sl.code);
-        if(!ruleByKey[ck])ruleByKey[ck]={slot:sl,corps:{}};
-        ruleByKey[ck].corps["k"+ci]=sl;
-        for(ii=0;ii<sl.sup.length;ii++){sc=nkRule(sl.sup[ii]);if(!ruleSup[sc])ruleSup[sc]={};ruleSup[sc]["k"+ci]=true;}
+        sl=CORPS_RULES[ci][si];forms=[sl.code].concat(sl.alt||[]);
+        if(ruleSlots.indexOf(sl)<0)ruleSlots.push(sl);
+        for(fi=0;fi<forms.length;fi++){
+          ro=ruleByKey[nkRule(forms[fi])];
+          if(!ro)ro=ruleByKey[nkRule(forms[fi])]={slot:sl,corps:{}};
+          ro.corps["k"+ci]=sl;
+        }
+        for(ii=0;ii<sl.sup.length;ii++){var sc=nkSup(sl.sup[ii]);if(!ruleSup[sc])ruleSup[sc]={};ruleSup[sc]["k"+ci]=sl.supAll?"all":"new";}
       }
     }
   })();
@@ -1735,20 +1744,20 @@ function doRappel() {
   for(i=0;i<meta.rows.length;i++) {
     var code=rv(meta.rows[i][0]),key0="k"+lc(code),lib=rv(meta.rows[i][1])||code,ty=parseFloat(rv(meta.rows[i][2]));
     var lr=leadRank({code:code,lib:lib});
-    var nkc=nkRule(code),ruleHit=ruleByKey[nkc]||null;
+    var nkc=nkRule(code),ruleHit=ruleByKey[nkc]||ruleByKey[nkRule(lib)]||null;
     known[key0]=true;if(excl[key0]||(!corpRubSet[key0]&&lr<0&&!ruleHit)||isAlwaysOut(code,lib))continue;
     var it={key:key0,code:code,lib:lib,mode:rv(meta.rows[i][4]),automatic:rv(meta.rows[i][5]),bareme:rv(meta.rows[i][6]),base:rv(meta.rows[i][7]),taux:rv(meta.rows[i][8]),imposable:(rv(meta.rows[i][9])==="Oui"),cotisable:(rv(meta.rows[i][10])==="Oui"),arab:(meta.rows[i].length>11?trim(rv(meta.rows[i][11])):"")};
     it.calculated=isCalculatedRubrique(it);
-    if(ruleHit){it.rule=ruleHit;it.calculated=true;ruleHit.used=true;}
-    if(ruleSup[nkc])it.sup=ruleSup[nkc];
+    if(ruleHit){it.rule=ruleHit;it.calculated=true;ruleHit.slot.used=true;}
+    if(ruleSup[nkSup(code)]||ruleSup[nkSup(lib)])it.sup=ruleSup[nkSup(code)]||ruleSup[nkSup(lib)];
     if(isAFRubrique(it))it.calculated=false;               // allocations familiales / M.I.F.R. / salaire unique: fixed amounts
     if(isContagieuxRubrique(it))it.calculated=false;      // I.Cont is always fixed
     if(forceFixed[key0])it.calculated=false;
     if(forceCalc[key0]&&!isContagieuxRubrique(it))it.calculated=true;
     if(ty===0||lr>=0)gains.push(it);else if(ty===1)rets.push(it);else ints.push(it);
   }
-  for(var rk in ruleByKey)if(ruleByKey.hasOwnProperty(rk)&&!ruleByKey[rk].used){
-    var vs=ruleByKey[rk].slot,vit={key:"k"+lc(vs.code),code:vs.code,lib:vs.lib,mode:"2",automatic:"",bareme:"",base:"[SBASE]+[IEP]",taux:String(vs.rate),imposable:true,cotisable:true,arab:vs.lib,calculated:true,rule:ruleByKey[rk],virtual:true};
+  for(var rsi=0;rsi<ruleSlots.length;rsi++)if(!ruleSlots[rsi].used){
+    var vs=ruleSlots[rsi],vkey=nkRule(vs.code),vit={key:"k"+lc(vs.code),code:vs.code,lib:vs.lib,mode:"2",automatic:"",bareme:"",base:"[SBASE]+[IEP]",taux:String(vs.rate),imposable:true,cotisable:true,arab:vs.lib,calculated:true,rule:ruleByKey[vkey],virtual:true};
     gains.push(vit);ruleWarn.push(vs.code);
   }
   var gLead=[],gRest=[];
@@ -2076,13 +2085,16 @@ function doRappel() {
       else if(lr===0){oldAmount=baseMin;newAmount=baseMin;}
       else if(lr===1){oldAmount=iepOld;newAmount=iepNew;}
       else if(rubs[q].rule&&rubs[q].rule.corps["k"+e.corpsCode]!==undefined){
-        /* rubrique de regle : taux x (base + IEP) ; a partir de la grille 2024, ou pour toutes les periodes si all ; minCat = categorie minimale */
-        var rsl=rubs[q].rule.corps["k"+e.corpsCode],cn=parseInt(ld.catP,10);
-        if((rsl.minCat&&!isNaN(cn)&&cn<rsl.minCat)||(rsl.maxCat&&!isNaN(cn)&&cn>rsl.maxCat)||(rsl.maxCat&&isNaN(cn))){oldAmount=0;newAmount=0;}
-        else if(ld.regNew||rsl.all){oldAmount=r2(rsl.rate/100*oldTot);newAmount=r2(rsl.rate/100*newTot);}
+        /* rubrique de regle : taux x (base + IEP) ; regime = periode >= 01/01/RULE_FROM_YEAR ; reg = regime unique ; all = toutes periodes ; minCat/maxCat = categories */
+        var rsl=rubs[q].rule.corps["k"+e.corpsCode],cn=parseInt(ld.catP,10),rRate=(ld.regNew||rsl.rateOld===undefined)?rsl.rate:rsl.rateOld;
+        var inReg=(!rsl.reg)||((rsl.reg==="new")===ld.regNew);
+        if(!inReg&&rsl.all){oldAmount=0;newAmount=0;}
+        else if((rsl.minCat&&!isNaN(cn)&&cn<rsl.minCat)||(rsl.maxCat&&!isNaN(cn)&&cn>rsl.maxCat)||(rsl.maxCat&&isNaN(cn))){oldAmount=0;newAmount=0;}
+        else if(rsl.all||(ld.regNew&&inReg)){oldAmount=r2(rRate/100*oldTot);newAmount=r2(rRate/100*newTot);}
         else{oldAmount=r2(actual);newAmount=oldAmount;}
+        rubs[q].ruleRateTmp=rRate;
       }
-      else if(rubs[q].sup&&rubs[q].sup["k"+e.corpsCode]&&ld.regNew){oldAmount=0;newAmount=0;}
+      else if(rubs[q].sup&&rubs[q].sup["k"+e.corpsCode]&&(rubs[q].sup["k"+e.corpsCode]==="all"||ld.regNew)){oldAmount=0;newAmount=0;}
       else if(rubs[q].calculated){
         /* taux de CETTE periode = montant du bulletin / (base + IEP) ; un taux entier (25, 30, 50 %...) est restitue exactement */
         /* le taux se calcule sur le salaire PORTE PAR LE BULLETIN (base + IEP de ce bulletin), pas sur l echelon theorique : le bulletin peut dater d un echelon anterieur */
@@ -2096,7 +2108,7 @@ function doRappel() {
       } else {oldAmount=r2(actual);newAmount=oldAmount;}
       oldSalary.push(oldAmount);newSalary.push(newAmount);unit.push(newAmount-oldAmount);rateArr.push(null);
       if(q!==irgIdx&&lr<0&&!isContagieuxRubrique(rubs[q])){
-        if(rubs[q].rule&&rubs[q].rule.corps["k"+e.corpsCode]!==undefined){var rs2=rubs[q].rule.corps["k"+e.corpsCode];if(rs2.rate>0&&(oldAmount!==0||newAmount!==0))setRate(q,rs2.rate/100);}
+        if(rubs[q].rule&&rubs[q].rule.corps["k"+e.corpsCode]!==undefined){if(rubs[q].ruleRateTmp>0&&(oldAmount!==0||newAmount!==0))setRate(q,rubs[q].ruleRateTmp/100);}
         else if(rubs[q].calculated&&typeof pct==="number")setRate(q,pct);
       }
     }
