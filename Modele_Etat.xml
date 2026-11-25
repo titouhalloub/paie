@@ -1,0 +1,879 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<dataroot xmlns:od="urn:schemas-microsoft-com:officedata" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"  xsi:noNamespaceSchemaLocation="Modele_Etat.xsd" generated="2026-11-24T01:31:34">
+<Modele_Etat>
+<Cle>42</Cle>
+<Code>كشف الاداريين</Code>
+<Libelle></Libelle>
+<Libelle_Arab>كشف راتب</Libelle_Arab>
+<Largeur>210</Largeur>
+<Longueur>297</Longueur>
+<Ligne_Separation>1</Ligne_Separation>
+<Marge>2</Marge>
+<Cle_DBTable>102</Cle_DBTable>
+<Affiche_Selection>1</Affiche_Selection>
+</Modele_Etat>
+<Modele_Etat>
+<Cle>77</Cle>
+<Code>azerty</Code>
+<Libelle></Libelle>
+<Libelle_Arab>كشف التحويلات البريدية</Libelle_Arab>
+<Largeur>210</Largeur>
+<Longueur>297</Longueur>
+<Ligne_Separation>1</Ligne_Separation>
+<Marge>20</Marge>
+<Cle_DBTable>103</Cle_DBTable>
+<Affiche_Selection>0</Affiche_Selection>
+</Modele_Etat>
+<Modele_Etat>
+<Cle>78</Cle>
+<Code>CH102</Code>
+<Libelle></Libelle>
+<Libelle_Arab>كشف التحويلات البريدية</Libelle_Arab>
+<Largeur>190</Largeur>
+<Longueur>280</Longueur>
+<Ligne_Separation>1</Ligne_Separation>
+<Marge>20</Marge>
+<Cle_DBTable>103</Cle_DBTable>
+<Affiche_Selection>0</Affiche_Selection>
+</Modele_Etat>
+<Modele_Etat>
+<Cle>80</Cle>
+<Code>liste de personnel 2008</Code>
+<Libelle></Libelle>
+<Libelle_Arab>قائمة المستخدمين</Libelle_Arab>
+<Largeur>210</Largeur>
+<Longueur>297</Longueur>
+<Ligne_Separation>1</Ligne_Separation>
+<Marge>20</Marge>
+<Cle_DBTable>105</Cle_DBTable>
+<Affiche_Selection>0</Affiche_Selection>
+</Modele_Etat>
+<Modele_Etat>
+<Cle>81</Cle>
+<Code>LISTE DE PERSONNEL- FR-</Code>
+<Libelle>&quot;Tapez le titre de l&apos;Etat&quot;</Libelle>
+<Libelle_Arab>&quot;أدخل عنوان التقرير&quot;</Libelle_Arab>
+<Largeur>210</Largeur>
+<Longueur>297</Longueur>
+<Ligne_Separation>1</Ligne_Separation>
+<Marge>20</Marge>
+<Cle_DBTable>105</Cle_DBTable>
+<Affiche_Selection>0</Affiche_Selection>
+</Modele_Etat>
+<Modele_Etat>
+<Cle>82</Cle>
+<Code>LISTE DE PERSO-FR-08</Code>
+<Libelle>LISTE DE PERSONNEL </Libelle>
+<Libelle_Arab></Libelle_Arab>
+<Largeur>210</Largeur>
+<Longueur>297</Longueur>
+<Ligne_Separation>1</Ligne_Separation>
+<Marge>20</Marge>
+<Cle_DBTable>105</Cle_DBTable>
+<Affiche_Selection>0</Affiche_Selection>
+</Modele_Etat>
+<Modele_Etat>
+<Cle>85</Cle>
+<Code>Bullet_Heur</Code>
+<Libelle></Libelle>
+<Libelle_Arab>كشف راتب</Libelle_Arab>
+<Largeur>210</Largeur>
+<Longueur>297</Longueur>
+<Ligne_Separation>1</Ligne_Separation>
+<Marge>2</Marge>
+<Cle_DBTable>102</Cle_DBTable>
+<Affiche_Selection>0</Affiche_Selection>
+</Modele_Etat>
+<Modele_Etat>
+<Cle>91</Cle>
+<Code>Bulletin Francais</Code>
+<Libelle>Fiche de Paie</Libelle>
+<Libelle_Arab></Libelle_Arab>
+<Largeur>210</Largeur>
+<Longueur>297</Longueur>
+<Ligne_Separation>1</Ligne_Separation>
+<Marge>3</Marge>
+<Cle_DBTable>102</Cle_DBTable>
+<Affiche_Selection>0</Affiche_Selection>
+</Modele_Etat>
+<Modele_Etat>
+<Cle>567</Cle>
+<Code>قابلات شهر ماي 2022</Code>
+<Libelle></Libelle>
+<Libelle_Arab>جدول  رواتب الموظفين سلك القابلات  لشهر: ماي 2022</Libelle_Arab>
+<Largeur>350</Largeur>
+<Longueur>280</Longueur>
+<Ligne_Separation>1</Ligne_Separation>
+<Marge>20</Marge>
+<Cle_DBTable>101</Cle_DBTable>
+<Affiche_Selection>1</Affiche_Selection>
+</Modele_Etat>
+<Modele_Etat>
+<Cle>568</Cle>
+<Code>التخذير والانعاش لشهر ماي 2022</Code>
+<Libelle></Libelle>
+<Libelle_Arab>جدول  رواتب الموظفين سلك الأعوان الطبيين في التخدير و الانعاش لشهر:  ماي 2022</Libelle_Arab>
+<Largeur>350</Largeur>
+<Longueur>280</Longueur>
+<Ligne_Separation>1</Ligne_Separation>
+<Marge>18</Marge>
+<Cle_DBTable>101</Cle_DBTable>
+<Affiche_Selection>1</Affiche_Selection>
+</Modele_Etat>
+<Modele_Etat>
+<Cle>573</Cle>
+<Code>العمال المهنيين ماي 2022</Code>
+<Libelle></Libelle>
+<Libelle_Arab>جدول رواتب سلك الموظفين المهنيين و السائقين و الحجاب  لشهــر : ماي 2022</Libelle_Arab>
+<Largeur>350</Largeur>
+<Longueur>280</Longueur>
+<Ligne_Separation>1</Ligne_Separation>
+<Marge>20</Marge>
+<Cle_DBTable>101</Cle_DBTable>
+<Affiche_Selection>1</Affiche_Selection>
+</Modele_Etat>
+<Modele_Etat>
+<Cle>583</Cle>
+<Code>22</Code>
+<Libelle></Libelle>
+<Libelle_Arab>جدول  رواتب الموظفين سلك القابلات  لشهر: ماي 2022</Libelle_Arab>
+<Largeur>350</Largeur>
+<Longueur>280</Longueur>
+<Ligne_Separation>1</Ligne_Separation>
+<Marge>20</Marge>
+<Cle_DBTable>101</Cle_DBTable>
+<Affiche_Selection>1</Affiche_Selection>
+</Modele_Etat>
+<Modele_Etat>
+<Cle>585</Cle>
+<Code>الخام22</Code>
+<Libelle>&quot;Tapez le titre de l&apos;Etat&quot;</Libelle>
+<Libelle_Arab>كشف تحويلات</Libelle_Arab>
+<Largeur>210</Largeur>
+<Longueur>297</Longueur>
+<Ligne_Separation>1</Ligne_Separation>
+<Marge>20</Marge>
+<Cle_DBTable>101</Cle_DBTable>
+<Affiche_Selection>1</Affiche_Selection>
+</Modele_Etat>
+<Modele_Etat>
+<Cle>597</Cle>
+<Code>غياب 2023</Code>
+<Libelle>&quot;Tapez le titre de l&apos;Etat&quot;</Libelle>
+<Libelle_Arab>كشف تحويلات</Libelle_Arab>
+<Largeur>210</Largeur>
+<Longueur>297</Longueur>
+<Ligne_Separation>1</Ligne_Separation>
+<Marge>20</Marge>
+<Cle_DBTable>101</Cle_DBTable>
+<Affiche_Selection>1</Affiche_Selection>
+</Modele_Etat>
+<Modele_Etat>
+<Cle>601</Cle>
+<Code>عمال ت كامل بن عيسى أفريل 2023</Code>
+<Libelle></Libelle>
+<Libelle_Arab>جدول رواتب الموظفين المتعاقدين غير محدودي المدة   لشهر : أفريل 2023</Libelle_Arab>
+<Largeur>350</Largeur>
+<Longueur>280</Longueur>
+<Ligne_Separation>1</Ligne_Separation>
+<Marge>30</Marge>
+<Cle_DBTable>101</Cle_DBTable>
+<Affiche_Selection>1</Affiche_Selection>
+</Modele_Etat>
+<Modele_Etat>
+<Cle>97</Cle>
+<Code>Avis Ordre de Vire. Cont</Code>
+<Libelle>Pour Modéles 01 et 02</Libelle>
+<Libelle_Arab></Libelle_Arab>
+<Largeur>210</Largeur>
+<Longueur>280</Longueur>
+<Ligne_Separation>0</Ligne_Separation>
+<Marge>20</Marge>
+<Cle_DBTable>106</Cle_DBTable>
+<Affiche_Selection>0</Affiche_Selection>
+</Modele_Etat>
+<Modele_Etat>
+<Cle>98</Cle>
+<Code>Avis de Ordre V Med</Code>
+<Libelle>Pour Modéles 01 et 02</Libelle>
+<Libelle_Arab></Libelle_Arab>
+<Largeur>210</Largeur>
+<Longueur>280</Longueur>
+<Ligne_Separation>0</Ligne_Separation>
+<Marge>20</Marge>
+<Cle_DBTable>106</Cle_DBTable>
+<Affiche_Selection>0</Affiche_Selection>
+</Modele_Etat>
+<Modele_Etat>
+<Cle>102</Cle>
+<Code>Avis de Ordre V ADM</Code>
+<Libelle>Pour Modéles 01 et 02</Libelle>
+<Libelle_Arab></Libelle_Arab>
+<Largeur>210</Largeur>
+<Longueur>280</Longueur>
+<Ligne_Separation>0</Ligne_Separation>
+<Marge>20</Marge>
+<Cle_DBTable>106</Cle_DBTable>
+<Affiche_Selection>0</Affiche_Selection>
+</Modele_Etat>
+<Modele_Etat>
+<Cle>103</Cle>
+<Code>Avis O V Vac</Code>
+<Libelle>Pour Modéles 01 et 02</Libelle>
+<Libelle_Arab></Libelle_Arab>
+<Largeur>210</Largeur>
+<Longueur>280</Longueur>
+<Ligne_Separation>0</Ligne_Separation>
+<Marge>20</Marge>
+<Cle_DBTable>106</Cle_DBTable>
+<Affiche_Selection>0</Affiche_Selection>
+</Modele_Etat>
+<Modele_Etat>
+<Cle>623</Cle>
+<Code>مارس 2025 تخدير وانعاش الجديد</Code>
+<Libelle></Libelle>
+<Libelle_Arab>جدول  رواتب الموظفين سلك الأعوان الطبيين في التخدير و الانعاش لشهر:  ماي 2022</Libelle_Arab>
+<Largeur>350</Largeur>
+<Longueur>280</Longueur>
+<Ligne_Separation>1</Ligne_Separation>
+<Marge>18</Marge>
+<Cle_DBTable>101</Cle_DBTable>
+<Affiche_Selection>1</Affiche_Selection>
+</Modele_Etat>
+<Modele_Etat>
+<Cle>624</Cle>
+<Code>مارس 2025 البيولوجيين الجديد</Code>
+<Libelle></Libelle>
+<Libelle_Arab>جدول رواتب سلك البيولوجيون  لشهر :  مارس 2023</Libelle_Arab>
+<Largeur>350</Largeur>
+<Longueur>280</Longueur>
+<Ligne_Separation>1</Ligne_Separation>
+<Marge>21</Marge>
+<Cle_DBTable>101</Cle_DBTable>
+<Affiche_Selection>1</Affiche_Selection>
+</Modele_Etat>
+<Modele_Etat>
+<Cle>104</Cle>
+<Code>Avis O.V Vac Heurs</Code>
+<Libelle>Pour Modéles 01 et 02</Libelle>
+<Libelle_Arab></Libelle_Arab>
+<Largeur>210</Largeur>
+<Longueur>280</Longueur>
+<Ligne_Separation>0</Ligne_Separation>
+<Marge>20</Marge>
+<Cle_DBTable>106</Cle_DBTable>
+<Affiche_Selection>0</Affiche_Selection>
+</Modele_Etat>
+<Modele_Etat>
+<Cle>108</Cle>
+<Code>Avis DE O.V Para-Med</Code>
+<Libelle>Pour Modéles 01 et 02</Libelle>
+<Libelle_Arab></Libelle_Arab>
+<Largeur>210</Largeur>
+<Longueur>280</Longueur>
+<Ligne_Separation>0</Ligne_Separation>
+<Marge>20</Marge>
+<Cle_DBTable>106</Cle_DBTable>
+<Affiche_Selection>0</Affiche_Selection>
+</Modele_Etat>
+<Modele_Etat>
+<Cle>110</Cle>
+<Code>sec soc 2009</Code>
+<Libelle>&quot;Tapez le titre de l&apos;Etat&quot;</Libelle>
+<Libelle_Arab>إشتراكات الضمان الإجتماعي</Libelle_Arab>
+<Largeur>210</Largeur>
+<Longueur>297</Longueur>
+<Ligne_Separation>1</Ligne_Separation>
+<Marge>20</Marge>
+<Cle_DBTable>107</Cle_DBTable>
+<Affiche_Selection>1</Affiche_Selection>
+</Modele_Etat>
+<Modele_Etat>
+<Cle>115</Cle>
+<Code>تعداد العمال 09</Code>
+<Libelle>&quot;Tapez le titre de l&apos;Etat&quot;</Libelle>
+<Libelle_Arab>تعداد العمال حسب المصالح </Libelle_Arab>
+<Largeur>210</Largeur>
+<Longueur>297</Longueur>
+<Ligne_Separation>1</Ligne_Separation>
+<Marge>20</Marge>
+<Cle_DBTable>104</Cle_DBTable>
+<Affiche_Selection>0</Affiche_Selection>
+</Modele_Etat>
+<Modele_Etat>
+<Cle>118</Cle>
+<Code>Liste des personnel par service</Code>
+<Libelle></Libelle>
+<Libelle_Arab>قائمة المستخدمين حسب المصالح</Libelle_Arab>
+<Largeur>210</Largeur>
+<Longueur>297</Longueur>
+<Ligne_Separation>1</Ligne_Separation>
+<Marge>20</Marge>
+<Cle_DBTable>105</Cle_DBTable>
+<Affiche_Selection>0</Affiche_Selection>
+</Modele_Etat>
+<Modele_Etat>
+<Cle>203</Cle>
+<Code>Liste de Personnel EPH Med 2012</Code>
+<Libelle></Libelle>
+<Libelle_Arab>قائمة العمال المؤسسة العمومية الإستشفائية مسعد</Libelle_Arab>
+<Largeur>350</Largeur>
+<Longueur>280</Longueur>
+<Ligne_Separation>1</Ligne_Separation>
+<Marge>20</Marge>
+<Cle_DBTable>105</Cle_DBTable>
+<Affiche_Selection>1</Affiche_Selection>
+</Modele_Etat>
+<Modele_Etat>
+<Cle>205</Cle>
+<Code>Etat  récapitulatif 2012</Code>
+<Libelle>&quot;Tapez le titre de l&apos;Etat&quot;</Libelle>
+<Libelle_Arab>جدول تعداد المستخدمين الإداريين      لسنة 2012</Libelle_Arab>
+<Largeur>210</Largeur>
+<Longueur>297</Longueur>
+<Ligne_Separation>0</Ligne_Separation>
+<Marge>20</Marge>
+<Cle_DBTable>104</Cle_DBTable>
+<Affiche_Selection>0</Affiche_Selection>
+</Modele_Etat>
+<Modele_Etat>
+<Cle>206</Cle>
+<Code>Etat Récapitulatif Perso 2012</Code>
+<Libelle>&quot;Tapez le titre de l&apos;Etat&quot;</Libelle>
+<Libelle_Arab>جدول تعداد المستخدمين الشبه الطبيين        لسنة 2012</Libelle_Arab>
+<Largeur>210</Largeur>
+<Longueur>297</Longueur>
+<Ligne_Separation>0</Ligne_Separation>
+<Marge>20</Marge>
+<Cle_DBTable>104</Cle_DBTable>
+<Affiche_Selection>0</Affiche_Selection>
+</Modele_Etat>
+<Modele_Etat>
+<Cle>279</Cle>
+<Code>Feuille N° 03 ADM</Code>
+<Libelle>&quot;Tapez le titre de l&apos;Etat&quot;</Libelle>
+<Libelle_Arab>&quot;أدخل عنوان التقرير&quot;</Libelle_Arab>
+<Largeur>210</Largeur>
+<Longueur>297</Longueur>
+<Ligne_Separation>0</Ligne_Separation>
+<Marge>20</Marge>
+<Cle_DBTable>109</Cle_DBTable>
+<Affiche_Selection>0</Affiche_Selection>
+</Modele_Etat>
+<Modele_Etat>
+<Cle>281</Cle>
+<Code>Feuille N° 03 ADM S.S </Code>
+<Libelle>&quot;Tapez le titre de l&apos;Etat&quot;</Libelle>
+<Libelle_Arab>بيان أصلي أولي     </Libelle_Arab>
+<Largeur>210</Largeur>
+<Longueur>297</Longueur>
+<Ligne_Separation>0</Ligne_Separation>
+<Marge>20</Marge>
+<Cle_DBTable>109</Cle_DBTable>
+<Affiche_Selection>0</Affiche_Selection>
+</Modele_Etat>
+<Modele_Etat>
+<Cle>282</Cle>
+<Code>Feuille N° 03 Medical </Code>
+<Libelle>&quot;Tapez le titre de l&apos;Etat&quot;</Libelle>
+<Libelle_Arab>بيان أصلي أولي     </Libelle_Arab>
+<Largeur>210</Largeur>
+<Longueur>297</Longueur>
+<Ligne_Separation>0</Ligne_Separation>
+<Marge>20</Marge>
+<Cle_DBTable>109</Cle_DBTable>
+<Affiche_Selection>0</Affiche_Selection>
+</Modele_Etat>
+<Modele_Etat>
+<Cle>283</Cle>
+<Code>Feuille N° 03 Med SP</Code>
+<Libelle>&quot;Tapez le titre de l&apos;Etat&quot;</Libelle>
+<Libelle_Arab>بيان أصلي أولي     </Libelle_Arab>
+<Largeur>210</Largeur>
+<Longueur>297</Longueur>
+<Ligne_Separation>0</Ligne_Separation>
+<Marge>20</Marge>
+<Cle_DBTable>109</Cle_DBTable>
+<Affiche_Selection>0</Affiche_Selection>
+</Modele_Etat>
+<Modele_Etat>
+<Cle>284</Cle>
+<Code>Feuille N° 03 Para Medical </Code>
+<Libelle>&quot;Tapez le titre de l&apos;Etat&quot;</Libelle>
+<Libelle_Arab>بيان أصلي أولي     </Libelle_Arab>
+<Largeur>210</Largeur>
+<Longueur>297</Longueur>
+<Ligne_Separation>0</Ligne_Separation>
+<Marge>20</Marge>
+<Cle_DBTable>109</Cle_DBTable>
+<Affiche_Selection>0</Affiche_Selection>
+</Modele_Etat>
+<Modele_Etat>
+<Cle>285</Cle>
+<Code>Feuille N° 03 Sage Femme S.P </Code>
+<Libelle>&quot;Tapez le titre de l&apos;Etat&quot;</Libelle>
+<Libelle_Arab>بيان أصلي أولي     </Libelle_Arab>
+<Largeur>210</Largeur>
+<Longueur>297</Longueur>
+<Ligne_Separation>0</Ligne_Separation>
+<Marge>20</Marge>
+<Cle_DBTable>109</Cle_DBTable>
+<Affiche_Selection>0</Affiche_Selection>
+</Modele_Etat>
+<Modele_Etat>
+<Cle>286</Cle>
+<Code>Feuille N° 03 Anis S.P</Code>
+<Libelle>&quot;Tapez le titre de l&apos;Etat&quot;</Libelle>
+<Libelle_Arab>بيان أصلي أولي     </Libelle_Arab>
+<Largeur>210</Largeur>
+<Longueur>297</Longueur>
+<Ligne_Separation>0</Ligne_Separation>
+<Marge>20</Marge>
+<Cle_DBTable>109</Cle_DBTable>
+<Affiche_Selection>0</Affiche_Selection>
+</Modele_Etat>
+<Modele_Etat>
+<Cle>287</Cle>
+<Code>Feuille N° 03 Biol S.P</Code>
+<Libelle>&quot;Tapez le titre de l&apos;Etat&quot;</Libelle>
+<Libelle_Arab>بيان أصلي أولي     </Libelle_Arab>
+<Largeur>210</Largeur>
+<Longueur>297</Longueur>
+<Ligne_Separation>0</Ligne_Separation>
+<Marge>20</Marge>
+<Cle_DBTable>109</Cle_DBTable>
+<Affiche_Selection>0</Affiche_Selection>
+</Modele_Etat>
+<Modele_Etat>
+<Cle>288</Cle>
+<Code>Feuille N° 05 Tétulaire</Code>
+<Libelle>&quot;Tapez le titre de l&apos;Etat&quot;</Libelle>
+<Libelle_Arab>بيان اصلي اولي</Libelle_Arab>
+<Largeur>210</Largeur>
+<Longueur>297</Longueur>
+<Ligne_Separation>0</Ligne_Separation>
+<Marge>20</Marge>
+<Cle_DBTable>109</Cle_DBTable>
+<Affiche_Selection>0</Affiche_Selection>
+</Modele_Etat>
+<Modele_Etat>
+<Cle>289</Cle>
+<Code>Feuille N° 03 O.P Tétulaire</Code>
+<Libelle>&quot;Tapez le titre de l&apos;Etat&quot;</Libelle>
+<Libelle_Arab>بيان أصلي أولي</Libelle_Arab>
+<Largeur>210</Largeur>
+<Longueur>297</Longueur>
+<Ligne_Separation>0</Ligne_Separation>
+<Marge>20</Marge>
+<Cle_DBTable>109</Cle_DBTable>
+<Affiche_Selection>0</Affiche_Selection>
+</Modele_Etat>
+<Modele_Etat>
+<Cle>290</Cle>
+<Code>Feuille N° 03 Cont 8H</Code>
+<Libelle>&quot;Tapez le titre de l&apos;Etat&quot;</Libelle>
+<Libelle_Arab>بيان أصلي أولي</Libelle_Arab>
+<Largeur>210</Largeur>
+<Longueur>297</Longueur>
+<Ligne_Separation>0</Ligne_Separation>
+<Marge>20</Marge>
+<Cle_DBTable>109</Cle_DBTable>
+<Affiche_Selection>0</Affiche_Selection>
+</Modele_Etat>
+<Modele_Etat>
+<Cle>291</Cle>
+<Code>Feuille N° 03 Cont 5H</Code>
+<Libelle>&quot;Tapez le titre de l&apos;Etat&quot;</Libelle>
+<Libelle_Arab>بيان أصلي أولي</Libelle_Arab>
+<Largeur>210</Largeur>
+<Longueur>297</Longueur>
+<Ligne_Separation>0</Ligne_Separation>
+<Marge>20</Marge>
+<Cle_DBTable>109</Cle_DBTable>
+<Affiche_Selection>0</Affiche_Selection>
+</Modele_Etat>
+<Modele_Etat>
+<Cle>292</Cle>
+<Code>Feuille N° 03 Contractuille T </Code>
+<Libelle>&quot;Tapez le titre de l&apos;Etat&quot;</Libelle>
+<Libelle_Arab>بيان أصلي أولي</Libelle_Arab>
+<Largeur>210</Largeur>
+<Longueur>297</Longueur>
+<Ligne_Separation>0</Ligne_Separation>
+<Marge>20</Marge>
+<Cle_DBTable>109</Cle_DBTable>
+<Affiche_Selection>0</Affiche_Selection>
+</Modele_Etat>
+<Modele_Etat>
+<Cle>293</Cle>
+<Code>Feuille N° 03 Cont T.F</Code>
+<Libelle>&quot;Tapez le titre de l&apos;Etat&quot;</Libelle>
+<Libelle_Arab>بيان أصلي أولي</Libelle_Arab>
+<Largeur>210</Largeur>
+<Longueur>297</Longueur>
+<Ligne_Separation>0</Ligne_Separation>
+<Marge>20</Marge>
+<Cle_DBTable>109</Cle_DBTable>
+<Affiche_Selection>0</Affiche_Selection>
+</Modele_Etat>
+<Modele_Etat>
+<Cle>294</Cle>
+<Code>Feuille N° 03 Cont Secu Prev</Code>
+<Libelle>&quot;Tapez le titre de l&apos;Etat&quot;</Libelle>
+<Libelle_Arab>بيان أصلي أولي</Libelle_Arab>
+<Largeur>210</Largeur>
+<Longueur>297</Longueur>
+<Ligne_Separation>0</Ligne_Separation>
+<Marge>20</Marge>
+<Cle_DBTable>109</Cle_DBTable>
+<Affiche_Selection>0</Affiche_Selection>
+</Modele_Etat>
+<Modele_Etat>
+<Cle>298</Cle>
+<Code>Feuillet N° 02 T</Code>
+<Libelle></Libelle>
+<Libelle_Arab>بيان أصلي أولي 2012  </Libelle_Arab>
+<Largeur>210</Largeur>
+<Longueur>297</Longueur>
+<Ligne_Separation>0</Ligne_Separation>
+<Marge>20</Marge>
+<Cle_DBTable>109</Cle_DBTable>
+<Affiche_Selection>0</Affiche_Selection>
+</Modele_Etat>
+<Modele_Etat>
+<Cle>299</Cle>
+<Code>Feuillet N° 02 Cont</Code>
+<Libelle></Libelle>
+<Libelle_Arab>بيان أصلي أولي 2012  </Libelle_Arab>
+<Largeur>210</Largeur>
+<Longueur>297</Longueur>
+<Ligne_Separation>0</Ligne_Separation>
+<Marge>20</Marge>
+<Cle_DBTable>109</Cle_DBTable>
+<Affiche_Selection>0</Affiche_Selection>
+</Modele_Etat>
+<Modele_Etat>
+<Cle>302</Cle>
+<Code>Feuillet N° 05 Tétulaire</Code>
+<Libelle>&quot;Tapez le titre de l&apos;Etat&quot;</Libelle>
+<Libelle_Arab>بيان اصلي اولي</Libelle_Arab>
+<Largeur>210</Largeur>
+<Longueur>297</Longueur>
+<Ligne_Separation>0</Ligne_Separation>
+<Marge>20</Marge>
+<Cle_DBTable>109</Cle_DBTable>
+<Affiche_Selection>0</Affiche_Selection>
+</Modele_Etat>
+<Modele_Etat>
+<Cle>303</Cle>
+<Code>Feuillet N° 04 </Code>
+<Libelle>&quot;Tapez le titre de l&apos;Etat&quot;</Libelle>
+<Libelle_Arab>بيان اصلي اولي</Libelle_Arab>
+<Largeur>210</Largeur>
+<Longueur>297</Longueur>
+<Ligne_Separation>0</Ligne_Separation>
+<Marge>20</Marge>
+<Cle_DBTable>109</Cle_DBTable>
+<Affiche_Selection>0</Affiche_Selection>
+</Modele_Etat>
+<Modele_Etat>
+<Cle>304</Cle>
+<Code>Feuillet N° 05 Cont</Code>
+<Libelle>&quot;Tapez le titre de l&apos;Etat&quot;</Libelle>
+<Libelle_Arab>بيان اصلي اولي</Libelle_Arab>
+<Largeur>210</Largeur>
+<Longueur>297</Longueur>
+<Ligne_Separation>0</Ligne_Separation>
+<Marge>20</Marge>
+<Cle_DBTable>109</Cle_DBTable>
+<Affiche_Selection>0</Affiche_Selection>
+</Modele_Etat>
+<Modele_Etat>
+<Cle>306</Cle>
+<Code>Feuillet N° 02 Tétulaire 2014</Code>
+<Libelle></Libelle>
+<Libelle_Arab>بيان أصلي أولي </Libelle_Arab>
+<Largeur>210</Largeur>
+<Longueur>297</Longueur>
+<Ligne_Separation>0</Ligne_Separation>
+<Marge>20</Marge>
+<Cle_DBTable>109</Cle_DBTable>
+<Affiche_Selection>0</Affiche_Selection>
+</Modele_Etat>
+<Modele_Etat>
+<Cle>314</Cle>
+<Code>Avis de Ver Med 2014</Code>
+<Libelle>Pour Modéles 01 et 02</Libelle>
+<Libelle_Arab></Libelle_Arab>
+<Largeur>210</Largeur>
+<Longueur>280</Longueur>
+<Ligne_Separation>0</Ligne_Separation>
+<Marge>20</Marge>
+<Cle_DBTable>106</Cle_DBTable>
+<Affiche_Selection>0</Affiche_Selection>
+</Modele_Etat>
+<Modele_Etat>
+<Cle>399</Cle>
+<Code>Feuille N° 03 Med Généraliste 2016</Code>
+<Libelle>&quot;Tapez le titre de l&apos;Etat&quot;</Libelle>
+<Libelle_Arab>بيان أصلي أولي     </Libelle_Arab>
+<Largeur>210</Largeur>
+<Longueur>297</Longueur>
+<Ligne_Separation>0</Ligne_Separation>
+<Marge>20</Marge>
+<Cle_DBTable>109</Cle_DBTable>
+<Affiche_Selection>0</Affiche_Selection>
+</Modele_Etat>
+<Modele_Etat>
+<Cle>400</Cle>
+<Code>Feuille N° 03 Med Spécialiste 2016</Code>
+<Libelle>&quot;Tapez le titre de l&apos;Etat&quot;</Libelle>
+<Libelle_Arab>بيان أصلي أولي  2016  </Libelle_Arab>
+<Largeur>210</Largeur>
+<Longueur>297</Longueur>
+<Ligne_Separation>0</Ligne_Separation>
+<Marge>20</Marge>
+<Cle_DBTable>109</Cle_DBTable>
+<Affiche_Selection>0</Affiche_Selection>
+</Modele_Etat>
+<Modele_Etat>
+<Cle>403</Cle>
+<Code>N 03 psycho 2016</Code>
+<Libelle>&quot;Tapez le titre de l&apos;Etat&quot;</Libelle>
+<Libelle_Arab>بيان أولي أصلي 2016</Libelle_Arab>
+<Largeur>210</Largeur>
+<Longueur>297</Longueur>
+<Ligne_Separation>0</Ligne_Separation>
+<Marge>20</Marge>
+<Cle_DBTable>109</Cle_DBTable>
+<Affiche_Selection>0</Affiche_Selection>
+</Modele_Etat>
+<Modele_Etat>
+<Cle>413</Cle>
+<Code>كشف راتب 2016</Code>
+<Libelle></Libelle>
+<Libelle_Arab>كشف راتب</Libelle_Arab>
+<Largeur>210</Largeur>
+<Longueur>297</Longueur>
+<Ligne_Separation>1</Ligne_Separation>
+<Marge>3</Marge>
+<Cle_DBTable>102</Cle_DBTable>
+<Affiche_Selection>1</Affiche_Selection>
+</Modele_Etat>
+<Modele_Etat>
+<Cle>436</Cle>
+<Code>شهادة إيقاف راتب</Code>
+<Libelle></Libelle>
+<Libelle_Arab>شهــادة إيقــــــاف راتـــــب</Libelle_Arab>
+<Largeur>210</Largeur>
+<Longueur>297</Longueur>
+<Ligne_Separation>1</Ligne_Separation>
+<Marge>3</Marge>
+<Cle_DBTable>102</Cle_DBTable>
+<Affiche_Selection>1</Affiche_Selection>
+</Modele_Etat>
+<Modele_Etat>
+<Cle>464</Cle>
+<Code>CCP</Code>
+<Libelle>&quot;Tapez le titre de l&apos;Etat&quot;</Libelle>
+<Libelle_Arab>كشف تحويلات</Libelle_Arab>
+<Largeur>210</Largeur>
+<Longueur>297</Longueur>
+<Ligne_Separation>1</Ligne_Separation>
+<Marge>20</Marge>
+<Cle_DBTable>101</Cle_DBTable>
+<Affiche_Selection>1</Affiche_Selection>
+</Modele_Etat>
+<Modele_Etat>
+<Cle>465</Cle>
+<Code>ROS 2020</Code>
+<Libelle>&quot;Tapez le titre de l&apos;Etat&quot;</Libelle>
+<Libelle_Arab>الخدمات الاجتماعية لشهر جانفي 2020</Libelle_Arab>
+<Largeur>210</Largeur>
+<Longueur>297</Longueur>
+<Ligne_Separation>1</Ligne_Separation>
+<Marge>20</Marge>
+<Cle_DBTable>101</Cle_DBTable>
+<Affiche_Selection>1</Affiche_Selection>
+</Modele_Etat>
+<Modele_Etat>
+<Cle>596</Cle>
+<Code>راتب أعوان الامن والوقاية مارس 2023  جد</Code>
+<Libelle></Libelle>
+<Libelle_Arab>جدول رواتب الموظفين المتعاقدين غير محدودي المدة   لشهر : مارس 2023</Libelle_Arab>
+<Largeur>350</Largeur>
+<Longueur>280</Longueur>
+<Ligne_Separation>1</Ligne_Separation>
+<Marge>30</Marge>
+<Cle_DBTable>101</Cle_DBTable>
+<Affiche_Selection>1</Affiche_Selection>
+</Modele_Etat>
+<Modele_Etat>
+<Cle>600</Cle>
+<Code>23333</Code>
+<Libelle></Libelle>
+<Libelle_Arab>جدول  رواتب الموظفين سلك الشبه الطبيين لشهر: ماي 2022</Libelle_Arab>
+<Largeur>350</Largeur>
+<Longueur>280</Longueur>
+<Ligne_Separation>1</Ligne_Separation>
+<Marge>15</Marge>
+<Cle_DBTable>101</Cle_DBTable>
+<Affiche_Selection>1</Affiche_Selection>
+</Modele_Etat>
+<Modele_Etat>
+<Cle>602</Cle>
+<Code>سلك عمال ت كامل  دحمان زيان أفريل 2023</Code>
+<Libelle></Libelle>
+<Libelle_Arab>جدول رواتب الموظفين المتعاقدين غير محدودي المدة   لشهر : ماي 2022</Libelle_Arab>
+<Largeur>350</Largeur>
+<Longueur>280</Longueur>
+<Ligne_Separation>1</Ligne_Separation>
+<Marge>30</Marge>
+<Cle_DBTable>101</Cle_DBTable>
+<Affiche_Selection>1</Affiche_Selection>
+</Modele_Etat>
+<Modele_Etat>
+<Cle>603</Cle>
+<Code>2024</Code>
+<Libelle>&quot;Tapez le titre de l&apos;Etat&quot;</Libelle>
+<Libelle_Arab>كشف تحويلات</Libelle_Arab>
+<Largeur>210</Largeur>
+<Longueur>297</Longueur>
+<Ligne_Separation>1</Ligne_Separation>
+<Marge>20</Marge>
+<Cle_DBTable>101</Cle_DBTable>
+<Affiche_Selection>1</Affiche_Selection>
+</Modele_Etat>
+<Modele_Etat>
+<Cle>606</Cle>
+<Code>أخصائيين 2024</Code>
+<Libelle></Libelle>
+<Libelle_Arab>جدول رواتب سلك الموظفين الطبيين شهر :  فيفري 2024</Libelle_Arab>
+<Largeur>350</Largeur>
+<Longueur>280</Longueur>
+<Ligne_Separation>1</Ligne_Separation>
+<Marge>24</Marge>
+<Cle_DBTable>101</Cle_DBTable>
+<Affiche_Selection>1</Affiche_Selection>
+</Modele_Etat>
+<Modele_Etat>
+<Cle>608</Cle>
+<Code>الاجر القاعدي2024</Code>
+<Libelle></Libelle>
+<Libelle_Arab>جدول  رواتب  سلك الموظفين الطبيين شهر :  ماي 2022</Libelle_Arab>
+<Largeur>350</Largeur>
+<Longueur>280</Longueur>
+<Ligne_Separation>1</Ligne_Separation>
+<Marge>24</Marge>
+<Cle_DBTable>101</Cle_DBTable>
+<Affiche_Selection>1</Affiche_Selection>
+</Modele_Etat>
+<Modele_Etat>
+<Cle>609</Cle>
+<Code>الاجر القاعدي +الخبرة 2024</Code>
+<Libelle></Libelle>
+<Libelle_Arab>جدول  رواتب  سلك الموظفين الطبيين شهر :  ماي 2022</Libelle_Arab>
+<Largeur>350</Largeur>
+<Longueur>280</Longueur>
+<Ligne_Separation>1</Ligne_Separation>
+<Marge>24</Marge>
+<Cle_DBTable>101</Cle_DBTable>
+<Affiche_Selection>1</Affiche_Selection>
+</Modele_Etat>
+<Modele_Etat>
+<Cle>610</Cle>
+<Code>نفسانيين أفريل 2024</Code>
+<Libelle></Libelle>
+<Libelle_Arab>جدول  رواتب الموظفين سلك نفسانيين عيادي لشهر: مارس 2024</Libelle_Arab>
+<Largeur>350</Largeur>
+<Longueur>280</Longueur>
+<Ligne_Separation>1</Ligne_Separation>
+<Marge>19</Marge>
+<Cle_DBTable>101</Cle_DBTable>
+<Affiche_Selection>1</Affiche_Selection>
+</Modele_Etat>
+<Modele_Etat>
+<Cle>611</Cle>
+<Code>متصرفوا مصالح الصحة افريل 2024</Code>
+<Libelle></Libelle>
+<Libelle_Arab>جدول رواتب سلك الموظفين  متصرفوا المصالح الصحية  لشهــر : أفريل 2024</Libelle_Arab>
+<Largeur>350</Largeur>
+<Longueur>280</Longueur>
+<Ligne_Separation>1</Ligne_Separation>
+<Marge>26</Marge>
+<Cle_DBTable>101</Cle_DBTable>
+<Affiche_Selection>1</Affiche_Selection>
+</Modele_Etat>
+<Modele_Etat>
+<Cle>612</Cle>
+<Code>الاداريين أفريل 2024</Code>
+<Libelle></Libelle>
+<Libelle_Arab>جدول رواتب سلك الموظفين الإداريين   لشهــر : أفريل 2024</Libelle_Arab>
+<Largeur>350</Largeur>
+<Longueur>280</Longueur>
+<Ligne_Separation>1</Ligne_Separation>
+<Marge>17</Marge>
+<Cle_DBTable>101</Cle_DBTable>
+<Affiche_Selection>1</Affiche_Selection>
+</Modele_Etat>
+<Modele_Etat>
+<Cle>622</Cle>
+<Code>مارس 2025 قابلات الجديد</Code>
+<Libelle></Libelle>
+<Libelle_Arab>جدول  رواتب الموظفين سلك القابلات  لشهر: ماي 2022</Libelle_Arab>
+<Largeur>350</Largeur>
+<Longueur>280</Longueur>
+<Ligne_Separation>1</Ligne_Separation>
+<Marge>20</Marge>
+<Cle_DBTable>101</Cle_DBTable>
+<Affiche_Selection>1</Affiche_Selection>
+</Modele_Etat>
+<Modele_Etat>
+<Cle>625</Cle>
+<Code>شهر مارس 2025 الاطباء الاخصائيين الجديد</Code>
+<Libelle></Libelle>
+<Libelle_Arab>جدول  رواتب  سلك الموظفين الطبيين شهر :  ماي 2022</Libelle_Arab>
+<Largeur>350</Largeur>
+<Longueur>280</Longueur>
+<Ligne_Separation>1</Ligne_Separation>
+<Marge>24</Marge>
+<Cle_DBTable>101</Cle_DBTable>
+<Affiche_Selection>1</Affiche_Selection>
+</Modele_Etat>
+<Modele_Etat>
+<Cle>627</Cle>
+<Code>اطباء عامون بالجديد مارس 2025</Code>
+<Libelle></Libelle>
+<Libelle_Arab>جدول  رواتب  سلك الموظفين الطبيين شهر :  فيفري 2024</Libelle_Arab>
+<Largeur>350</Largeur>
+<Longueur>280</Longueur>
+<Ligne_Separation>1</Ligne_Separation>
+<Marge>24</Marge>
+<Cle_DBTable>101</Cle_DBTable>
+<Affiche_Selection>1</Affiche_Selection>
+</Modele_Etat>
+<Modele_Etat>
+<Cle>628</Cle>
+<Code>شبه طبيين بالجديد مارس 2025</Code>
+<Libelle></Libelle>
+<Libelle_Arab>جدول  رواتب الموظفين سلك الشبه الطبيين لشهر: </Libelle_Arab>
+<Largeur>350</Largeur>
+<Longueur>280</Longueur>
+<Ligne_Separation>1</Ligne_Separation>
+<Marge>15</Marge>
+<Cle_DBTable>101</Cle_DBTable>
+<Affiche_Selection>1</Affiche_Selection>
+</Modele_Etat>
+<Modele_Etat>
+<Cle>630</Cle>
+<Code>نفسانيين بالجديد مارس 2025</Code>
+<Libelle></Libelle>
+<Libelle_Arab>جدول  رواتب الموظفين سلك نفسانيين عيادي لشهر: مارس 2024</Libelle_Arab>
+<Largeur>350</Largeur>
+<Longueur>280</Longueur>
+<Ligne_Separation>1</Ligne_Separation>
+<Marge>19</Marge>
+<Cle_DBTable>101</Cle_DBTable>
+<Affiche_Selection>1</Affiche_Selection>
+</Modele_Etat>
+</dataroot>
