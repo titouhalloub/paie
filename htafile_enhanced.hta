@@ -2648,13 +2648,13 @@ function rpBuildSheetsAt(prof) {
   }
   function cellN(v,st){return X("N",""+r2(v),st);}
   function rendSheet(srcR,nm,per){
-  var rw=[58,135,50,95,55,45,55,95,85,85,95],rnc=rw.length,rg=[],curRows=[],acc=[0,0,0,0,0];
-  var rcols=["Matricule","Nom et prenom","Jours rappel (base 30j)","Salaire principal (Base + IEP)","Taux max %","Note /40","Taux effectif %","Prime de rendement","Retenue C.S 9%","IRG 10%","Net a payer"];
+  var rw=[58,135,50,45,45,50,50,95,55,45,55,95,85,85,95],rnc=rw.length,rg=[],curRows=[],acc=[0,0,0,0,0];
+  var rcols=["Matricule","Nom et prenom","Jours rappel (base 30j)","Categorie","Echelon","Indice min","Points echelon","Salaire principal (Base + IEP)","Taux max %","Note /40","Taux effectif %","Prime de rendement","Retenue C.S 9%","IRG 10%","Net a payer"];
   function pv(r){var s1=0;if(ib>=0)s1+=parseFloat(rv(r[ib]))||0;if(ie>=0)s1+=parseFloat(rv(r[ie]))||0;return s1;}
   function amounts(brut){var cs=r2(brut*0.09),irg=r2((brut-cs)*0.10);return {cs:cs,irg:irg,net:r2(brut-cs-irg)};}
   function rendTot(l1,l2,v,st){
-    var r=[X("S",l1+(l2&&l2!==l1&&l2!==T("TOTAL EMPLOYE")?"  "+l2:""),"bf"),X("E","","bf"),X("E","","bf"),cellN(v[0],"bn"),X("E","","bf"),X("E","","bf"),X("E","","bf"),cellN(v[1],"bn"),cellN(v[2],"bn"),cellN(v[3],"bn"),cellN(v[4],"bn")];
-    var ag=[3,7,8,9,10],az;for(az=0;az<ag.length;az++)r[ag[az]].f={k:"agg"};
+    var r=[X("S",l1+(l2&&l2!==l1&&l2!==T("TOTAL EMPLOYE")?"  "+l2:""),"bf"),X("E","","bf"),X("E","","bf"),X("E","","bf"),X("E","","bf"),X("E","","bf"),X("E","","bf"),cellN(v[0],"bn"),X("E","","bf"),X("E","","bf"),X("E","","bf"),cellN(v[1],"bn"),cellN(v[2],"bn"),cellN(v[3],"bn"),cellN(v[4],"bn")];
+    var ag=[7,11,12,13,14],az;for(az=0;az<ag.length;az++)r[ag[az]].f={k:"agg"};
     r.h=ROWH;return r;
   }
   for(i=0;i<srcR.length;i++){
@@ -2662,20 +2662,20 @@ function rpBuildSheetsAt(prof) {
     if(nat==="TOTAL EMPLOYE"){
       row=rendTot(rv(dr[0]),T("TOTAL EMPLOYE"),acc);
       row[1]=X("S",rv(dr[1]),"bf");row.role="tot";curRows.push(row);
-      var tr=[];tr[3]="N"+r2(acc[0]);tr[7]="N"+r2(acc[1]);tr[8]="N"+r2(acc[2]);tr[9]="N"+r2(acc[3]);tr[10]="N"+r2(acc[4]);
+      var tr=[];tr[7]="N"+r2(acc[0]);tr[11]="N"+r2(acc[1]);tr[12]="N"+r2(acc[2]);tr[13]="N"+r2(acc[3]);tr[14]="N"+r2(acc[4]);
       rg.push({rows:curRows,tot:tr,h:curRows.length*ROWH,mat:mat});curRows=[];acc=[0,0,0,0,0];continue;
     }
     if(nat!=="ANCIEN SALAIRE"&&nat!=="NOUVEAU SALAIRE"&&nat!=="RAPPEL")continue;
     var princ=pv(dr),prime=r2(princ*eff/100),am=amounts(prime);
     if(nat==="RAPPEL"){acc[0]+=princ;acc[1]+=prime;acc[2]+=am.cs;acc[3]+=am.irg;acc[4]+=am.net;}
     if(nat==="ANCIEN SALAIRE"){var rpr=[X("S",T("Periode couverte")+" : "+rv(dr[4]),"cxa",rnc-1)];rpr.h=ROWH;curRows.push(rpr);}
-    row=[xr(dr[0]),(nat==="ANCIEN SALAIRE")?xr(dr[1]):X("E",""),xr(dr[5]),cellN(princ,"n"),cellN(rateFor(mat),"n"),cellN(note,"n"),cellN(eff,"n"),cellN(prime,"n"),cellN(am.cs,"n"),cellN(am.irg,"n"),cellN(am.net,"n")];
+    row=[xr(dr[0]),(nat==="ANCIEN SALAIRE")?xr(dr[1]):X("E",""),xr(dr[5]),xr((dr.ixc||[])[0]||"E"),xr((dr.ixc||[])[1]||"E"),xr((dr.ixc||[])[2]||"E"),xr((dr.ixc||[])[3]||"E"),cellN(princ,"n"),cellN(rateFor(mat),"n"),cellN(note,"n"),cellN(eff,"n"),cellN(prime,"n"),cellN(am.cs,"n"),cellN(am.irg,"n"),cellN(am.net,"n")];
     row.h=ROWH;row.role=(nat==="ANCIEN SALAIRE")?"old":(nat==="NOUVEAU SALAIRE"?"new":"rap");
-    row[6].f={k:"expr",t:"[4]*[5]/40"};row[7].f={k:"expr",t:"ROUND([3]*[4]*[5]/40/100,2)"};row[8].f={k:"expr",t:"ROUND([7]*0.09,2)"};row[9].f={k:"expr",t:"ROUND(([7]-[8])*0.1,2)"};row[10].f={k:"expr",t:"[7]-[8]-[9]"};
+    row[10].f={k:"expr",t:"[8]*[9]/40"};row[11].f={k:"expr",t:"ROUND([7]*[8]*[9]/40/100,2)"};row[12].f={k:"expr",t:"ROUND([11]*0.09,2)"};row[13].f={k:"expr",t:"ROUND(([11]-[12])*0.1,2)"};row[14].f={k:"expr",t:"[11]-[12]-[13]"};
     curRows.push(row);
   }
   function rtot(list,col){var s0=0,q;for(q=0;q<list.length;q++){var cc=list[q].tot[col];if(cc)s0+=parseFloat(rv(cc));}return r2(s0);}
-  function rSums(list){return [rtot(list,3),rtot(list,7),rtot(list,8),rtot(list,9),rtot(list,10)];}
+  function rSums(list){return [rtot(list,7),rtot(list,11),rtot(list,12),rtot(list,13),rtot(list,14)];}
   function rPageTotal(list,no,cnt){var r=rendTot(T("TOTAL PAGE"),no+" / "+cnt,rSums(list));r.h=TOTH;r.role="pt";return r;}
   var rfoot=rendTot(T("TOTAL GENERAL"),T("TOTAL GENERAL"),rSums(rg));rfoot.h=FOOTH;rfoot.role="ft";
   var rHdr=[];for(i=0;i<rnc;i++)rHdr.push(X("S",T(rcols[i]),"h"));
