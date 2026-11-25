@@ -1853,6 +1853,13 @@ function doRappel() {
     else if(dmT==="cont"||dmT==="para")dispKind.push("gain");
     else{var dix=dispMap[i].idx;dispKind.push(dix<nG?(isAFRubrique(rubs[dix])?"af":(isHousingRubrique(rubs[dix])?"gainH":"gain")):(dix<nG+nR?"ret":"int"));}
   }
+  var dispCot=[],cotDisp=-1;
+  for(i=0;i<dispMap.length;i++){
+    var ctT=dispMap[i].type,cl0=(ctT==="cont")?contIdx:(ctT==="para"?paraIdx:null);
+    if(ctT==="rub"){dispCot.push(dispMap[i].idx<nG&&!!rubs[dispMap[i].idx].cotisable&&!isAFRubrique(rubs[dispMap[i].idx]));if(cotIdx>=0&&dispMap[i].idx===cotIdx)cotDisp=i;}
+    else if(cl0&&cl0.length)dispCot.push(!!rubs[cl0[0]].cotisable);
+    else dispCot.push(false);
+  }
   function dfxOf(rateArr,amounts){
     var out=[],jj,list,ci,hit,nz;
     for(jj=0;jj<dispMap.length;jj++){
@@ -2112,6 +2119,12 @@ function doRappel() {
         else if(rubs[q].calculated&&typeof pct==="number")setRate(q,pct);
       }
     }
+    /* Cotisation sociale : 9 % de la somme des gains COTISABLES (hors allocations familiales), recalculee pour l ancien et le nouveau salaire */
+    if(cotIdx>=0){
+      var cso=0,csn=0,cq;
+      for(cq=0;cq<nG;cq++)if(rubs[cq].cotisable&&!isAFRubrique(rubs[cq])){cso+=oldSalary[cq];csn+=newSalary[cq];}
+      oldSalary[cotIdx]=r2(0.09*cso);newSalary[cotIdx]=r2(0.09*csn);unit[cotIdx]=newSalary[cotIdx]-oldSalary[cotIdx];rateArr[cotIdx]=null;
+    }
     if(irgIdx>=0){
       var oBase=0,nBase=0,qq,oIrg,nIrg;
       for(qq=0;qq<nG;qq++)if(!isZoneOrLog(rubs[qq])&&!isAFRubrique(rubs[qq])){oBase+=oldSalary[qq];nBase+=newSalary[qq];}
@@ -2129,8 +2142,8 @@ function doRappel() {
     /* controle de fin de bloc : un bulletin du dernier mois doit donner les memes montants (sinon un taux a change en cours de periode) */
     if(sg.lastLd&&sg.lastLd.ref.aid!==sg.firstAid){var chk=fullCalc(sg.lastLd,sg.e,sg.cpk,sg.cam);if(chk.sig!==sg.sig)warnOnce(flushEmp.mat+" "+flushEmp.name+": montants ou taux differents au sein de "+periodText+" (grille "+sg.gk+") ; verifiez ou scindez la periode.");}
     var ratio=sg.newIdx.total/sg.oldIdx.total,mat=flushEmp.mat,nm=flushEmp.name;
-    var rOld=lineRow(mat,nm,"ANCIEN SALAIRE",sg.gk,periodText,null,sg.refPeriod,sg.oldSalary);rOld.ixc=["S"+sg.catP,"I"+sg.echP,"I"+sg.oldIdx.min,"I"+sg.oldIdx.pts,"I"+sg.oldIdx.total,"E"];rOld.dfx=dfxOf(sg.rate,sg.oldSalary);rows.push(rOld);
-    var rNew=lineRow(mat,nm,"NOUVEAU SALAIRE",sg.gk,periodText,null,sg.refPeriod,sg.newSalary);rNew.ixc=["S"+sg.catP,"I"+sg.newE,"I"+sg.newIdx.min,"I"+sg.newIdx.pts,"I"+sg.newIdx.total,"E"];rNew.dfx=dfxOf(sg.rate,sg.newSalary);rows.push(rNew);
+    var rOld=lineRow(mat,nm,"ANCIEN SALAIRE",sg.gk,periodText,null,sg.refPeriod,sg.oldSalary);rOld.ixc=["S"+sg.catP,"I"+sg.echP,"I"+sg.oldIdx.min,"I"+sg.oldIdx.pts,"I"+sg.oldIdx.total,"E"];rOld.dfx=dfxOf(sg.rate,sg.oldSalary);rOld.cotf=(cotDisp>=0);rows.push(rOld);
+    var rNew=lineRow(mat,nm,"NOUVEAU SALAIRE",sg.gk,periodText,null,sg.refPeriod,sg.newSalary);rNew.ixc=["S"+sg.catP,"I"+sg.newE,"I"+sg.newIdx.min,"I"+sg.newIdx.pts,"I"+sg.newIdx.total,"E"];rNew.dfx=dfxOf(sg.rate,sg.newSalary);rNew.cotf=(cotDisp>=0);rows.push(rNew);
     var rRap=lineRow(mat,nm,"RAPPEL",sg.gk,periodText,sg.days,sg.refPeriod,sg.recall);rRap.ixc=["E","E","E","E","E","N"+(Math.round(ratio*1000000)/1000000)];rows.push(rRap);
     flushEmp.rows++;if(flushEmp.grids.indexOf(sg.gk)<0)flushEmp.grids.push(sg.gk);
   }
@@ -2200,7 +2213,7 @@ function doRappel() {
     var nature=rv(rows[i][2]);
     if(nature==="RAPPEL"||nature==="TOTAL EMPLOYE")compactRows.push(rows[i]);
   }
-  curR={dispKind:dispKind,nDisp:dispMap.length,empTotals:empTotals,rubKinds:rubKinds,cols:cols,rows:rows,detailRows:rows,compactRows:compactRows,foot:foot,rcols:rcols,recap:recap,rubs:rubs,warns:warns.slice(0),contIdx:contIdx.slice(0),date:"individuelle par agent",until:"individuel par agent"};
+  curR={dispCot:dispCot,cotDisp:cotDisp,dispKind:dispKind,nDisp:dispMap.length,empTotals:empTotals,rubKinds:rubKinds,cols:cols,rows:rows,detailRows:rows,compactRows:compactRows,foot:foot,rcols:rcols,recap:recap,rubs:rubs,warns:warns.slice(0),contIdx:contIdx.slice(0),date:"individuelle par agent",until:"individuel par agent"};
     rpRenderOut();
   }
   /* calcul par tranches de ~120 ms : la fenetre reste vivante et affiche la progression */
@@ -2596,6 +2609,10 @@ function rpBuildSheetsAt(prof) {
     cells.role=role;
     if(role==="old"||role==="new"){
       if(P.base>=0&&src.dfx)for(jj=0;jj<P.nd;jj++){pp=P.disp[jj];if(pp>=0&&src.dfx[jj])cells[pp].f={k:"rate",p:src.dfx[jj],a:P.base,b:P.iep};}
+      if(src.cotf&&d.cotDisp>=0&&P.disp[d.cotDisp]>=0){
+        var cl2=[],cz;for(cz=0;cz<P.nd;cz++)if(d.dispCot[cz]&&P.disp[cz]>=0)cl2.push("["+P.disp[cz]+"]");
+        if(cl2.length)cells[P.disp[d.cotDisp]].f={k:"expr",t:"ROUND(0.09*("+cl2.join("+")+"),2)"};
+      }
       if(P.tcol[0]>=0)cells[P.tcol[0]].f={k:"sum",c:P.gNoAF};
       if(P.tcol[1]>=0)cells[P.tcol[1]].f={k:"sum",c:P.gNoAFH};
       if(P.tcol[2]>=0)cells[P.tcol[2]].f={k:"sum",c:P.rets};
@@ -2754,7 +2771,7 @@ function rpBuildSheetsAt(prof) {
         a=rg.a>periodStart?rg.a:periodStart;b=rg.b<periodEnd?rg.b:periodEnd;
         if(a>b)continue;
         originalDays=annualDays30(rg.a,rg.b);partDays=annualDays30(a,b);factor=originalDays>0?partDays/originalDays:0;
-        cp=src.slice(0);cp.raw=(src.raw||[]).slice(0);cp.dfx=src.dfx;
+        cp=src.slice(0);cp.raw=(src.raw||[]).slice(0);cp.dfx=src.dfx;cp.cotf=src.cotf;
         cp[4]=annualDateFmt(a)+" - "+annualDateFmt(b);cp[5]="I"+partDays;cp.ixc=(src.ixc||[]).slice(0);
         if(kind==="RAPPEL"){
           for(jj=0;jj<cp.raw.length;jj++)cp.raw[jj]=r2(cp.raw[jj]*factor);
