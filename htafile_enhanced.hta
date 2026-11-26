@@ -1701,13 +1701,15 @@ function doRappel() {
   /* ---- Regles par corps (modeles Quick Report Modele_Etat) : rubriques du NOUVEAU regime (grille 2024) calculees meme si absentes des bulletins archives.
      rate = % de (base + IEP) ; sup = rubriques de l ancien regime (codes normalises) mises a zero dans le nouveau regime. ---- */
   var CORPS_RULES={
-    "1000":[{code:"I.S.S.M.E40%",alt:["I.S.S.M.E40"],lib:"\u062a.\u062f.\u0635.\u0623.\u0637 40",rate:40,reg:"new",sup:["I.S.S.M.E25"]},
-            {code:"I.A.S.O.S.R35%",alt:["I.A.S.O.S.R35"],lib:"\u062a.\u0625.\u0639.\u062a.\u0635.\u0625 35",rate:35,reg:"new",sup:["I.A.S.O.S.R25"]},
-            {code:"I.TECHNI 25",alt:["I.TECHNI 25%"],lib:"I.TECHNI 25",rate:25,reg:"new",sup:["I.TECHNI 10"]},
+    /* sages-femmes (11-201 / 24-426) : meme rubrique ancienne et nouvelle, taux selon la periode ; aucune condition de categorie */
+    "1000":[{code:"I.S.S.M.E40%",alt:["I.S.S.M.E40","I.S.S.M.E25%"],lib:"\u062a.\u062f.\u0635.\u0623.\u0637 40",rateOld:25,rate:40,all:true,sup:[]},
+            {code:"I.A.S.O.S.R35%",alt:["I.A.S.O.S.R35","I.A.S.O.S.R25%"],lib:"\u062a.\u0625.\u0639.\u062a.\u0635.\u0625 35",rateOld:25,rate:35,all:true,sup:[]},
+            {code:"I.TECHNI 25",alt:["I.TECHNI 25%","I.TECHNI 10%"],lib:"I.TECHNI 25",rateOld:10,rate:25,all:true,sup:[]},
             {code:"ISP 30 %",lib:"I.S.P 30 %",rate:30,all:true,minCat:11,sup:["ISP"],supAll:true}],
-    "1100":[{code:"I.S.A.A.R40%",alt:["I.S.A.A.R40"],lib:"I.S.A.A.R 40%",rate:40,reg:"new",sup:["I.S.A.A.R25"]},
-            {code:"I.A.A.A.R35%",alt:["I.A.A.A.R35"],lib:"I.A.A.A.R 35%",rate:35,reg:"new",sup:["I.A.A.A.R25"]},
-            {code:"I.TECHNI25",alt:["I.TECHNI25%"],lib:"I.TECHNI25",rate:25,reg:"new",sup:["I.TECHNI 10"]},
+    /* anesthesie-reanimation (11-289 / 24-427) : systeme propre, ne pas melanger avec les sages-femmes ni les paramedicaux */
+    "1100":[{code:"I.S.A.A.R40%",alt:["I.S.A.A.R40","I.S.A.A.R25%"],lib:"I.S.A.A.R 40%",rateOld:25,rate:40,all:true,sup:[]},
+            {code:"I.A.A.A.R35%",alt:["I.A.A.A.R35","I.A.A.A.R25%"],lib:"I.A.A.A.R 35%",rateOld:25,rate:35,all:true,sup:[]},
+            {code:"I.TECHNI25",alt:["I.TECHNI25%","I.TECHNI 10%","I.S.A.A 10%"],lib:"I.TECHNI25",rateOld:10,rate:25,all:true,sup:[]},
             {code:"ISP 30 %",lib:"I.S.P 30 %",rate:30,all:true,minCat:11,sup:["ISP"],supAll:true}],
     /* paramedicaux : obligation 25% -> 40% ; soutien 30% (cat<=10) / 25% (cat>=11) -> 55% (cat<=11) / 50% (cat>=12) ; technicite 10% (cat>=12) ; ISP 30% (cat>=11) */
     "200":[{code:"P.A.PM%",lib:"P.A.PM%",rateOld:25,rate:40,all:true,sup:["P.A.PM"],supAll:true},
@@ -1957,7 +1959,7 @@ function doRappel() {
   }
   var warnSeen={};
   function warnOnce(t){if(!warnSeen[t]){warnSeen[t]=true;warns.push(t);}}
-  for(var rwi=0;rwi<ruleWarn.length;rwi++)warnOnce("Rubrique "+ruleWarn[rwi]+" absente du catalogue Rubrique : ajoutee selon la regle du corps (taux x base+IEP, a partir du 01/01/"+RULE_FROM_YEAR+").");
+  for(var rwi=0;rwi<ruleWarn.length;rwi++)warnOnce("Rubrique "+ruleWarn[rwi]+" absente du catalogue Rubrique : ajoutee selon la regle du corps (taux de la periode x base+IEP ; nouveau regime a partir du 01/01/"+RULE_FROM_YEAR+").");
   function rpChooseRef(mat,gk,pEnd){
     var list=candByMat["k"+lc(mat)];
     if(!list||!list.length)return null;
