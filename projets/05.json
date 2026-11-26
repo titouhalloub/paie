@@ -1,0 +1,58 @@
+{
+ "type": "rappel-projet",
+ "version": 2,
+ "no": "05",
+ "titre": "",
+ "date": "2026-11-23T00:00:00.000Z",
+ "baseDonnees": "E:\\eph\\2026.mdb",
+ "basesReference": [
+  "E:\\eph\\16-11-2026\\Paie September 2021 .mdb",
+  "E:\\eph\\16-11-2026\\Paie Oct 2022.mdb",
+  "E:\\eph\\16-11-2026\\Novembre 2023.mdb"
+ ],
+ "filtres": {
+  "corps": "1000",
+  "matricules": "",
+  "dateDefaut": "",
+  "finDefaut": "02/2026",
+  "bulletinGlobal": ""
+ },
+ "filtresListe": {
+  "corps": "1000",
+  "matricules": ""
+ },
+ "grilles": {
+  "g2022": "01/03/2022",
+  "g2023": "01/01/2023",
+  "g2024": "01/01/2024"
+ },
+ "calcul": {
+  "exclure": "",
+  "fixes": "",
+  "calculees": "",
+  "intermediaires": false,
+  "rendTaux": "",
+  "rendNote": "40",
+  "titreEtat": ""
+ },
+ "calcule": false,
+ "corpsNom": "Sages femmes de sante publique",
+ "source": [
+  "مستخرج الترقية شبه الطبيين 2025.txt"
+ ],
+ "rapprochement": "noms",
+ "agents": [
+{"mat":"","nom":"بلعباس هيفاء الشائعة","inclure":true,"nouvelEch":"10","dateEffet":"01/07/2024","fin":"12/2026","ech2":"","date2":"","bulletinRef":""},
+{"mat":"","nom":"بن حمزة سلمى","inclure":true,"nouvelEch":"4","dateEffet":"01/08/2025","fin":"12/2026","ech2":"","date2":"","bulletinRef":""},
+{"mat":"","nom":"بن خليفة سهيلة","inclure":true,"nouvelEch":"3","dateEffet":"01/01/2025","fin":"12/2026","ech2":"","date2":"","bulletinRef":""},
+{"mat":"","nom":"حميدة فاطنة","inclure":true,"nouvelEch":"8","dateEffet":"01/04/2024","fin":"12/2026","ech2":"","date2":"","bulletinRef":""},
+{"mat":"","nom":"دحمان خولة أمة الرحمان","inclure":true,"nouvelEch":"1","dateEffet":"01/08/2024","fin":"12/2026","ech2":"","date2":"","bulletinRef":""},
+{"mat":"","nom":"دراجي بختة","inclure":true,"nouvelEch":"7","dateEffet":"01/01/2025","fin":"12/2026","ech2":"","date2":"","bulletinRef":""},
+{"mat":"","nom":"سلامي نورة","inclure":true,"nouvelEch":"2","dateEffet":"01/11/2024","fin":"12/2026","ech2":"","date2":"","bulletinRef":""},
+{"mat":"","nom":"صالحي فضيلة","inclure":true,"nouvelEch":"3","dateEffet":"01/08/2025","fin":"12/2026","ech2":"","date2":"","bulletinRef":""},
+{"mat":"","nom":"قماري نعيمة","inclure":true,"nouvelEch":"10","dateEffet":"01/05/2025","fin":"12/2026","ech2":"","date2":"","bulletinRef":""},
+{"mat":"","nom":"قويسم زينب","inclure":true,"nouvelEch":"3","dateEffet":"01/02/2024","fin":"12/2026","ech2":"","date2":"","bulletinRef":""},
+{"mat":"","nom":"كيدار نعيمة","inclure":true,"nouvelEch":"8","dateEffet":"01/02/2025","fin":"12/2026","ech2":"","date2":"","bulletinRef":""},
+{"mat":"","nom":"ناجم خديجة","inclure":true,"nouvelEch":"2","dateEffet":"01/02/2024","fin":"12/2026","ech2":"","date2":"","bulletinRef":""}
+ ]
+}

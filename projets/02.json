@@ -1,0 +1,52 @@
+{
+ "type": "rappel-projet",
+ "version": 2,
+ "no": "02",
+ "titre": "",
+ "date": "2026-11-23T00:00:00.000Z",
+ "baseDonnees": "E:\\eph\\2026.mdb",
+ "basesReference": [
+  "E:\\eph\\16-11-2026\\Paie September 2021 .mdb",
+  "E:\\eph\\16-11-2026\\Paie Oct 2022.mdb",
+  "E:\\eph\\16-11-2026\\Novembre 2023.mdb"
+ ],
+ "filtres": {
+  "corps": "800",
+  "matricules": "",
+  "dateDefaut": "",
+  "finDefaut": "02/2026",
+  "bulletinGlobal": ""
+ },
+ "filtresListe": {
+  "corps": "800",
+  "matricules": ""
+ },
+ "grilles": {
+  "g2022": "01/03/2022",
+  "g2023": "01/01/2023",
+  "g2024": "01/01/2024"
+ },
+ "calcul": {
+  "exclure": "",
+  "fixes": "",
+  "calculees": "",
+  "intermediaires": false,
+  "rendTaux": "",
+  "rendNote": "40",
+  "titreEtat": ""
+ },
+ "calcule": false,
+ "corpsNom": "Biologistes S.P",
+ "source": [
+  "مستخرج الترقية شبه الطبيين 2025.txt"
+ ],
+ "rapprochement": "noms",
+ "agents": [
+{"mat":"","nom":"بوالكور رفية","inclure":true,"nouvelEch":"5","dateEffet":"01/07/2024","fin":"12/2026","ech2":"","date2":"","bulletinRef":""},
+{"mat":"","nom":"قبلة أسماء","inclure":true,"nouvelEch":"2","dateEffet":"01/10/2025","fin":"12/2026","ech2":"","date2":"","bulletinRef":""},
+{"mat":"","nom":"كيدار بركانة","inclure":true,"nouvelEch":"1","dateEffet":"01/09/2024","fin":"12/2026","ech2":"","date2":"","bulletinRef":""},
+{"mat":"","nom":"لهزيل ايمان","inclure":true,"nouvelEch":"4","dateEffet":"01/07/2024","fin":"12/2026","ech2":"","date2":"","bulletinRef":""},
+{"mat":"","nom":"نجمة دنيا","inclure":true,"nouvelEch":"5","dateEffet":"01/11/2024","fin":"12/2026","ech2":"","date2":"","bulletinRef":""},
+{"mat":"","nom":"هلوب فطيمة","inclure":true,"nouvelEch":"4","dateEffet":"01/12/2024","fin":"12/2026","ech2":"","date2":"","bulletinRef":""}
+ ]
+}

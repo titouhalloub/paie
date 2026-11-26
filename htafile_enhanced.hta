@@ -877,6 +877,7 @@ function rpSort(target, col) {
   if (!curR) return;
   var st = rpSortState[target] || (rpSortState[target] = { col: -1, asc: true }), i, dec = [], blocks = [], cur = [];
   if (st.col === col) st.asc = !st.asc; else { st.col = col; st.asc = true; }
+  curR.sortSrc = (target == "rpRecap") ? "recap" : "detail";
   if (target == "rpRecap") {
     for (i = 0; i < curR.recap.length; i++) dec.push({ k: rpSortKey(curR.recap[i][col] || "E"), i: i, v: curR.recap[i] });
     dec.sort(function (a, b) { var c = rpSortCmp(a.k, b.k, st.asc); return c !== 0 ? c : a.i - b.i; });
@@ -900,6 +901,30 @@ function rpSort(target, col) {
     curR.detailRows = nr; curR.compactRows = nc2;
   }
   rpRenderOut();
+}
+/* copie de curR dont TOUTES les feuilles d export (journal, feuilles 2-6, rendement, recap) suivent l ordre choisi a l ecran (nom, categorie, echelon...) */
+function rpOrderedCopy(src) {
+  var o = {}, k, i, j, blocks = [], cur = [], rowsIn = (src.detailRows && src.detailRows.length) ? src.detailRows : src.rows, order = [], pos = {}, mat;
+  for (k in src) if (src.hasOwnProperty(k)) o[k] = src[k];
+  for (i = 0; i < rowsIn.length; i++) { cur.push(rowsIn[i]); if (rv(rowsIn[i][4]) == "TOTAL EMPLOYE") { blocks.push(cur); cur = []; } }
+  if (cur.length) blocks.push(cur);
+  if (src.sortSrc == "recap" && src.recap) {
+    for (i = 0; i < src.recap.length; i++) { mat = rv(src.recap[i][0]); if (pos["k" + mat] === undefined) pos["k" + mat] = i; }
+    var bl = [];
+    for (i = 0; i < blocks.length; i++) { mat = rv(blocks[i][blocks[i].length - 1][0]); bl.push({ p: (pos["k" + mat] === undefined ? 1e9 + i : pos["k" + mat]), v: blocks[i] }); }
+    bl.sort(function (a, b) { return a.p - b.p; });
+    blocks = []; for (i = 0; i < bl.length; i++) blocks.push(bl[i].v);
+  } else if (src.recap) {
+    for (i = 0; i < blocks.length; i++) { mat = rv(blocks[i][blocks[i].length - 1][0]); if (pos["k" + mat] === undefined) pos["k" + mat] = i; }
+    var rc = [];
+    for (i = 0; i < src.recap.length; i++) { mat = rv(src.recap[i][0]); rc.push({ p: (pos["k" + mat] === undefined ? 1e9 + i : pos["k" + mat]), v: src.recap[i] }); }
+    rc.sort(function (a, b) { return a.p - b.p; });
+    o.recap = []; for (i = 0; i < rc.length; i++) o.recap.push(rc[i].v);
+  }
+  var nr = [];
+  for (i = 0; i < blocks.length; i++) for (j = 0; j < blocks[i].length; j++) nr.push(blocks[i][j]);
+  o.detailRows = nr; o.rows = nr;
+  return o;
 }
 function memTable(target, cols, rows, page, ps, foot) {
   mem[target] = { cols: cols, rows: rows, ps: ps, foot: foot };
@@ -949,30 +974,77 @@ function xlsCellXml(c) {
   var st = ' ss:StyleID="' + sid + '"' + at;
   if (c.t == "E") return '<Cell' + st + '/>';
   if ((c.t == "N" || c.t == "I") && !isNaN(parseFloat(c.v)))
-    return '<Cell' + st + '><Data ss:Type="Number">' + parseFloat(c.v) + '</Data></Cell>';
+    return '<Cell' + st + (c.fx ? ' ss:Formula="' + xmlEsc(c.fx) + '"' : '') + '><Data ss:Type="Number">' + parseFloat(c.v) + '</Data></Cell>';
   if (c.t == "D") return '<Cell' + st + '><Data ss:Type="DateTime">' + c.v + 'T00:00:00.000</Data></Cell>';
   return '<Cell' + st + '><Data ss:Type="String">' + xmlEsc(c.v) + '</Data></Cell>';
 }
-function xCopy(c, ix) { return { t: c.t, v: c.v, s: c.s, m: c.m, ix: ix }; }
+/* Excel formulas (R1C1) : each cell may carry a descriptor f resolved here, once the final physical layout is known.
+   roles of rows: old / new / rap (one agent period), tot (TOTAL EMPLOYE), pt (TOTAL PAGE), ft (TOTAL GENERAL). */
+function rpResolveF(rows, n, mir) {
+  var rapR = [], totR = [], ptR = [], ri, r, k, c, pos, pc, role, f, txt, i, lst, o;
+  function ph(j) { return mir ? (n - 1 - j) : j; }
+  function sr(j) { var d = ph(j) - pc; return d === 0 ? "RC" : "RC[" + d + "]"; }
+  function listOf(a) { var q, z = []; for (q = 0; q < a.length; q++) z.push("R[" + (a[q] - ri) + "]C"); return z.join(","); }
+  for (ri = 0; ri < rows.length; ri++) {
+    r = rows[ri]; role = r.role;
+    if (!role) continue;
+    pos = 0;
+    for (k = 0; k < r.length; k++) {
+      c = r[k]; if (c.ix) pos = c.ix - 1; pc = pos; pos += 1 + (c.m || 0);
+      f = c.f; if (!f || (c.t !== "N" && c.t !== "I") || isNaN(parseFloat(c.v))) continue;
+      txt = null;
+      if (f.k === "rate") txt = "ROUND(" + f.p + "*(" + sr(f.a) + (f.b >= 0 ? "+" + sr(f.b) : "") + "),2)";
+      else if (f.k === "sum") {
+        lst = []; for (i = 0; i < f.c.length; i++) lst.push(sr(f.c[i]));
+        if (lst.length) { txt = "SUM(" + lst.join(",") + ")"; if (f.n && f.n.length) { o = []; for (i = 0; i < f.n.length; i++) o.push(sr(f.n[i])); txt += "-SUM(" + o.join(",") + ")"; } }
+        else if (f.n && f.n.length) { o = []; for (i = 0; i < f.n.length; i++) o.push(sr(f.n[i])); txt = "-SUM(" + o.join(",") + ")"; }
+      }
+      else if (f.k === "rap") txt = "ROUND((R[-1]C-R[-2]C)*" + sr(f.d) + "/30,2)";
+      else if (f.k === "expr") txt = f.t.replace(/\[(\d+)\]/g, function (m0, g) { return sr(parseInt(g, 10)); });
+      else if (f.k === "agg") {
+        lst = (role === "tot") ? rapR : (role === "pt" ? totR : (role === "ft" ? ptR : []));
+        if (lst.length) txt = "SUM(" + listOf(lst) + ")";
+      }
+      if (txt) c.fx = "=" + txt;
+    }
+    if (role === "rap") rapR.push(ri);
+    else if (role === "tot") { totR.push(ri); rapR = []; }
+    else if (role === "pt") { ptR.push(ri); totR = []; }
+  }
+}
+function xCopy(c, ix) { return { t: c.t, v: c.v, s: c.s, m: c.m, ix: ix, f: c.f }; }
 /* logical layout: column 1 = right-most. Physical layout for a left-to-right sheet: table rows reversed, heading rows re-anchored. */
+/* generic right-to-left mirror of a grid row (handles merged cells): logical column 1 = right-most */
+function mirrorGrid(r, n) {
+  var items = [], pos = 0, k, c, span, res = [], phys = 0, o, ps, nc2;
+  for (k = 0; k < r.length; k++) { c = r[k]; span = 1 + (c.m || 0); items.push({ c: c, e: pos + span - 1 }); pos += span; }
+  items.reverse();
+  for (k = 0; k < items.length; k++) {
+    o = items[k]; ps = n - 1 - o.e;
+    nc2 = xCopy(o.c, ps === phys ? undefined : ps + 1); nc2.m = o.c.m;
+    res.push(nc2); phys = ps + 1 + (o.c.m || 0);
+  }
+  return res;
+}
 function mirrorRows(rows, n) {
   var out = [], i, r, st, rr, c;
   for (i = 0; i < rows.length; i++) {
     r = rows[i];
     if (!r.length) { out.push(r); continue; }
+    if (r.gr) { rr = mirrorGrid(r, n); rr.h = r.h; rr.role = r.role; out.push(rr); continue; }
     st = r[0].s || "";
     if (st === "e1" || st === "e4" || st === "e7") { out.push(r); continue; }
     if (st === "e2") { rr = [xCopy(r[0], n - r.length + 1)].concat(r.slice(1)); }
-    else if (st === "e3") { rr = r.slice().reverse(); }
+    else if (st === "e3") { rr = [xCopy(r[0], 1)]; }
     else if (st === "e6") { rr = [xCopy(r[0], undefined)]; }
-    else if (st === "e5") { rr = [xCopy(r[0], n)]; }
+    else if (st === "e5") { rr = [xCopy(r[0], 1)]; }
     else if (r.length === n) { rr = r.slice().reverse(); }
     else { rr = r; }
-    rr.h = r.h; out.push(rr);
+    rr.h = r.h; rr.role = r.role; out.push(rr);
   }
   return out;
 }
-var RP_FONT_SIZE=10;
+var RP_FONT_SIZE=12;
 function buildXls(sheets) {
   var o = [], i, j, k, bd = '<Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/></Borders>';
   var f = '<Font ss:FontName="Arial" ss:Size="'+RP_FONT_SIZE+'"';
@@ -980,26 +1052,27 @@ function buildXls(sheets) {
   o.push('<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet" xmlns:html="http://www.w3.org/TR/REC-html40">\r\n');
   o.push('<Styles>');
   o.push('<Style ss:ID="Default" ss:Name="Normal"><Alignment ss:Vertical="Bottom"/>' + f + '/></Style>');
-  o.push('<Style ss:ID="cx"><Alignment ss:Vertical="Bottom"/>' + f + '/>' + bd + '</Style>');
-  o.push('<Style ss:ID="h">' + f + ' ss:Bold="1"/><Interior ss:Color="#DCE6F1" ss:Pattern="Solid"/><Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"' + (LANG === "ar" ? ' ss:ReadingOrder="RightToLeft"' : '') + '/>' + bd + '</Style>');
-  o.push('<Style ss:ID="b">' + f + ' ss:Bold="1"/>' + bd + '</Style>');
-  o.push('<Style ss:ID="bf">' + f + ' ss:Bold="1"/><Interior ss:Color="#EEF3FA" ss:Pattern="Solid"/>' + bd + '</Style>');
+  o.push('<Style ss:ID="cx"><Alignment ss:Vertical="Center" ss:WrapText="1"/>' + f + '/>' + bd + '</Style>');
+  o.push('<Style ss:ID="h"><Font ss:FontName="Arial" ss:Size="' + RP_HEAD_FONT + '" ss:Bold="1"/><Interior ss:Color="#DCE6F1" ss:Pattern="Solid"/><Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"' + (LANG === "ar" ? ' ss:ReadingOrder="RightToLeft"' : '') + '/>' + bd + '</Style>');
+  o.push('<Style ss:ID="b">' + f + ' ss:Bold="1"/><Alignment ss:Vertical="Center" ss:WrapText="1"/>' + bd + '</Style>');
+  o.push('<Style ss:ID="bf">' + f + ' ss:Bold="1"/><Alignment ss:Vertical="Center" ss:WrapText="1"/><Interior ss:Color="#EEF3FA" ss:Pattern="Solid"/>' + bd + '</Style>');
   o.push('<Style ss:ID="t"><Font ss:FontName="Arial" ss:Size="' +(RP_FONT_SIZE+4)+'" ss:Bold="1"/></Style>');
   o.push('<Style ss:ID="et1"><Font ss:FontName="Arial" ss:Size="' +(RP_FONT_SIZE+4)+'" ss:Bold="1"/><Alignment ss:Horizontal="Center"/></Style>');
   o.push('<Style ss:ID="et2"><Font ss:FontName="Arial" ss:Size="' +(RP_FONT_SIZE+2)+'" ss:Bold="1"/><Alignment ss:Horizontal="Center"/></Style>');
-  o.push('<Style ss:ID="n">' + f + '/><NumberFormat ss:Format="#,##0.00"/>' + bd + '</Style>');
-  o.push('<Style ss:ID="bn">' + f + ' ss:Bold="1"/><Interior ss:Color="#EEF3FA" ss:Pattern="Solid"/><NumberFormat ss:Format="#,##0.00"/>' + bd + '</Style>');
+  o.push('<Style ss:ID="n"><Alignment ss:Vertical="Center" ss:WrapText="1"/>' + f + '/><NumberFormat ss:Format="#,##0.00"/>' + bd + '</Style>');
+  o.push('<Style ss:ID="bn">' + f + ' ss:Bold="1"/><Alignment ss:Vertical="Center" ss:WrapText="1"/><Interior ss:Color="#EEF3FA" ss:Pattern="Solid"/><NumberFormat ss:Format="#,##0.00"/>' + bd + '</Style>');
   o.push('<Style ss:ID="d">' + f + '/><NumberFormat ss:Format="yyyy\\-mm\\-dd"/>' + bd + '</Style>');
+  o.push('<Style ss:ID="pad"><Alignment ss:Vertical="Bottom"/>' + f + '/></Style>');
   var nb = '<Borders><Border ss:Position="Bottom" ss:LineStyle="None"/><Border ss:Position="Left" ss:LineStyle="None"/><Border ss:Position="Right" ss:LineStyle="None"/><Border ss:Position="Top" ss:LineStyle="None"/></Borders>';
   var ae = '<Font ss:FontName="Arabic Transparent" x:CharSet="178" ss:Size=';
-  o.push('<Style ss:ID="x6"><Alignment ss:Vertical="Bottom"/>' + f + '/><NumberFormat ss:Format="0.000000"/>' + bd + '</Style>');
-  o.push('<Style ss:ID="cxa"><Alignment ss:Vertical="Center"' + (LANG === "ar" ? ' ss:ReadingOrder="RightToLeft"' : '') + '/>' + f + '/><Interior ss:Color="#F7F7F2" ss:Pattern="Solid"/>' + bd + '</Style>');
+  o.push('<Style ss:ID="x6"><Alignment ss:Vertical="Center" ss:WrapText="1"/>' + f + '/><NumberFormat ss:Format="0.000000"/>' + bd + '</Style>');
+  o.push('<Style ss:ID="cxa"><Alignment ss:Vertical="Center" ss:WrapText="1"' + (LANG === "ar" ? ' ss:ReadingOrder="RightToLeft"' : '') + '/>' + f + '/><Interior ss:Color="#F7F7F2" ss:Pattern="Solid"/>' + bd + '</Style>');
   o.push('<Style ss:ID="e7"><Alignment ss:Horizontal="CenterAcrossSelection" ss:Vertical="Bottom"/>' + ae + '"' +(RP_FONT_SIZE+10)+'" ss:Bold="1"/>' + nb + '</Style>');
   o.push('<Style ss:ID="e6"><Alignment ss:Horizontal="Left" ss:Vertical="Center"/>' + ae + '"' +(RP_FONT_SIZE+6)+'" ss:Bold="1"/>' + nb + '</Style>');
-  o.push('<Style ss:ID="e5"><Font ss:FontName="Arial" ss:Size="' +(RP_FONT_SIZE+4)+'" ss:Bold="1"/>' + nb + '</Style>');
+  o.push('<Style ss:ID="e5"><Alignment ss:Horizontal="Center" ss:Vertical="Center"/><Font ss:FontName="Arial" ss:Size="' +(RP_FONT_SIZE+4)+'" ss:Bold="1"/>' + nb + '</Style>');
   o.push('<Style ss:ID="e1"><Alignment ss:Horizontal="CenterAcrossSelection" ss:Vertical="Bottom"/>' + ae + '"' +(RP_FONT_SIZE+12)+'" ss:Bold="1"/>' + nb + '</Style>');
   o.push('<Style ss:ID="e2"><Alignment ss:Horizontal="CenterAcrossSelection" ss:Vertical="Bottom"/>' + ae + '"' +(RP_FONT_SIZE+8)+'" ss:Bold="1"/>' + nb + '</Style>');
-  o.push('<Style ss:ID="e3"><Alignment ss:Horizontal="Right" ss:Vertical="Bottom"/>' + ae + '"' +(RP_FONT_SIZE+10)+'" ss:Bold="1"/>' + nb + '</Style>');
+  o.push('<Style ss:ID="e3"><Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>' + ae + '"' +(RP_FONT_SIZE+10)+'" ss:Bold="1"/>' + nb + '</Style>');
   o.push('<Style ss:ID="e4"><Alignment ss:Horizontal="CenterAcrossSelection" ss:Vertical="Bottom"/>' + ae + '"' +(RP_FONT_SIZE+8)+'" ss:Bold="1"/>' + nb + '</Style>');
   o.push('</Styles>\r\n');
   for (i = 0; i < sheets.length; i++) {
@@ -1007,6 +1080,7 @@ function buildXls(sheets) {
     var sName = xmlEsc(String(sh1.name).replace(/[\\/\?\*\[\]:]/g, " ").substring(0, 31));
     var rowsOut = sh1.rows, rowOff = 0, wOut = sh1.w;
     if (sh1.rtl && LANG === "ar") { rowsOut = mirrorRows(rowsOut, sh1.w.length); wOut = sh1.w.slice().reverse(); }
+    rpResolveF(rowsOut, sh1.w.length, !!(sh1.rtl && LANG === "ar"));
     if (sh1.entete) { rowsOut = [[X("S", ENTETE1, "et1")], [X("S", ENTETE2, "et2")]].concat(rowsOut); rowOff = 2; }
     o.push('<Worksheet ss:Name="' + sName + '">');
     if (sh1.printRow) o.push('<Names><NamedRange ss:Name="Print_Titles" ss:RefersTo="=\'' + sName + '\'!R' + sh1.printRow + ':R' + sh1.printRow + '"/></Names>');
@@ -1014,7 +1088,7 @@ function buildXls(sheets) {
     for (j = 0; j < wOut.length; j++) o.push('<Column ss:AutoFitWidth="0" ss:Width="' + wOut[j] + '"/>');
     for (j = 0; j < rowsOut.length; j++) {
       var r = rowsOut[j];
-      var rh = r.h ? ' ss:AutoFitHeight="0" ss:Height="' + r.h + '"' : "";
+      var rh = r.h ? ' ss:AutoFitHeight="' + (sh1.banded ? "0" : "1") + '" ss:Height="' + r.h + '"' : "";
       if (r.length == 0) { o.push('<Row' + rh + '/>'); continue; }
       o.push('<Row' + rh + '>');
       for (k = 0; k < r.length; k++) o.push(xlsCellXml(r[k]));
@@ -1022,14 +1096,17 @@ function buildXls(sheets) {
     }
     o.push('</Table>');
     if (sh1.entete) o.push('<Names><NamedRange ss:Name="_xlnm.Print_Titles" ss:RefersTo="=\'' + sName + '\'!$' + (sh1.headRow + rowOff) + ':$' + (sh1.headRow + rowOff) + '"/></Names>');
-    if (sh1.land || sh1.entete) {
+    if (sh1.land || sh1.entete || sh1.page) {
       o.push('<WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel"><PageSetup>');
-      if (sh1.land) o.push('<Layout x:Orientation="Landscape" x:PaperSize="8"/>');
+      if (sh1.page) o.push('<Layout x:Orientation="' + (sh1.page.land ? "Landscape" : "Portrait") + '" x:PaperSize="' + sh1.page.paper + '"/>');
+      else if (sh1.land) o.push('<Layout x:Orientation="Landscape" x:PaperSize="8"/>');
       if (sh1.entete) o.push('<Header x:Margin="0.2" x:Data="&amp;C' + xmlEsc(ENTETE1) + '&#10;' + xmlEsc(ENTETE2) + '"/><Footer x:Margin="0.2" x:Data="&amp;C' + T("Page") + ' &amp;P / &amp;N"/>');
       if (!sh1.entete && sh1.footer) o.push('<Footer x:Margin="0.2" x:Data="&amp;C' + xmlEsc(T("Page")) + ' &amp;P / &amp;N"/>');
-      if (sh1.land) o.push('<PageMargins x:Bottom="0.35" x:Left="0.25" x:Right="0.25" x:Top="' + (sh1.top || "0.6") + '" x:Header="0.15" x:Footer="0.15"/>');
+      if (sh1.page) o.push('<PageMargins x:Bottom="' + sh1.page.mB + '" x:Left="' + sh1.page.mL + '" x:Right="' + sh1.page.mR + '" x:Top="' + sh1.page.mT + '" x:Header="0.2" x:Footer="0.2"/>');
+      else if (sh1.land) o.push('<PageMargins x:Bottom="0.35" x:Left="0.25" x:Right="0.25" x:Top="' + (sh1.top || "0.6") + '" x:Header="0.15" x:Footer="0.15"/>');
       o.push('</PageSetup>');
-      if (sh1.land) o.push('<FitToPage/><Print><ValidPrinterInfo/><PaperSizeIndex>8</PaperSizeIndex><FitWidth>1</FitWidth><FitHeight>0</FitHeight><HorizontalResolution>600</HorizontalResolution><VerticalResolution>600</VerticalResolution></Print>');
+      if (sh1.page) o.push('<Print><ValidPrinterInfo/><PaperSizeIndex>' + sh1.page.paper + '</PaperSizeIndex><Scale>' + ((sh1.plan && sh1.plan.scale) || 100) + '</Scale></Print>');
+      else if (sh1.land) o.push('<Print><ValidPrinterInfo/><PaperSizeIndex>8</PaperSizeIndex><Scale>100</Scale><HorizontalResolution>600</HorizontalResolution><VerticalResolution>600</VerticalResolution></Print>');
       o.push('</WorksheetOptions>');
       if (sh1.plan && sh1.plan.breaks.length) {
         o.push('<PageBreaks xmlns="urn:schemas-microsoft-com:office:excel"><RowBreaks>');
@@ -1056,12 +1133,12 @@ function saveFile(name, text) {
   }
   throw last;
 }
-function exportXls(sheets, base, msgId) {
+function exportXls(sheets, base, msgId, append) {
   try {
     var dt = new Date(), stamp = dt.getFullYear() + rpPad(dt.getMonth() + 1) + rpPad(dt.getDate()) + "-" + rpPad(dt.getHours()) + rpPad(dt.getMinutes()) + rpPad(dt.getSeconds());
     var name = String(base).replace(/[\\/:*?"<>|\s]+/g, "_") + "_" + stamp + ".xls";
     var path = saveFile(name, buildXls(sheets));
-    $(msgId).innerHTML = '<span class="ok">Fichier cree: ' + esc(path) + '</span>';
+    $(msgId).innerHTML = (append ? $(msgId).innerHTML + '<br>' : '') + '<span class="ok">Fichier cree: ' + esc(path) + '</span>';
     try { sh.Run('"' + path + '"', 1, false); } catch (x) { }
   } catch (e) { $(msgId).innerHTML = '<span class="err">Export impossible: ' + esc(errText(e)) + '</span>'; }
 }
@@ -1331,6 +1408,12 @@ function rpLoadEmployees() {
       '<p><button type="button" onclick="rpSetSelection(true)">' + T("Tout selectionner") + '</button> ' +
       '<button type="button" onclick="rpSetSelection(false)">' + T("Tout deselectionner") + '</button> ' +
       '<span id="rpSelectionCount" class="muted"></span></p>' +
+      '<p>\u0628\u062d\u062b / Recherche (nom ou matricule) : <input id="rpSearch" size="28" oninput="rpFilterList()" onkeyup="rpFilterList()" placeholder="nom ou matricule"> ' +
+      '<label><input type="checkbox" id="rpOnlyChecked" onclick="rpFilterList()"> seulement les coches</label> ' +
+      '<button type="button" onclick="rpClearSearch()">Effacer</button> ' +
+      '<button type="button" onclick="rpSetVisible(true)">Cocher les visibles</button> ' +
+      '<button type="button" onclick="rpSetVisible(false)">Decocher les visibles</button> ' +
+      '<span id="rpSearchCount" class="muted"></span><span class="muted"> (la recherche masque seulement des lignes : rien n est recharge ni perdu)</span></p>' +
       '<div class="box" style="margin:8px 0;background:#f7f9fc"><b>تطبيق موحّد للتواريخ / Application groupée des dates</b><br>' +
       'تاريخ البداية / Date effet: <input id="rpBulkDate" size="10" value="'+esc(trim($("rpDefaultDate").value))+'" placeholder="jj/mm/aaaa"> &nbsp; ' +
       'تاريخ النهاية / Fin: <input id="rpBulkEnd" size="8" value="'+esc(trim($("rpUntil").value))+'" placeholder="MM/AAAA"> &nbsp; ' +
@@ -1390,7 +1473,7 @@ function rpLoadEmployees() {
       r=q.rows[i]; var nameAr=trim(rv(r[9])+" "+rv(r[10])), nameFr=trim(rv(r[1])+" "+rv(r[2]));
       var emp={mat:rv(r[0]), name:nameAr||nameFr, nameAr:nameAr, nameFr:nameFr, cat:rpCatKey(rv(r[3]),rv(r[4])), sec:rv(r[4]), old:rpEchNum(rv(r[5])), iep:rv(r[6]), corpsCode:rv(r[7]), corpsName:rv(r[8])};
       emp.id=i; rpEmployees.push(emp);
-      html += '<tr><td><input type="checkbox" id="rps_'+i+'" checked></td><td>'+esc(emp.mat)+'</td><td dir="'+(nameAr?'rtl':'auto')+'" lang="'+(nameAr?'ar':'')+'">'+esc(emp.name)+'</td><td>'+esc(emp.cat||rv(r[3]))+'</td><td>'+emp.old+'</td>'+
+      html += '<tr id="rpr_'+i+'"><td><input type="checkbox" id="rps_'+i+'" checked onclick="if($(\'rpOnlyChecked\')&&$(\'rpOnlyChecked\').checked)rpFilterList();"></td><td>'+esc(emp.mat)+'</td><td dir="'+(nameAr?'rtl':'auto')+'" lang="'+(nameAr?'ar':'')+'">'+esc(emp.name)+'</td><td>'+esc(emp.cat||rv(r[3]))+'</td><td>'+emp.old+'</td>'+
         '<td><input id="rpn_'+i+'" size="3" value="'+Math.min(12,emp.old+1)+'"></td>'+
         '<td><input id="rpd_'+i+'" size="10" value="'+esc(defDate)+'"></td>'+
         '<td><input id="rpe_'+i+'" size="8" value="'+esc(defEnd)+'"></td>'+
@@ -1404,6 +1487,25 @@ function rpLoadEmployees() {
     rpSetSelection(true);
     $("rpOut").innerHTML = '<p class="ok">Liste chargee. Selectionnez les agents puis calculez.</p>';
   } catch(e) { rpFail("Chargement des agents: "+errText(e)); }
+}
+/* recherche dans la liste chargee : masque/affiche les lignes, sans toucher aux valeurs saisies ni recharger */
+function rpFilterList() {
+  var q=rpNKey($("rpSearch")?$("rpSearch").value:"").toLowerCase(),tk=q?q.split(" "):[],only=!!($("rpOnlyChecked")&&$("rpOnlyChecked").checked),i,j,e,tr,cb,hay,ok,shown=0;
+  for(i=0;i<rpEmployees.length;i++){
+    e=rpEmployees[i];tr=$("rpr_"+i);if(!tr)continue;
+    hay=(String(e.mat)+" "+rpNKey(e.name)).toLowerCase();ok=true;
+    for(j=0;j<tk.length&&ok;j++)if(hay.indexOf(tk[j])<0)ok=false;
+    if(ok&&only){cb=$("rps_"+i);if(!cb||!cb.checked)ok=false;}
+    tr.style.display=ok?"":"none";if(ok)shown++;
+  }
+  if($("rpSearchCount"))$("rpSearchCount").innerHTML=(tk.length||only)?(shown+" / "+rpEmployees.length+" affiche(s)"):"";
+}
+function rpClearSearch(){if($("rpSearch"))$("rpSearch").value="";if($("rpOnlyChecked"))$("rpOnlyChecked").checked=false;rpFilterList();}
+function rpSetVisible(on){
+  var i,n=0,tr,el;
+  for(i=0;i<rpEmployees.length;i++){tr=$("rpr_"+i);el=$("rps_"+i);if(el&&tr&&tr.style.display!=="none")el.checked=!!on;if(el&&el.checked)n++;}
+  if($("rpSelectionCount"))$("rpSelectionCount").innerHTML=n+" / "+rpEmployees.length+" agent(s) selectionne(s)";
+  rpFilterList();
 }
 function rpSetSelection(on) {
   var i,n=0,el;
@@ -1445,6 +1547,7 @@ function rpGridAt(y,m) {
   if(v>=n22) return "2022";
   return "2007";
 }
+var RP_RUN = 0;
 function rpRun() {
   if (needDb("rpOut")) return;
   rpStage="validation des dates et des echelons";
@@ -1595,18 +1698,67 @@ function doRappel() {
   for(i=0;i<clList.length;i++)forceCalc["k"+lc(clList[i])]=true;
   rpStage="classement des rubriques du bulletin de reference";
   rpStage="preparation du journal de rappel";
+  /* ---- Regles par corps (modeles Quick Report Modele_Etat) : rubriques du NOUVEAU regime (grille 2024) calculees meme si absentes des bulletins archives.
+     rate = % de (base + IEP) ; sup = rubriques de l ancien regime (codes normalises) mises a zero dans le nouveau regime. ---- */
+  var CORPS_RULES={
+    "1000":[{code:"I.S.S.M.E40%",alt:["I.S.S.M.E40"],lib:"\u062a.\u062f.\u0635.\u0623.\u0637 40",rate:40,reg:"new",sup:["I.S.S.M.E25"]},
+            {code:"I.A.S.O.S.R35%",alt:["I.A.S.O.S.R35"],lib:"\u062a.\u0625.\u0639.\u062a.\u0635.\u0625 35",rate:35,reg:"new",sup:["I.A.S.O.S.R25"]},
+            {code:"I.TECHNI 25%",alt:["I.TECHNI 25"],lib:"I.TECHNI 25%",rate:25,reg:"new",sup:["I.TECHNI 10"]},
+            {code:"ISP 30 %",lib:"I.S.P 30 %",rate:30,all:true,minCat:11,sup:[]}],
+    "1100":[{code:"I.S.A.A.R40%",alt:["I.S.A.A.R40"],lib:"I.S.A.A.R 40%",rate:40,reg:"new",sup:["I.S.A.A.R25"]},
+            {code:"I.A.A.A.R35%",alt:["I.A.A.A.R35"],lib:"I.A.A.A.R 35%",rate:35,reg:"new",sup:["I.A.A.A.R25"]},
+            {code:"I.TECHNI 25%",alt:["I.TECHNI 25"],lib:"I.TECHNI 25%",rate:25,reg:"new",sup:["I.TECHNI 10"]},
+            {code:"ISP 30 %",lib:"I.S.P 30 %",rate:30,all:true,minCat:11,sup:[]}],
+    /* paramedicaux : obligation 25% -> 40% ; soutien 30% (cat<=10) / 25% (cat>=11) -> 55% (cat<=11) / 50% (cat>=12) ; technicite 10% (cat>=12) ; ISP 30% (cat>=11) */
+    "200":[{code:"P.A.PM%",lib:"P.A.PM%",rateOld:25,rate:40,all:true,sup:["P.A.PM"],supAll:true},
+           {code:"I.S.A.PM 30 %",lib:"\u062a.\u062f\u0639\u0645 \u0646.\u0634.\u0637 30%",rate:30,reg:"old",all:true,maxCat:10,sup:[]},
+           {code:"I.S.A.PM 25%",lib:"\u062a.\u062f\u0639\u0645 \u0646.\u0634.\u0637 25%",rate:25,reg:"old",all:true,minCat:11,sup:[]},
+           {code:"I.S.A.PM 55 %",lib:"\u062a.\u062f\u0639\u0645 \u0646.\u0634.\u0637 55%",rate:55,reg:"new",all:true,maxCat:11,sup:[]},
+           {code:"I.S.A.PM 50%",lib:"\u062a.\u062f\u0639\u0645 \u0646.\u0634.\u0637 50%",rate:50,reg:"new",all:true,minCat:12,sup:[]},
+           {code:"I.TECHNI 10%",lib:"I.TECHNI 10%",rate:10,all:true,minCat:12,sup:[]},
+           {code:"ISP 30 %",lib:"I.S.P 30 %",rate:30,all:true,minCat:11,sup:[]}]
+  };
+  var corpsHasRules={};
+  /* cle de rubrique : sans espaces ni points ni _ ; le % est conserve (P.A.PM et P.A.PM% sont deux rubriques distinctes) */
+  function nkRule(c){return String(c||"").toLowerCase().replace(/[\s._]+/g,"");}
+  function nkSup(c){return nkRule(c).replace(/%/g,"");}
+  var RULE_FROM_YEAR=2025,ruleByKey={},ruleSup={},ruleWarn=[],ruleSlots=[];
+  (function(){
+    var ci,si,sl,ii,forms,ro,fi;
+    for(ci in CORPS_RULES)if(CORPS_RULES.hasOwnProperty(ci)){
+      if(!corpsSeen["k"+ci])continue;
+      corpsHasRules["k"+ci]=true;
+      for(si=0;si<CORPS_RULES[ci].length;si++){
+        sl=CORPS_RULES[ci][si];forms=[sl.code].concat(sl.alt||[]);
+        if(ruleSlots.indexOf(sl)<0)ruleSlots.push(sl);
+        for(fi=0;fi<forms.length;fi++){
+          ro=ruleByKey[nkRule(forms[fi])];
+          if(!ro)ro=ruleByKey[nkRule(forms[fi])]={slot:sl,corps:{}};
+          ro.corps["k"+ci]=sl;
+        }
+        for(ii=0;ii<sl.sup.length;ii++){var sc=nkSup(sl.sup[ii]);if(!ruleSup[sc])ruleSup[sc]={};ruleSup[sc]["k"+ci]=sl.supAll?"all":"new";}
+      }
+    }
+  })();
   var gains=[],rets=[],ints=[],known={};
   for(i=0;i<meta.rows.length;i++) {
     var code=rv(meta.rows[i][0]),key0="k"+lc(code),lib=rv(meta.rows[i][1])||code,ty=parseFloat(rv(meta.rows[i][2]));
     var lr=leadRank({code:code,lib:lib});
-    known[key0]=true;if(excl[key0]||(!corpRubSet[key0]&&lr<0)||isAlwaysOut(code,lib))continue;
+    var nkc=nkRule(code),ruleHit=ruleByKey[nkc]||ruleByKey[nkRule(lib)]||null;
+    known[key0]=true;if(excl[key0]||(!corpRubSet[key0]&&lr<0&&!ruleHit)||isAlwaysOut(code,lib))continue;
     var it={key:key0,code:code,lib:lib,mode:rv(meta.rows[i][4]),automatic:rv(meta.rows[i][5]),bareme:rv(meta.rows[i][6]),base:rv(meta.rows[i][7]),taux:rv(meta.rows[i][8]),imposable:(rv(meta.rows[i][9])==="Oui"),cotisable:(rv(meta.rows[i][10])==="Oui"),arab:(meta.rows[i].length>11?trim(rv(meta.rows[i][11])):"")};
     it.calculated=isCalculatedRubrique(it);
+    if(ruleHit){it.rule=ruleHit;it.calculated=true;ruleHit.slot.used=true;}
+    if(ruleSup[nkSup(code)]||ruleSup[nkSup(lib)])it.sup=ruleSup[nkSup(code)]||ruleSup[nkSup(lib)];
     if(isAFRubrique(it))it.calculated=false;               // allocations familiales / M.I.F.R. / salaire unique: fixed amounts
     if(isContagieuxRubrique(it))it.calculated=false;      // I.Cont is always fixed
     if(forceFixed[key0])it.calculated=false;
     if(forceCalc[key0]&&!isContagieuxRubrique(it))it.calculated=true;
     if(ty===0||lr>=0)gains.push(it);else if(ty===1)rets.push(it);else ints.push(it);
+  }
+  for(var rsi=0;rsi<ruleSlots.length;rsi++)if(!ruleSlots[rsi].used){
+    var vs=ruleSlots[rsi],vkey=nkRule(vs.code),vit={key:"k"+lc(vs.code),code:vs.code,lib:vs.lib,mode:"2",automatic:"",bareme:"",base:"[SBASE]+[IEP]",taux:String(vs.rate),imposable:true,cotisable:true,arab:vs.lib,calculated:true,rule:ruleByKey[vkey],virtual:true};
+    gains.push(vit);ruleWarn.push(vs.code);
   }
   var gLead=[],gRest=[];
   for(i=0;i<gains.length;i++){if(leadRank(gains[i])>=0)gLead.push(gains[i]);else gRest.push(gains[i]);}
@@ -1631,6 +1783,7 @@ function doRappel() {
   /* RET.O.S and Retenue Absence are removed from the journal altogether */
   function isAlwaysOut(code,lib) { var c=nrm(code),l=nrm(lib); return c==="retos"||l==="retos"||/retenueabsence/.test(l); }
   /* Allocation familiale, M.I.F.R., Salaire unique: fixed amounts shown as ONE column "Total A.F" */
+  function isParaSupportRubrique(it) { return /soutien/.test(nrm(it.lib))||/\u062f\u0639\u0645/.test(String(it.arab||it.lib||'')); }
   function isAFRubrique(it) { var c=nrm(it.code),l=nrm(it.lib); return /allocationfamil/.test(l)||/^mifr/.test(l)||c==="mifr"||/salaireunique/.test(l); }
   function isIrgRubrique(it) { var c=nrm(it.code),l=nrm(it.lib); return /impotsurlerevenu/.test(l)||c==="irg"||/^irg/.test(l); }
   /* IRG base = taxable gains excluding I.ZONE, IND.LOG and family-allowance rubriques, minus social-security contribution. */
@@ -1672,7 +1825,7 @@ function doRappel() {
 
   /* All I.Cont rubriques (Sec2, Sec1/3, Sec3/3) are merged into ONE column:
      the cell shows their sum, i.e. the employee's actual contagieux amount. */
-  var contIdx=[],dispMap=[],contInserted=false,afIdx=[],afInserted=false,irgIdx=-1,cotIdx=-1,anyImp=false;
+  var contIdx=[],dispMap=[],contInserted=false,paraIdx=[],paraInserted=false,afIdx=[],afInserted=false,irgIdx=-1,cotIdx=-1,anyImp=false;
   for(i=0;i<rubs.length;i++){
     if(i<nG&&rubs[i].imposable)anyImp=true;
     if(irgIdx<0&&isIrgRubrique(rubs[i]))irgIdx=i;
@@ -1682,6 +1835,9 @@ function doRappel() {
     if(isContagieuxRubrique(rubs[i])){
       contIdx.push(i);
       if(!contInserted){dispMap.push({type:"cont"});contInserted=true;}
+    } else if(i<nG&&isParaSupportRubrique(rubs[i])){
+      paraIdx.push(i);
+      if(!paraInserted){dispMap.push({type:"para"});paraInserted=true;}
     } else if(isAFRubrique(rubs[i])&&i<nG){
       afIdx.push(i);
       if(!afInserted){dispMap.push({type:"af"});afInserted=true;}
@@ -1689,10 +1845,35 @@ function doRappel() {
       dispMap.push({type:"rub",idx:i});
     }
   }
+  /* nature de chaque colonne affichee (pour les formules Excel des totaux) et taux par colonne (pour les formules de rubriques calculees) */
+  var dispKind=[];
+  for(i=0;i<dispMap.length;i++){
+    var dmT=dispMap[i].type;
+    if(dmT==="af")dispKind.push("af");
+    else if(dmT==="cont"||dmT==="para")dispKind.push("gain");
+    else{var dix=dispMap[i].idx;dispKind.push(dix<nG?(isAFRubrique(rubs[dix])?"af":(isHousingRubrique(rubs[dix])?"gainH":"gain")):(dix<nG+nR?"ret":"int"));}
+  }
+  var dispCot=[],cotDisp=-1;
+  for(i=0;i<dispMap.length;i++){
+    var ctT=dispMap[i].type,cl0=(ctT==="cont")?contIdx:(ctT==="para"?paraIdx:null);
+    if(ctT==="rub"){dispCot.push(dispMap[i].idx<nG&&!!rubs[dispMap[i].idx].cotisable&&!isAFRubrique(rubs[dispMap[i].idx]));if(cotIdx>=0&&dispMap[i].idx===cotIdx)cotDisp=i;}
+    else if(cl0&&cl0.length)dispCot.push(!!rubs[cl0[0]].cotisable);
+    else dispCot.push(false);
+  }
+  function dfxOf(rateArr,amounts){
+    var out=[],jj,list,ci,hit,nz;
+    for(jj=0;jj<dispMap.length;jj++){
+      if(dispMap[jj].type==="rub"){out.push((rateArr[dispMap[jj].idx]&&amounts[dispMap[jj].idx]!==0)?rateArr[dispMap[jj].idx]:null);continue;}
+      list=(dispMap[jj].type==="cont")?contIdx:(dispMap[jj].type==="para"?paraIdx:afIdx);hit=null;nz=0;
+      for(ci=0;ci<list.length;ci++)if(amounts[list[ci]]!==0){nz++;if(rateArr[list[ci]])hit=rateArr[list[ci]];}
+      out.push(nz===1?hit:null);
+    }
+    return out;
+  }
   var rubKinds=[];
   for(i=0;i<rubs.length;i++)rubKinds.push(i>=nG?"ret":(leadRank(rubs[i])>=0?"lead":(isAFRubrique(rubs[i])?"af":"gain")));
   var cols=["Matricule","Nom et prenom","Nature","Grille","Periode couverte","Jours rappel (base 30j)","Bulletin salaire de reference"];
-  for(i=0;i<dispMap.length;i++)cols.push(dispMap[i].type==="cont"?"I.Cont (Sec2 + Sec1/3 + Sec3/3)":(dispMap[i].type==="af"?"Total A.F":rubs[dispMap[i].idx].lib));
+  for(i=0;i<dispMap.length;i++)cols.push(dispMap[i].type==="cont"?"I.Cont (Sec2 + Sec1/3 + Sec3/3)":(dispMap[i].type==="para"?"\u062a.\u062f\u0639\u0645 \u0646.\u0634.\u0637 (50%+55%)":(dispMap[i].type==="af"?"Total A.F":rubs[dispMap[i].idx].lib)));
   cols.push("TOTAL GAINS HORS A.F","TOTAL GAINS HORS A.F ET LOGEMENT","TOTAL RETENUES","NET RAPPEL");
   function infoRow(mat,nm,label,text,per,basePeriod) {
     var row=["S"+mat,"S"+nm,"S"+label,"S"+text,"S"+per,"E","S"+(basePeriod||"")],jj;
@@ -1708,6 +1889,7 @@ function doRappel() {
     for(jj=0;jj<rubs.length;jj++){v=arr[jj]||0;if(jj<nG){sg+=v;if(!isAFRubrique(rubs[jj])){sgNoAF+=v;if(!isHousingRubrique(rubs[jj]))sgNoAFNoHousing+=v;}}else if(jj<nG+nR)sr+=v;}
     for(jj=0;jj<dispMap.length;jj++){
       if(dispMap[jj].type==="cont"){v=0;for(ci=0;ci<contIdx.length;ci++)v+=arr[contIdx[ci]]||0;}
+      else if(dispMap[jj].type==="para"){v=0;for(ci=0;ci<paraIdx.length;ci++)v+=arr[paraIdx[ci]]||0;}
       else if(dispMap[jj].type==="af"){v=0;for(ci=0;ci<afIdx.length;ci++)v+=arr[afIdx[ci]]||0;}
       else v=arr[dispMap[jj].idx]||0;
       row.push("N"+r2(v));
@@ -1767,6 +1949,9 @@ function doRappel() {
     }catch(exD){warns.push("Lecture du bulletin "+aid+" impossible ("+errText(exD)+").");}
     baseValCache[ck]=m;return m;
   }
+  var warnSeen={};
+  function warnOnce(t){if(!warnSeen[t]){warnSeen[t]=true;warns.push(t);}}
+  for(var rwi=0;rwi<ruleWarn.length;rwi++)warnOnce("Rubrique "+ruleWarn[rwi]+" absente du catalogue Rubrique : ajoutee selon la regle du corps (taux x base+IEP, a partir du 01/01/"+RULE_FROM_YEAR+").");
   function rpChooseRef(mat,gk,pEnd){
     var list=candByMat["k"+lc(mat)];
     if(!list||!list.length)return null;
@@ -1774,15 +1959,202 @@ function doRappel() {
     for(q2=0;q2<list.length;q2++){var c=list[q2];if(c.gk!==gk||c.serial>serEnd)continue;if(!best||c.serial>best.serial)best=c;}
     if(best)return best;
     for(q2=0;q2<list.length;q2++){var c2=list[q2];if(c2.serial>serEnd)continue;if(!best||c2.serial>best.serial)best=c2;}
-    if(best)warns.push(mat+": aucun bulletin de la grille "+gk+" avant "+dateFmt(pEnd)+"; bulletin "+best.period+" utilise a la place.");
+    if(best){warnOnce(mat+": aucun bulletin de la grille "+gk+" avant "+dateFmt(pEnd)+"; bulletin "+best.period+" utilise a la place.");return best;}
+    for(q2=0;q2<list.length;q2++){var c3=list[q2];if(c3.gk!==gk)continue;if(!best||c3.serial<best.serial)best=c3;}
+    if(best)warnOnce(mat+": aucun bulletin avant "+dateFmt(pEnd)+" pour la grille "+gk+"; bulletin posterieur "+best.period+" utilise.");
     return best;
   }
-  for(i=0;i<selected.length;i++) {
+  /* ---- Etape 1 (rapide) : UNE requete groupee lit, pour tous les agents, le salaire de base et l IEP de chaque mois archive.
+     Elle suffit a retrouver la categorie et l echelon de chaque mois ; les bulletins complets ne sont lus qu aux changements. ---- */
+  var leadTL={},leadCodes={sb:null,iep:null},leadQueries=0,fullReads=0;
+  (function loadLeadTimeline(){
+    var q,lr0,rci2,chunk,mi,rs3,mk3,pp3,ser3,sbList=[];
+    for(q=0;q<rubs.length;q++){lr0=leadRank(rubs[q]);if(lr0===0&&!leadCodes.sb)leadCodes.sb=rubs[q];if(lr0===1&&!leadCodes.iep)leadCodes.iep=rubs[q];}
+    if(!leadCodes.sb||!leadCodes.iep)return;
+    for(rci2=0;rci2<refConns.length;rci2++){
+      if(refConns[rci2].kind==="json")continue;
+      for(mi=0;mi<selected.length;mi+=150){
+        chunk=[];for(q=mi;q<Math.min(selected.length,mi+150);q++)chunk.push("'"+sq(selected[q].mat)+"'");
+        try{
+          rs3=refConns[rci2].conn.Execute("SELECT a.Matricule,a.Code_Periode_Exercice,d.Code_Rubrique,d.Valeur FROM Archive a INNER JOIN Archive_Detail d ON a.Cle_Archive=d.Cle_Archive WHERE CStr(a.Code_Traitement)='0' AND d.Code_Rubrique IN ('"+sq(leadCodes.sb.code)+"','"+sq(leadCodes.iep.code)+"') AND CStr(a.Matricule) IN ("+chunk.join(",")+")");
+          leadQueries++;
+          while(!rs3.EOF){
+            if(rs3.Fields(0).Value!==null&&rs3.Fields(1).Value!==null&&rs3.Fields(3).Value!==null){
+              pp3=rpParsePer(String(rs3.Fields(1).Value));
+              if(pp3&&pp3.m>=1&&pp3.m<=12){
+                mk3="k"+lc(String(rs3.Fields(0).Value));ser3=pp3.y*12+pp3.m;
+                if(!leadTL[mk3])leadTL[mk3]={};
+                if(!leadTL[mk3][ser3])leadTL[mk3][ser3]={dbi:rci2,sb:0,iep:0,n:0};
+                if(leadTL[mk3][ser3].dbi===rci2){
+                  var tv3=parseFloat(String(rs3.Fields(3).Value))||0;
+                  if(String(rs3.Fields(2).Value)===String(leadCodes.sb.code))leadTL[mk3][ser3].sb+=tv3;else leadTL[mk3][ser3].iep+=tv3;
+                  leadTL[mk3][ser3].n++;
+                }
+              }
+            }
+            rs3.MoveNext();
+          }
+          rs3.Close();
+        }catch(eL){leadTL={};return;}   // groupee impossible : retour a la lecture bulletin par bulletin
+      }
+    }
+  })();
+  /* categorie + echelon reels d UN mois (grille de ce mois) : salaire de base / 45 = indice minimum ; IEP / 45 = points */
+  /* categorie/echelon lus sur la grille PROPRE au bulletin (et non celle du mois calcule) */
+  function classify(sbV,iepV,gkRef,key,oe){
+    var RG=GRIDS[gkRef]||{},minT=Math.round(sbV/PTV),cand=[],g2,q,r={cat:key,ech:oe,catFound:false,echFound:false},gks=[gkRef],gi,tol,order=["2007","2022","2023","2024"],oi=order.indexOf(gkRef);
+    /* une paie versee en retard garde les valeurs de la grille PRECEDENTE : on n essaie que la grille du bulletin puis les plus anciennes, jamais les plus recentes */
+    for(gi=oi-1;gi>=0;gi--)gks.push(order[gi]);
+    for(gi=0;gi<gks.length&&!cand.length;gi++){
+      if(!GRIDS[gks[gi]])continue;
+      RG=GRIDS[gks[gi]];
+      for(tol=0;tol<=1&&!cand.length;tol++)
+        if(minT>0)for(g2 in RG)if(RG.hasOwnProperty(g2)&&Math.abs(RG[g2][0]-minT)<=tol)cand.push(g2);
+    }
+    if(cand.length){r.catFound=true;r.gkm=gks[gi-1];r.cat=cand[0];for(q=0;q<cand.length;q++)if(cand[q]===key){r.cat=key;break;}}
+    var gg=RG[r.cat],ptsT=iepV/PTV,best=-1,bd=1e9,ee,pp;
+    if(gg&&iepV>0){for(ee=0;ee<=12;ee++){pp=(ee>0)?gg[1][ee-1]:0;if(Math.abs(pp-ptsT)<bd){bd=Math.abs(pp-ptsT);best=ee;}}}
+    if(best>=0&&bd<=1.5){r.ech=best;r.echFound=true;}
+    return r;
+  }
+  /* la carriere ne descend jamais : categorie (puis echelon a categorie egale) non decroissante dans le temps */
+  var monoCache={},yearCache={};
+  function yearCat(e,key,oe,Y){
+    var ck=lc(e.mat)+"|"+Y;if(yearCache.hasOwnProperty(ck))return yearCache[ck];
+    var tl=leadTL["k"+lc(e.mat)],s2,t,c,best=null,n,kmax=parseInt(key,10);
+    if(tl)for(s2 in tl){
+      if(!tl.hasOwnProperty(s2))continue;
+      n=parseInt(s2,10);if(Math.floor((n-1)/12)!==Y)continue;
+      t=tl[s2];if(!(t.sb>0))continue;
+      c=classify(t.sb,t.iep,rpGridAt(Y,(n-1)%12+1),key,oe);
+      n=parseInt(c.cat,10);if(!c.catFound||isNaN(n))continue;
+      if(!isNaN(kmax)&&n>kmax)n=kmax;
+      if(best===null||n>best)best=n;
+    }
+    yearCache[ck]=best;return best;
+  }
+  function monoFor(e,key,oe){
+    var mk="k"+lc(e.mat);if(monoCache[mk])return monoCache[mk];
+    var tl=leadTL[mk],out={},sers=[],s2,i2,run,t,c;
+    if(tl){for(s2 in tl)if(tl.hasOwnProperty(s2))sers.push(parseInt(s2,10));sers.sort(function(a,b){return a-b;});}
+    var arr=[];
+    for(i2=0;i2<sers.length;i2++){t=tl[sers[i2]];c=classify(t.sb,t.iep,rpGridAt(Math.floor((sers[i2]-1)/12),(sers[i2]-1)%12+1),key,oe);if(t.sb>0&&c.catFound)arr.push({ser:sers[i2],cat:parseInt(c.cat,10),ech:c.ech,echFound:c.echFound,raw:c.cat});}
+    var runC=parseInt(key,10),runE=99;
+    for(i2=arr.length-1;i2>=0;i2--){
+      if(arr[i2].cat>runC){arr[i2].cat=runC;arr[i2].ech=-1;arr[i2].fixed=true;}
+      else if(arr[i2].cat<runC){runC=arr[i2].cat;runE=99;}
+      if(arr[i2].cat===runC&&arr[i2].ech>=0){if(arr[i2].ech>runE){arr[i2].ech=runE;arr[i2].fixed=true;}else runE=arr[i2].ech;}
+      out[arr[i2].ser]=arr[i2];
+    }
+    monoCache[mk]=out;return out;
+  }
+  function leadOf(e,gk,key,oe,ne,mEnd){
+    var G=GRIDS[gk],ref=rpChooseRef(e.mat,gk,mEnd);
+    if(!ref){warnOnce(e.mat+" "+e.name+": aucun bulletin de reference pour la grille "+gk+" (avant "+dateFmt(mEnd)+"); mois ignore.");return null;}
+    var tl=leadTL["k"+lc(e.mat)],t=tl?tl[ref.serial]:null,sbV=0,iepV=0,q,lr0,baseP;
+    if(t&&t.dbi===ref.dbi){sbV=t.sb;iepV=t.iep;}
+    else{
+      baseP=rpReadBaseVals(ref.aid,ref.dbi);fullReads++;
+      for(q=0;q<rubs.length;q++){lr0=leadRank(rubs[q]);if(lr0===0&&!sbV)sbV=baseP[rubs[q].key]||0;if(lr0===1&&!iepV)iepV=baseP[rubs[q].key]||0;}
+    }
+    var cl=classify(sbV,iepV,ref.gk||gk,key,oe),catP=cl.cat,echP=cl.ech,catFound=cl.catFound,mo=monoFor(e,key,oe)[ref.serial];
+    if(!catFound)warnOnce(e.mat+" "+e.name+": le salaire de base du bulletin "+ref.period+" ("+r2(sbV)+") ne correspond a aucune categorie de la grille "+(ref.gk||gk)+"; categorie actuelle "+key+" utilisee.");
+    /* la categorie change au 1er janvier : toute l annee civile du mois calcule prend la categorie la plus haute constatee sur les bulletins de CETTE annee
+       (un bulletin de janvier encore a l ancienne categorie ou aux valeurs de l ancienne grille n est donc pas une periode a part) */
+    var yc=catFound?yearCat(e,key,oe,mEnd.getFullYear()):null;
+    if(yc!==null&&!isNaN(parseInt(catP,10))&&yc>parseInt(catP,10)){
+      var gY=GRIDS[cl.gkm||ref.gk||gk],g7=gY&&gY[String(yc)];
+      if(g7&&iepV>0){var bb2=-1,bd2=1e9,e4,p4;for(e4=0;e4<=12;e4++){p4=(e4>0)?g7[1][e4-1]:0;if(Math.abs(p4-iepV/PTV)<bd2){bd2=Math.abs(p4-iepV/PTV);bb2=e4;}}if(bb2>=0&&bd2<=1.5)echP=bb2;}
+      catP=String(yc);cl.catAnchored=true;
+    }
+    if(mo&&mo.fixed&&!cl.catAnchored&&String(mo.cat)!==String(catP)){warnOnce(e.mat+" "+e.name+": categorie "+catP+" lue au bulletin "+ref.period+" ramenee a "+mo.cat+" (la carriere ne descend pas).");catP=String(mo.cat);}
+    if(catFound&&catP!==key)warnOnce(e.mat+" "+e.name+": categorie "+catP+" (et non "+key+") sur la grille "+gk+" d apres les bulletins de reference.");
+    /* seule la DERNIERE promotion compte : l echelon paye autrefois est ignore, seules les categories evoluent selon les periodes des grilles */
+    echP=oe;var newE=ne;
+    if(newE===echP)return null;
+    var oldIdx=rpIdx(G,catP,echP),newIdx=rpIdx(G,catP,newE);
+    if(!oldIdx||!newIdx||oldIdx.total===0){warnOnce(e.mat+": indice impossible pour "+gk+", categorie "+catP+".");return null;}
+    var regNew=(mEnd.getFullYear()>=RULE_FROM_YEAR),hasRules=!!corpsHasRules["k"+e.corpsCode];
+    return {lkey:gk+"|"+catP+"|"+echP+"|"+newE+(hasRules?(regNew?"|N":"|O"):""),regNew:regNew,gk:gk,ref:ref,catP:catP,echP:echP,newE:newE,oldIdx:oldIdx,newIdx:newIdx,catFound:catFound,sbV:sbV,iepV:iepV};
+  }
+  /* ---- Etape 2 : montants du bloc (le bulletin complet de reference n est lu qu ici). Montants par 30 jours conserves : le rappel = difference x jours / 30. ---- */
+  function fullCalc(ld,e,contPayKey,contAmount){
+    var baseP=rpReadBaseVals(ld.ref.aid,ld.ref.dbi),q,oldIdx=ld.oldIdx,newIdx=ld.newIdx,sbV=ld.sbV,iepV=ld.iepV;fullReads++;
+    var baseMin=(ld.catFound&&Math.abs(sbV-oldIdx.min*PTV)<=PTV)?r2(sbV):r2(oldIdx.min*PTV);
+    var iepOld=(iepV>0&&Math.abs(iepV-oldIdx.pts*PTV)<=PTV)?r2(iepV):r2(oldIdx.pts*PTV),iepNew=r2(newIdx.pts*PTV);
+    var oldTot=r2(baseMin+iepOld),newTot=r2(baseMin+iepNew),oldSalary=[],newSalary=[],unit=[],rateArr=[];
+    function setRate(q0,pctFrac){var fr=Math.round(pctFrac*1e6)/1e6;if(fr>0&&r2(fr*oldTot)===oldSalary[q0]&&r2(fr*newTot)===newSalary[q0]&&(oldSalary[q0]!==0||newSalary[q0]!==0))rateArr[q0]=fr;}
+    for(q=0;q<rubs.length;q++){
+      var actual=baseP[rubs[q].key]||0,oldAmount,newAmount,lr=leadRank(rubs[q]);
+      var pct=null;
+      if(q===irgIdx){oldAmount=0;newAmount=0;}
+      else if(isContagieuxRubrique(rubs[q])){var fixedAmount=(rubs[q].key===contPayKey)?contAmount:0;oldAmount=r2(fixedAmount);newAmount=oldAmount;}
+      else if(lr===0){oldAmount=baseMin;newAmount=baseMin;}
+      else if(lr===1){oldAmount=iepOld;newAmount=iepNew;}
+      else if(rubs[q].rule&&rubs[q].rule.corps["k"+e.corpsCode]!==undefined){
+        /* rubrique de regle : taux x (base + IEP) ; regime = periode >= 01/01/RULE_FROM_YEAR ; reg = regime unique ; all = toutes periodes ; minCat/maxCat = categories */
+        var rsl=rubs[q].rule.corps["k"+e.corpsCode],cn=parseInt(ld.catP,10),rRate=(ld.regNew||rsl.rateOld===undefined)?rsl.rate:rsl.rateOld;
+        var inReg=(!rsl.reg)||((rsl.reg==="new")===ld.regNew);
+        if(!inReg&&rsl.all){oldAmount=0;newAmount=0;}
+        else if((rsl.minCat&&!isNaN(cn)&&cn<rsl.minCat)||(rsl.maxCat&&!isNaN(cn)&&cn>rsl.maxCat)||(rsl.maxCat&&isNaN(cn))){oldAmount=0;newAmount=0;}
+        else if(rsl.all||(ld.regNew&&inReg)){oldAmount=r2(rRate/100*oldTot);newAmount=r2(rRate/100*newTot);}
+        else{oldAmount=r2(actual);newAmount=oldAmount;}
+        rubs[q].ruleRateTmp=rRate;
+      }
+      else if(rubs[q].sup&&rubs[q].sup["k"+e.corpsCode]&&(rubs[q].sup["k"+e.corpsCode]==="all"||ld.regNew)){oldAmount=0;newAmount=0;}
+      else if(rubs[q].calculated){
+        /* taux de CETTE periode = montant du bulletin / (base + IEP) ; un taux entier (25, 30, 50 %...) est restitue exactement */
+        /* le taux se calcule sur le salaire PORTE PAR LE BULLETIN (base + IEP de ce bulletin), pas sur l echelon theorique : le bulletin peut dater d un echelon anterieur */
+        var payTot=(sbV>0&&iepV>=0)?r2(sbV+iepV):oldTot;if(!(payTot>0))payTot=oldTot;
+        var pct=(payTot>0)?(actual/payTot):0,pr=Math.round(pct*100);
+        if(pr>0&&Math.abs(pct*100-pr)<0.02)pct=pr/100;
+        /* taux declare dans le catalogue des rubriques (Rubrique.Nombre_Taux, base SBASE+IEP) : il fait foi si le bulletin en est proche (arrondis, bulletin d un autre echelon) */
+        var decl=parseFloat(String(rubs[q].taux||"").replace("%","").replace(",","."));
+        if(actual!==0&&isFinite(decl)&&decl>0&&/sbase/i.test(String(rubs[q].base||""))&&Math.abs(pct*100-decl)<=1.5)pct=decl/100;
+        oldAmount=(Math.abs(payTot-oldTot)<=1)?r2(actual):r2(pct*oldTot);newAmount=r2(pct*newTot);
+      } else {oldAmount=r2(actual);newAmount=oldAmount;}
+      oldSalary.push(oldAmount);newSalary.push(newAmount);unit.push(newAmount-oldAmount);rateArr.push(null);
+      if(q!==irgIdx&&lr<0&&!isContagieuxRubrique(rubs[q])){
+        if(rubs[q].rule&&rubs[q].rule.corps["k"+e.corpsCode]!==undefined){if(rubs[q].ruleRateTmp>0&&(oldAmount!==0||newAmount!==0))setRate(q,rubs[q].ruleRateTmp/100);}
+        else if(rubs[q].calculated&&typeof pct==="number")setRate(q,pct);
+      }
+    }
+    /* Cotisation sociale : 9 % de la somme des gains COTISABLES (hors allocations familiales), recalculee pour l ancien et le nouveau salaire */
+    if(cotIdx>=0){
+      var cso=0,csn=0,cq;
+      for(cq=0;cq<nG;cq++)if(rubs[cq].cotisable&&!isAFRubrique(rubs[cq])){cso+=oldSalary[cq];csn+=newSalary[cq];}
+      oldSalary[cotIdx]=r2(0.09*cso);newSalary[cotIdx]=r2(0.09*csn);unit[cotIdx]=newSalary[cotIdx]-oldSalary[cotIdx];rateArr[cotIdx]=null;
+    }
+    if(irgIdx>=0){
+      var oBase=0,nBase=0,qq,oIrg,nIrg;
+      for(qq=0;qq<nG;qq++)if(!isZoneOrLog(rubs[qq])&&!isAFRubrique(rubs[qq])){oBase+=oldSalary[qq];nBase+=newSalary[qq];}
+      if(cotIdx>=0){oBase-=oldSalary[cotIdx];nBase-=newSalary[cotIdx];}
+      oIrg=calculerIRG2022(oBase);nIrg=calculerIRG2022(nBase);
+      oldSalary[irgIdx]=r2(oIrg);newSalary[irgIdx]=r2(nIrg);unit[irgIdx]=nIrg-oIrg;
+    }
+    return {rate:rateArr,sig:oldSalary.join(",")+"|"+newSalary.join(","),oldSalary:oldSalary,newSalary:newSalary,unit:unit,days:0,lkey:ld.lkey,gk:ld.gk,catP:ld.catP,echP:ld.echP,newE:ld.newE,oldIdx:oldIdx,newIdx:newIdx,refPeriod:ld.ref.period,e:e,cpk:contPayKey,cam:contAmount,ne:ld.newE};
+  }
+  var flushTot=null,flushEmp=null;
+  function flushSeg(sg){
+    var periodText=dateFmt(sg.start)+" - "+dateFmt(sg.end),qf;
+    sg.recall=[];for(qf=0;qf<rubs.length;qf++)sg.recall.push(r2(sg.unit[qf]*sg.days/30));
+    for(qf=0;qf<rubs.length;qf++){flushTot[qf]+=sg.recall[qf];gsum[qf]+=sg.recall[qf];}
+    /* controle de fin de bloc : un bulletin du dernier mois doit donner les memes montants (sinon un taux a change en cours de periode) */
+    if(sg.lastLd&&sg.lastLd.ref.aid!==sg.firstAid){var chk=fullCalc(sg.lastLd,sg.e,sg.cpk,sg.cam);if(chk.sig!==sg.sig)warnOnce(flushEmp.mat+" "+flushEmp.name+": montants ou taux differents au sein de "+periodText+" (grille "+sg.gk+") ; verifiez ou scindez la periode.");}
+    var ratio=sg.newIdx.total/sg.oldIdx.total,mat=flushEmp.mat,nm=flushEmp.name;
+    var rOld=lineRow(mat,nm,"ANCIEN SALAIRE",sg.gk,periodText,null,sg.refPeriod,sg.oldSalary);rOld.ixc=["S"+sg.catP,"I"+sg.echP,"I"+sg.oldIdx.min,"I"+sg.oldIdx.pts,"I"+sg.oldIdx.total,"E"];rOld.dfx=dfxOf(sg.rate,sg.oldSalary);rOld.cotf=(cotDisp>=0);rows.push(rOld);
+    var rNew=lineRow(mat,nm,"NOUVEAU SALAIRE",sg.gk,periodText,null,sg.refPeriod,sg.newSalary);rNew.ixc=["S"+sg.catP,"I"+sg.newE,"I"+sg.newIdx.min,"I"+sg.newIdx.pts,"I"+sg.newIdx.total,"E"];rNew.dfx=dfxOf(sg.rate,sg.newSalary);rNew.cotf=(cotDisp>=0);rows.push(rNew);
+    var rRap=lineRow(mat,nm,"RAPPEL",sg.gk,periodText,sg.days,sg.refPeriod,sg.recall);rRap.ixc=["E","E","E","E","E","N"+(Math.round(ratio*1000000)/1000000)];rows.push(rRap);
+    flushEmp.rows++;if(flushEmp.grids.indexOf(sg.gk)<0)flushEmp.grids.push(sg.gk);
+  }
+  var ai=0,runTok=++RP_RUN;
+  function processAgent(i) {
     e=selected[i];var key=e.cat,oe=e.old,ne=e.newEch,base=baseVals["k"+lc(e.mat)]||{},baseMeta=chosen["k"+lc(e.mat)],tot=[];
     for(j=0;j<rubs.length;j++)tot.push(0);
-    if(!key||!GRIDS["2007"][key]){warns.push(e.mat+" "+e.name+": categorie absente des grilles historiques ("+key+").");continue;}
-    if(ne===oe){warns.push(e.mat+" "+e.name+": echelon inchange, ignore.");continue;}
-    if(!baseMeta&&!candByMat["k"+lc(e.mat)]){warns.push(e.mat+" "+e.name+": aucun bulletin de reference trouve (toutes bases confondues); rappel non calcule.");continue;}
+    flushTot=tot;
+    if(!key||!GRIDS["2007"][key]){warns.push(e.mat+" "+e.name+": categorie absente des grilles historiques ("+key+").");return;}
+    if(ne===oe){warns.push(e.mat+" "+e.name+": echelon inchange, ignore.");return;}
+    if(!baseMeta&&!candByMat["k"+lc(e.mat)]){warns.push(e.mat+" "+e.name+": aucun bulletin de reference trouve (toutes bases confondues); rappel non calcule.");return;}
     /* I.Cont (indemnite de contagieux): fixed allowance, never indexed by the
        echelon ratio (old = new, recall = 0). The applicable category is read
        from THIS employee's own reference bulletin: only the contagieux rubric
@@ -1796,6 +2168,7 @@ function doRappel() {
     if(contSeen>1)warns.push(e.mat+" "+e.name+": "+contSeen+" rubriques I.Cont presentes dans le bulletin de reference; seule la 1re est retenue.");
     var contAmount=contPayKey?(isAdminsCorps(e)?2500:contActual):0;
     var employeeRows=0,gridsUsed=[],segs=[],sgi,neFirst=ne;
+    flushEmp={mat:e.mat,name:e.name,rows:0,grids:gridsUsed};
     if(e.ne2!==null){
       segs.push({s:e.startDate,t:new Date(e.startDate2.getFullYear(),e.startDate2.getMonth(),e.startDate2.getDate()-1),n:neFirst});
       segs.push({s:e.startDate2,t:e.endDate,n:e.ne2});
@@ -1807,69 +2180,30 @@ function doRappel() {
       var pEnd=new Date(segs[sgi].t.getTime());
       if(j<gridOrder.length-1) {var nextStart=gridStarts[j+1];var dayBefore=new Date(nextStart.getFullYear(),nextStart.getMonth(),nextStart.getDate()-1);if(dayBefore.getTime()<pEnd.getTime())pEnd=dayBefore;}
       if(pStart.getTime()>pEnd.getTime())continue;
-      var gk=gridOrder[j],G=GRIDS[gk],oldIdx=rpIdx(G,key,oe),newIdx=rpIdx(G,key,ne);
-      if(!oldIdx||!newIdx||oldIdx.total===0){warns.push(e.mat+": indice impossible pour "+gk+", categorie "+key+".");continue;}
-      /* Salaire de reference de LA MEME grille que la periode : un bulletin d une
-         autre grille (2022 pour une periode 2023 par ex.) est ecarte automatiquement. */
-      var ref=rpChooseRef(e.mat,gk,pEnd);
-      if(!ref){warns.push(e.mat+" "+e.name+": aucun bulletin de reference pour la grille "+gk+" ("+dateFmt(pStart)+" - "+dateFmt(pEnd)+"); periode ignoree.");continue;}
-      var baseP=rpReadBaseVals(ref.aid,ref.dbi),refPeriod=ref.period;
-      var days=days30(pStart,pEnd),oldSalary=[],newSalary=[],periodRecall=[],periodText=dateFmt(pStart)+" - "+dateFmt(pEnd);
-      var ratio=newIdx.total/oldIdx.total;
-      /* Regles (la promotion d echelon ne touche QUE l IEP) :
-         - Salaire de Base = indice MINIMUM x 45 : INCHANGE, rappel toujours 0 ;
-         - IEP = points d echelon x 45 : toute la variation sort d ici ;
-         - indemnites calculees = leur POURCENTAGE de (base + IEP), taux lu sur le
-           bulletin de reference de la meme grille : nouveau = taux x indice total x 45. */
-      var baseMin=r2(oldIdx.min*PTV),iepOld=r2(oldIdx.pts*PTV),iepNew=r2(newIdx.pts*PTV),oldTot=r2(oldIdx.total*PTV),newTot=r2(newIdx.total*PTV);
-      for(var q=0;q<rubs.length;q++) {
-        var actual=baseP[rubs[q].key]||0,oldAmount,newAmount,amount,lr=leadRank(rubs[q]);
-        if(q===irgIdx) {
-          oldAmount=0;newAmount=0;amount=0;                       // filled below with the IRG 2022 formula
-        } else if(isContagieuxRubrique(rubs[q])) {
-          /* Fixed allowance: identical before/after (recall = 0), never scaled
-             by the index ratio. Only the category present in the employee's own
-             reference bulletin is paid; every other I.Cont category stays 0. */
-          var fixedAmount=(rubs[q].key===contPayKey)?contAmount:0;
-          oldAmount=r2(fixedAmount);newAmount=r2(fixedAmount);amount=0;
-        } else if(lr===0) {
-          /* Salaire de Base = indice minimum x 45 : l echelon ne le modifie PAS -> rappel = 0 */
-          oldAmount=baseMin;newAmount=baseMin;amount=0;
-        } else if(lr===1) {
-          /* IEP = points d echelon x 45 : toute la variation vient d ici */
-          oldAmount=iepOld;newAmount=iepNew;amount=r2((iepNew-iepOld)*days/30);
-        } else if(rubs[q].calculated) {
-          /* indemnite = son pourcentage de (base + IEP); taux lu sur le bulletin de
-             reference de la MEME grille, montant recalcule sur le nouvel indice total */
-          var pct=(oldTot>0)?(actual/oldTot):0;
-          oldAmount=r2(actual);newAmount=r2(pct*newTot);amount=r2((newAmount-oldAmount)*days/30);
-        } else {
-          /* ordinary fixed rubrique: unchanged by the echelon */
-          oldAmount=r2(actual);newAmount=r2(actual);amount=0;
+      var gk=gridOrder[j],cur=null,mCur=new Date(pStart.getFullYear(),pStart.getMonth(),pStart.getDate()),mr,mEnd,gridHit=false;
+      /* Mois par mois : la categorie, l echelon et les taux sont ceux du bulletin de CE mois
+         (ou du plus proche de la meme grille) ; les mois identiques sont regroupes en une seule ligne. */
+      var ld,dd;
+      while(mCur.getTime()<=pEnd.getTime()){
+        mEnd=new Date(mCur.getFullYear(),mCur.getMonth()+1,0);if(mEnd.getTime()>pEnd.getTime())mEnd=new Date(pEnd.getTime());
+        ld=leadOf(e,gk,key,oe,ne,mEnd);
+        if(ld){
+          dd=days30(mCur,mEnd);
+          if(cur&&cur.lkey===ld.lkey){cur.end=mEnd;cur.days+=dd;cur.lastLd=ld;}
+          else{if(cur)flushSeg(cur);cur=fullCalc(ld,e,contPayKey,contAmount);cur.start=new Date(mCur.getTime());cur.end=mEnd;cur.days=dd;cur.firstAid=ld.ref.aid;cur.lastLd=ld;}
         }
-        oldSalary.push(oldAmount);newSalary.push(newAmount);periodRecall.push(amount);
-        tot[q]+=amount;gsum[q]+=amount;
+        mCur=new Date(mCur.getFullYear(),mCur.getMonth()+1,1);
       }
-      if(irgIdx>=0) {
-        /* taxable base = imposable gains - cotisation sociale; IRG 2022 normal on the monthly base, for old and new salary */
-        var oBase=0,nBase=0,qq,oIrg,nIrg,aIrg;
-        for(qq=0;qq<nG;qq++)if(!isZoneOrLog(rubs[qq])&&!isAFRubrique(rubs[qq])){oBase+=oldSalary[qq];nBase+=newSalary[qq];}
-        if(cotIdx>=0){oBase-=oldSalary[cotIdx];nBase-=newSalary[cotIdx];}
-        oIrg=calculerIRG2022(oBase);nIrg=calculerIRG2022(nBase);aIrg=r2((nIrg-oIrg)*days/30);
-        oldSalary[irgIdx]=r2(oIrg);newSalary[irgIdx]=r2(nIrg);periodRecall[irgIdx]=aIrg;
-        tot[irgIdx]+=aIrg;gsum[irgIdx]+=aIrg;
-      }
-      var rOld=lineRow(e.mat,e.name,"ANCIEN SALAIRE",gk,periodText,null,refPeriod,oldSalary);rOld.ixc=["S"+key,"I"+oe,"I"+oldIdx.min,"I"+oldIdx.pts,"I"+oldIdx.total,"E"];rows.push(rOld);
-      var rNew=lineRow(e.mat,e.name,"NOUVEAU SALAIRE",gk,periodText,null,refPeriod,newSalary);rNew.ixc=["S"+key,"I"+ne,"I"+newIdx.min,"I"+newIdx.pts,"I"+newIdx.total,"E"];rows.push(rNew);
-      var rRap=lineRow(e.mat,e.name,"RAPPEL",gk,periodText,days,refPeriod,periodRecall);rRap.ixc=["E","E","E","E","E","N"+(Math.round(ratio*1000000)/1000000)];rows.push(rRap);
-      employeeRows++;gridsUsed.push(gk);
+      if(cur)flushSeg(cur);
     }
-    if(!employeeRows){warns.push(e.mat+" "+e.name+": aucune periode de grille applicable.");continue;}
+    employeeRows=flushEmp.rows;
+    if(!employeeRows){warns.push(e.mat+" "+e.name+": aucune periode de grille applicable.");return;}
     empTotals.push({mat:e.mat,name:e.name,tot:tot.slice(0)});
     rows.push(lineRow(e.mat,e.name,"TOTAL EMPLOYE","","TOTAL EMPLOYE",null,baseMeta.period,tot));
     var tg=0,tr=0;for(j=0;j<rubs.length;j++){if(j<nG)tg+=tot[j];else if(j<nG+nR)tr+=tot[j];}
     recap.push(["S"+e.mat,"S"+e.name,"S"+key,"I"+oe,(e.ne2!==null?"S"+neFirst+" / "+e.ne2:"I"+neFirst),"S"+$('rpd_'+e.id).value+(e.ne2!==null?" / "+$('rpd2_'+e.id).value:""),"S"+$('rpe_'+e.id).value,"S"+baseMeta.period,"S"+gridsUsed.join(", "),"N"+r2(tg),"N"+r2(tr),"N"+r2(tg-tr)]);
   }
+  function finishRappel() {
   if(!rows.length){rpFail("Aucun rappel calcule. Verifiez les bulletins de reference, les categories et les dates.");return;}
   rpStage="construction du journal et du recapitulatif";
   var foot=lineRow("TOTAL GENERAL","","TOTAL GENERAL","","TOTAL GENERAL",null,"",gsum);
@@ -1879,8 +2213,21 @@ function doRappel() {
     var nature=rv(rows[i][2]);
     if(nature==="RAPPEL"||nature==="TOTAL EMPLOYE")compactRows.push(rows[i]);
   }
-  curR={empTotals:empTotals,rubKinds:rubKinds,cols:cols,rows:rows,detailRows:rows,compactRows:compactRows,foot:foot,rcols:rcols,recap:recap,rubs:rubs,warns:warns.slice(0),contIdx:contIdx.slice(0),date:"individuelle par agent",until:"individuel par agent"};
+  curR={dispCot:dispCot,cotDisp:cotDisp,dispKind:dispKind,nDisp:dispMap.length,empTotals:empTotals,rubKinds:rubKinds,cols:cols,rows:rows,detailRows:rows,compactRows:compactRows,foot:foot,rcols:rcols,recap:recap,rubs:rubs,warns:warns.slice(0),contIdx:contIdx.slice(0),date:"individuelle par agent",until:"individuel par agent"};
     rpRenderOut();
+  }
+  /* calcul par tranches de ~120 ms : la fenetre reste vivante et affiche la progression */
+  function stepRappel() {
+    if(runTok!==RP_RUN)return;
+    try{
+      var t0=new Date().getTime();
+      while(ai<selected.length&&(new Date().getTime()-t0)<120){processAgent(ai);ai++;}
+      if(ai<selected.length){$("rpOut").innerHTML='<span class="muted">Calcul en cours : agent '+ai+' / '+selected.length+' ...</span>';setTimeout(stepRappel,15);}
+      else finishRappel();
+    }catch(exS){rpFail("Erreur pendant : "+rpStage+"\n"+errText(exS));}
+  }
+  rpStage="calcul des rappels par agent et par periode";
+  stepRappel();
 }
 function rpToggleClass() { var d=$("rpClass"); if(d) d.style.display=(d.style.display==="none")?"block":"none"; }
 function rpSetView() {
@@ -1890,28 +2237,324 @@ function rpSetView() {
 }
 var RP_E1 = "\u0627\u0644\u062c\u0645\u0647\u0648\u0631\u064a\u0640\u0640\u0629 \u0627\u0644\u062c\u0640\u0632\u0627\u0626\u0640\u0631\u064a\u0640\u0640\u0629 \u0627\u0644\u062f\u064a\u0645\u0642\u0631\u0627\u0637\u064a\u0640\u0640\u0629 \u0627\u0644\u0634\u0639\u0628\u064a\u0640\u0640\u0640\u0640\u0629", RP_E2 = "\u0648\u0632\u0627\u0631\u0629 \u0627\u0644\u0635\u062d\u0640\u0629 ";
 function rpNrm(t) { return String(t||"").toLowerCase().replace(/[\u00e9\u00e8\u00ea\u00eb]/g,"e").replace(/[\u00e0\u00e2\u00e4]/g,"a").replace(/['\u2019`]/g,"").replace(/[\s._\-\/]+/g,""); }
-/* Page layout: employee blocks are never split; every page ends with a TOTAL PAGE row (sum of the employee totals on that page).
-   groups: [{rows:[cell rows], tot:[typed total row], h:height}], o: {capH, topH, hdrH, totH, footH, pageTotal(list,no,count), foot} */
-function rpPaged(groups, o) {
-  var pages = [], cur = [], used = o.topH + o.hdrH, i, k, p, g, need, rows = [], breaks = [];
-  for (i = 0; i < groups.length; i++) {
-    g = groups[i]; need = g.h + o.totH + ((i === groups.length - 1) ? o.footH : 0);
-    if (cur.length && used + need > o.capH) { pages.push(cur); cur = []; used = o.hdrH; }
+/* ===================== Moteur d'impression : profils papier, largeurs mesurees, bandes de colonnes =====================
+   Principe : AUCUN rétrécissement (échelle fixe 100 %), police réelle = police choisie.
+   - Les largeurs de colonnes sont MESUREES sur le texte réellement affiché (séparateurs et décimales compris),
+     y compris les totaux de page et le total général.
+   - Si le tableau est plus large que la page, les colonnes sont réparties en BANDES. Chaque bande est une page
+     complète et autonome (colonnes d'identité répétées : matricule, nom, nature, période).
+   - Les agents ne sont jamais coupés entre deux pages. Ordre d'impression : groupe d'agents 1 (bande 1, 2, 3...),
+     groupe 2 (bande 1, 2, 3...), etc. Chaque page porte son TOTAL PAGE ; la dernière page de chaque bande le TOTAL GENERAL.
+   - Contrôle : somme des totaux de page = total général, colonne par colonne (avertissement sinon). */
+var RP_PROFILES = {
+  a3: { id: "a3", name: "A3 paysage", suffix: "A3", paper: 8, land: true, W: 1154, H: 791, mL: "0.25", mR: "0.25", mT: "0.35", mB: "0.35", css: "size:A3 landscape;margin:8mm" },
+  listing: { id: "listing", name: "Listing 14 7/8 x 11 in (132 col.)", suffix: "LISTING", paper: 39, land: false, W: 948, H: 720, mL: "0.85", mR: "0.85", mT: "0.5", mB: "0.5", css: "size:378mm 279mm;margin:12.7mm 21.6mm" }
+};
+var RP_HEAD_FONT = 10, RP_LINEF = 1, RP_COLF = 1, RP_SAFE_W = 0.975, RP_SAFE_H = 0.95;
+var RP_PART_AR = "الجزء";
+var RP_HEADSZ = { e1: 12, e2: 8, e3: 10, e4: 8, e5: 4, e6: 6, e7: 10 };
+function rpQ(x) { return Math.round(x * 4) / 4; }
+function rpCW(n) {
+  if (n >= 48 && n <= 57) return 0.556;
+  if (n === 32 || n === 46 || n === 44 || n === 58 || n === 59 || n === 47 || n === 124 || n === 39 || n === 33) return 0.278;
+  if (n === 45 || n === 40 || n === 41) return 0.333;
+  if (n === 37) return 0.889;
+  if (n >= 65 && n <= 90) return 0.68;
+  if (n >= 97 && n <= 122) return 0.52;
+  if ((n >= 1536 && n <= 1791) || (n >= 64336 && n <= 65279)) return 0.5;
+  return 0.56;
+}
+/* estimated width in points of a text (Arial; safety margin included) */
+function rpTW(s, pt, bold) {
+  var t = 0, i;
+  s = String(s);
+  for (i = 0; i < s.length; i++) t += rpCW(s.charCodeAt(i));
+  return t * pt * (bold ? 1.07 : 1) * 1.06;
+}
+function rpBoldSt(s) { return s === "b" || s === "bf" || s === "bn" || s === "h"; }
+function rpCellTxt(c) {
+  var x;
+  if (!c || c.t === "E") return "";
+  if (c.t === "N") { x = parseFloat(c.v); return isNaN(x) ? String(c.v) : fmtNum(x); }
+  return String(c.v);
+}
+function rpLongest(s, pt, bold) {
+  var w = String(s).split(/\s+/), i, m = 0, x;
+  for (i = 0; i < w.length; i++) { x = rpTW(w[i], pt, bold); if (x > m) m = x; }
+  return m;
+}
+/* number of text lines needed in a cell of width w (points) */
+function rpWrapN(s, w, pt, bold) {
+  var inner = Math.max(10, w - 5), words = String(s).split(/\s+/), lines = 1, cur = 0, sp = rpTW(" ", pt, bold), i, ww, extra;
+  for (i = 0; i < words.length; i++) {
+    if (words[i] === "") continue;
+    ww = rpTW(words[i], pt, bold);
+    if (cur > 0 && cur + sp + ww <= inner) { cur += sp + ww; continue; }
+    if (cur > 0) lines++;
+    if (ww > inner) { extra = Math.ceil(ww / inner) - 1; lines += extra; cur = ww - extra * inner; } else cur = ww;
+  }
+  return Math.min(8, lines);
+}
+function rpPad1() { return X("E", "", "pad"); }
+function rpSpan(r) { var k, t = 0; for (k = 0; k < r.length; k++) t += 1 + (r[k].m || 0); return t; }
+function rpPadTo(r, n) { var t = rpSpan(r); while (t < n) { r.push(rpPad1()); t++; } return r; }
+/* "TOTAL PAGE" / "TOTAL GENERAL" label: merge the first two columns so the label never widens the Matricule column */
+function rpLabelRow(r) {
+  var o, k;
+  if (r.length < 2 || !r[0] || r[0].t !== "S" || !r[1] || r[1].m || !(r[1].t === "E" || r[1].v === "")) return r;
+  o = [X("S", r[0].v, r[0].s, 1)];
+  for (k = 2; k < r.length; k++) o.push(r[k]);
+  o.h = r.h;
+  return o;
+}
+/* cells of a full-width row restricted to the columns of one band (merged cells are cut to the band) */
+function rpSliceRow(row, cols) {
+  var cover = [], start = [], p = 0, k, m, c, out = [], i, col, k2, c2, done = {}, inter, show, inb = {};
+  for (i = 0; i < cols.length; i++) inb[cols[i]] = true;
+  for (k = 0; k < row.length; k++) {
+    c = row[k]; start[k] = p;
+    for (m = 0; m <= (c.m || 0); m++) cover[p + m] = k;
+    p += 1 + (c.m || 0);
+  }
+  for (i = 0; i < cols.length; i++) {
+    col = cols[i]; k2 = cover[col];
+    if (k2 === undefined) { out.push(rpPad1()); continue; }
+    c2 = row[k2];
+    if (!c2.m) { out.push(c2); continue; }
+    if (done[k2]) continue;
+    done[k2] = true;
+    inter = 1;
+    while (i + inter < cols.length && cover[cols[i + inter]] === k2) inter++;
+    show = (inb[start[k2]] === true);
+    out.push({ t: show ? c2.t : "E", v: show ? c2.v : "", s: c2.s, m: inter > 1 ? inter - 1 : undefined, ix: undefined });
+  }
+  return out;
+}
+/* numeric value at full-layout column j of a row (null if none) */
+function rpNumAt(r, j) {
+  var pos = 0, k, c;
+  for (k = 0; k < r.length; k++) {
+    c = r[k];
+    if (pos === j) return (c.t === "N") ? (parseFloat(c.v) || 0) : null;
+    pos += 1 + (c.m || 0);
+  }
+  return null;
+}
+function rpHeadRowH(r) {
+  var k, m = -1, c, d;
+  if (!r.length) return r.h || 12;
+  for (k = 0; k < r.length; k++) { c = r[k]; d = RP_HEADSZ[c.s]; if (d !== undefined && c.t !== "E" && d > m) m = d; }
+  if (m < 0) return r.h || 15;
+  return rpQ(Math.max(r.h || 0, (RP_FONT_SIZE + m) * 1.35 + 4));
+}
+function rpFixHeadHeights(rows) { var i; for (i = 0; i < rows.length; i++) rows[i].h = rpHeadRowH(rows[i]); }
+function rpLabelRowTxt(n, text) { var r = [X("S", text, "e5", n - 1, 1)]; r.h = rpQ((RP_FONT_SIZE + 4) * 1.35 + 4); return r; }
+function rpSumH(rows) { var i, t = 0; for (i = 0; i < rows.length; i++) t += (rows[i].h || 15); return t; }
+/* spec: {name,label,nc,idN,idCap,groups:[{rows}],hdr:[cells],head(n,rows),pageTotal(list,no,cnt),foot,signoff} */
+var RP_FORCE = null, RP_FORCE_MATS = null;
+function rpBandSheet(spec, prof) {
+  var font = RP_FONT_SIZE, lineH = rpQ(font * 1.3 * RP_LINEF), nc = spec.nc, idN = spec.idN, M = nc - idN, warns = [], G = spec.groups.length,
+      capW = prof.W * RP_SAFE_W, capH = prof.H * RP_SAFE_H, idCap = spec.idCap || [120, 200, 100, 150], i, j, k, g, b, p, q, x;
+  var nd = [], hw = [], ptSample = rpLabelRow(spec.pageTotal(spec.groups, 1, 1)), ftRow = rpLabelRow(spec.foot);
+  for (j = 0; j < nc; j++) { nd.push(0); hw.push(0); }
+  function scan(r0) {
+    var pos = 0, k2, c2, t;
+    for (k2 = 0; k2 < r0.length; k2++) {
+      c2 = r0[k2];
+      if (!c2.m && pos < nc) { t = rpTW(rpCellTxt(c2), font, rpBoldSt(c2.s)) + 7; if (t > nd[pos]) nd[pos] = t; }
+      pos += 1 + (c2.m || 0);
+    }
+  }
+  for (g = 0; g < G; g++) for (k = 0; k < spec.groups[g].rows.length; k++) scan(spec.groups[g].rows[k]);
+  scan(ptSample); scan(ftRow);
+  for (j = 0; j < nc; j++) hw[j] = rpLongest(rpCellTxt(spec.hdr[j]), RP_HEAD_FONT, true) + 7;
+  /* widths: identity columns fitted to their content; payload columns measured individually */
+  var idW = [], idTot = 0, pw = [];
+  for (j = 0; j < idN; j++) { x = Math.min(idCap[j] !== undefined ? idCap[j] : 130, Math.max(nd[j], hw[j], 30)); idW.push(rpQ(x * RP_COLF)); idTot += idW[j]; }
+  for (j = idN; j < nc; j++) pw.push(rpQ(Math.max(nd[j], Math.min(hw[j], 70), 24) * RP_COLF));
+  function posWidths(pr) {
+    var nbx = Math.ceil(M / pr), w = [], ii, bb, v;
+    for (ii = 0; ii < pr; ii++) { v = 0; for (bb = 0; bb < nbx; bb++) if (bb * pr + ii < M && pw[bb * pr + ii] > v) v = pw[bb * pr + ii]; w.push(v); }
+    return w;
+  }
+  function sumW(a) { var s = 0, ii; for (ii = 0; ii < a.length; ii++) s += a[ii]; return s; }
+  var kk = 1, pr0, nb = 1, per = 0, posW = [];
+  if (M > 0) {
+    for (pr0 = M; pr0 >= 1; pr0--) if (idTot + sumW(posWidths(pr0)) <= capW) { kk = pr0; break; }
+    if (kk === 1 && idTot + sumW(posWidths(1)) > capW) warns.push(spec.name + ": police ou largeur trop grande pour ce papier (une colonne par bande)");
+    nb = Math.ceil(M / kk); per = Math.ceil(M / nb);
+    if (idTot + sumW(posWidths(per)) > capW) per = kk;
+    nb = Math.ceil(M / per);
+    posW = posWidths(per);
+    if (nb > 1) { nb = 1; per = M; posW = posWidths(M); }
+  }
+  var n = idN + per, widths = idW.concat(posW), bands = [], cols;
+  for (b = 0; b < nb; b++) {
+    cols = [];
+    for (j = 0; j < idN; j++) cols.push(j);
+    for (j = idN + b * per; j < Math.min(nc, idN + (b + 1) * per); j++) cols.push(j);
+    bands.push(cols);
+  }
+  var Wt = sumW(widths), scale = 100;
+  if (Wt > capW) scale = Math.max(20, Math.floor(capW / Wt * 100));
+  var capH0 = capH;
+  function colW(c) { return c < idN ? idW[c] : (per > 0 ? posW[(c - idN) % per] : 60); }
+  function rowH(r0) {
+    var pos = 0, lines = 1, k2, c2, l, w, z;
+    for (k2 = 0; k2 < r0.length; k2++) {
+      c2 = r0[k2];
+      if (c2.t === "S" && c2.v !== "" && c2.v !== undefined) {
+        w = 0; for (z = 0; z <= (c2.m || 0); z++) w += (pos + z < nc ? colW(pos + z) : 0);
+        l = rpWrapN(c2.v, w, font, rpBoldSt(c2.s));
+        if (l > lines) lines = l;
+      }
+      pos += 1 + (c2.m || 0);
+    }
+    return rpQ(lines * lineH + 3);
+  }
+  for (g = 0; g < G; g++) {
+    spec.groups[g].h = 0;
+    for (k = 0; k < spec.groups[g].rows.length; k++) { spec.groups[g].rows[k].h = rowH(spec.groups[g].rows[k]); spec.groups[g].h += spec.groups[g].rows[k].h; }
+  }
+  var hdrL = 1, hl;
+  for (j = 0; j < nc; j++) { hl = rpWrapN(rpCellTxt(spec.hdr[j]), colW(j), RP_HEAD_FONT, true); if (hl > hdrL) hdrL = hl; }
+  var hdrH = rpQ(hdrL * rpQ(RP_HEAD_FONT * 1.3 * RP_LINEF) + 8), TOTH = Math.max(rpQ(lineH + 6), rowH(ptSample)), FOOTH = Math.max(rpQ(lineH + 6), rowH(ftRow));
+  var signRows = spec.signoff ? rpSignoffRows(n) : null, SIGNH = 0;
+  if (signRows) { SIGNH = 10; for (i = 0; i < signRows.length; i++) { signRows[i].h = rpQ((font + 6) * 1.35 + 8); SIGNH += signRows[i].h; } }
+  var tmp = [], fullH, compH = rpLabelRowTxt(n, "x").h;
+  spec.head(n, tmp); rpFixHeadHeights(tmp); fullH = rpSumH(tmp);
+  /* vertical pagination: whole agents only. Si un plan de pages de reference existe (celui du journal), TOUTES les feuilles
+     le suivent : memes agents sur la meme page ; l echelle est reduite au besoin pour que chaque page tienne. */
+  var pages = [], cur = [], used = fullH + (nb > 1 ? compH : 0) + hdrH, nextUsed = compH + hdrH, need, fc = null, fsum = 0, pi, gi2, u2, maxU = 0;
+  if (RP_FORCE_MATS && RP_FORCE_MATS.length) {
+    /* meme plan, par matricule : les agents absents d une feuille sont simplement omis, la page reste la meme */
+    var byM = {}, okM = true, pg2, sel, cnt2 = 0, planC = [];
+    for (i = 0; i < G; i++) { if (spec.groups[i].mat === undefined || spec.groups[i].mat === "") { okM = false; break; } byM["k" + spec.groups[i].mat] = spec.groups[i]; }
+    if (okM) {
+      for (pi = 0; pi < RP_FORCE_MATS.length; pi++) {
+        sel = [];
+        for (pg2 = 0; pg2 < RP_FORCE_MATS[pi].length; pg2++) if (byM["k" + RP_FORCE_MATS[pi][pg2]]) { sel.push(byM["k" + RP_FORCE_MATS[pi][pg2]]); byM["k" + RP_FORCE_MATS[pi][pg2]] = null; }
+        if (sel.length) { planC.push(sel); cnt2 += sel.length; }
+      }
+      if (cnt2 === G) { fc = []; for (pi = 0; pi < planC.length; pi++) fc.push(planC[pi].length); spec.groups = [].concat.apply([], planC); }
+    }
+  }
+  if (fc && !RP_FORCE_MATS) fc = null;
+  if (!fc && RP_FORCE && RP_FORCE.length) { for (pi = 0; pi < RP_FORCE.length; pi++) fsum += RP_FORCE[pi]; if (fsum === G) fc = RP_FORCE; }
+  if (fc) {
+    gi2 = 0;
+    for (pi = 0; pi < fc.length; pi++) {
+      u2 = (pi === 0) ? (fullH + (nb > 1 ? compH : 0) + hdrH) : nextUsed;
+      cur = [];
+      for (i = 0; i < fc[pi]; i++, gi2++) { cur.push(spec.groups[gi2]); u2 += spec.groups[gi2].h; }
+      u2 += TOTH + ((pi === fc.length - 1) ? (FOOTH + SIGNH) : 0);
+      if (u2 > maxU) maxU = u2;
+      pages.push(cur);
+    }
+    if (maxU > capH0 * 100 / scale) scale = Math.max(20, Math.floor(capH0 * 100 / maxU));
+    cur = [];
+  }
+  capH = capH0 * 100 / scale;
+  for (i = 0; !fc && i < G; i++) {
+    g = spec.groups[i];
+    need = g.h + TOTH + ((i === G - 1) ? (FOOTH + SIGNH) : 0);
+    if (cur.length && used + need > capH) { pages.push(cur); cur = []; used = nextUsed; }
+    if (!cur.length && used + need > capH) warns.push(spec.name + ": un agent depasse la hauteur de page");
     cur.push(g); used += g.h;
   }
   if (cur.length) pages.push(cur);
+  /* render: for every group of agents, one complete page per band */
+  var rows = [], breaks = [], pageRaw = [], ptr, pt, bandTxt, hrows, hc, rr, row, gg, ft;
+  ft = ftRow; ft.h = FOOTH;
   for (p = 0; p < pages.length; p++) {
-    if (p > 0) breaks.push(rows.length);
-    for (i = 0; i < pages[p].length; i++) for (k = 0; k < pages[p][i].rows.length; k++) rows.push(pages[p][i].rows[k]);
-    rows.push(o.pageTotal(pages[p], p + 1, pages.length));
+    ptr = spec.pageTotal(pages[p], p + 1, pages.length); pageRaw.push(ptr);
+    pt = rpLabelRow(ptr); pt.h = TOTH;
+    for (b = 0; b < nb; b++) {
+      if (rows.length) breaks.push(rows.length);
+      cols = bands[b];
+      bandTxt = (nb > 1) ? (" - " + RP_PART_AR + " " + (b + 1) + " / " + nb) : "";
+      if (p === 0 && b === 0) {
+        hrows = []; spec.head(n, hrows); rpFixHeadHeights(hrows);
+        for (q = 0; q < hrows.length; q++) rows.push(hrows[q]);
+        if (nb > 1) rows.push(rpLabelRowTxt(n, spec.label + bandTxt));
+      } else rows.push(rpLabelRowTxt(n, spec.label + bandTxt));
+      hc = rpPadTo(rpSliceRow(spec.hdr, cols), n); hc.h = hdrH; hc.gr = true; rows.push(hc);
+      for (gg = 0; gg < pages[p].length; gg++) {
+        for (k = 0; k < pages[p][gg].rows.length; k++) {
+          rr = pages[p][gg].rows[k];
+          row = rpPadTo(rpSliceRow(rr, cols), n); row.h = rr.h; row.gr = true; row.role = rr.role; rows.push(row);
+        }
+      }
+      row = rpPadTo(rpSliceRow(pt, cols), n); row.h = TOTH; row.gr = true; row.role = "pt"; rows.push(row);
+      if (p === pages.length - 1) {
+        row = rpPadTo(rpSliceRow(ft, cols), n); row.h = FOOTH; row.gr = true; row.role = "ft"; rows.push(row);
+        if (b === nb - 1 && signRows) { row = []; row.h = 10; rows.push(row); for (q = 0; q < signRows.length; q++) rows.push(signRows[q]); }
+      }
+    }
   }
-  if (o.foot) rows.push(o.foot);
-  return { rows: rows, breaks: breaks, pages: pages.length };
+  /* self-check: the page totals must add up to the general total, column by column */
+  var checked = 0, bad = 0, sp, fv, d0;
+  for (j = idN; j < nc; j++) {
+    fv = rpNumAt(spec.foot, j);
+    if (fv === null) continue;
+    sp = 0;
+    for (p = 0; p < pageRaw.length; p++) { d0 = rpNumAt(pageRaw[p], j); if (d0 !== null) sp += d0; }
+    checked++;
+    if (Math.abs(sp - fv) > 0.011 * pages.length + 0.005) { bad++; warns.push(spec.name + " / " + rpCellTxt(spec.hdr[j]) + " : somme des pages " + fmtNum(sp) + " <> total general " + fmtNum(fv)); }
+  }
+  return { rtl: true, name: spec.name, w: widths, rows: rows, page: prof, footer: true, printRow: 0, banded: true, plan: { scale: scale, breaks: breaks }, scale: scale, eff: Math.round(font * scale) / 100,
+           pages: pages.length, matPages: (function(){var c=[],z,y,m;for(z=0;z<pages.length;z++){m=[];for(y=0;y<pages[z].length;y++)m.push(pages[z][y].mat);c.push(m);}return c;})(), counts: (function(){var c=[],z;for(z=0;z<pages.length;z++)c.push(pages[z].length);return c;})(), forced: !!fc, bands: nb, agents: G, warns: warns, checked: checked, bad: bad, perBand: per };
 }
-function rpBuildSheets() {
+/* calibration sheet: ruler + frame to check that the paper, margins and 132 columns print as expected */
+function rpCalibSheet(prof) {
+  var cw = 72, nCol = Math.floor(prof.W * RP_SAFE_W / cw), nRow = Math.floor(prof.H * RP_SAFE_H / cw) - 2, w = [], rows = [], r, i, j, txt;
+  for (j = 0; j < nCol; j++) w.push(cw);
+  txt = "Etalonnage " + prof.name + " : chaque case = 1 pouce (2,54 cm). Le cadre doit etre imprime en entier (4 bords visibles).";
+  r = [X("S", txt, "b", nCol - 1)]; r.h = 22; rows.push(r);
+  r = []; for (j = 0; j < nCol; j++) r.push(X("S", String(j + 1), "h")); r.h = 22; rows.push(r);
+  for (i = 0; i < nRow; i++) {
+    r = [];
+    for (j = 0; j < nCol; j++) r.push(X("S", (i === 0 && j === 0) ? "1" : (j === 0 ? String(i + 1) : ""), "cx"));
+    r.h = cw; rows.push(r);
+  }
+  return { rtl: false, name: "Etalonnage", w: w, rows: rows, page: prof, footer: false, printRow: 0, banded: true, plan: { scale: 100, breaks: [] }, pages: 1, bands: 1, agents: 0, warns: [], checked: 0, bad: 0 };
+}
+
+/* a rubrique that is zero on every row of the whole report carries no information: it is not printed */
+function rpZeroCol(d,j){
+  var i,v;
+  for(i=0;i<d.rows.length;i++){if(d.rows[i].info)continue;v=d.rows[i][j];if(v&&rt(v)==="N"&&Math.abs(parseFloat(rv(v))||0)>0.004)return false;}
+  return true;
+}
+function rpHiddenPrintCol(label){
+  var n=rpNrm(label);
+  return n.indexOf("totalretenues")>=0||n.indexOf("coefficient")>=0||n.indexOf("indicemin")>=0||n.indexOf("indicetotal")>=0||n.indexOf("الرقمالاستدلالي")>=0||n.indexOf("معاملالتحيين")>=0||n.indexOf("مجموعالاقتطاعات")>=0;
+}
+function rpBuildSheets(prof) {
+  if(!prof)prof=RP_PROFILES.a3;
+  var lay0=rpReadLayoutSettings();
+  RP_LINEF=lay0.line;RP_COLF=lay0.col;RP_FONT_SIZE=lay0.font;RP_HEAD_FONT=Math.max(8,Math.round(lay0.font*0.7));
+  return rpBuildSheetsAt(prof);
+}
+function rpBuildSheetsAt(prof) {
   var RTLX=(LANG==="ar");
-  var d=curR,out=[],i,j,k,row,c,bold;if(!d){$("rpMsg").innerHTML='<span class="err">Calculez d’abord le rappel.</span>';return null;}
-  var keep=[0,1,2,4,5,-1,-2,-3,-4,-5,-6],IXK=["Categorie","Echelon","Indice min","Points echelon","Indice total","Coefficient"];for(j=7;j<d.cols.length;j++)keep.push(j); // omit Grille and Bulletin de reference from Excel
+  var d=curR?rpOrderedCopy(curR):curR,out=[],i,j,k,row,c,bold;if(!d){$("rpMsg").innerHTML='<span class="err">Calculez d’abord le rappel.</span>';return null;}
+  RP_FORCE=null;RP_FORCE_MATS=null;
+  var keep=[0,1,5,-1,-2,-3,-4],IXK=["Categorie","Echelon","Indice min","Points echelon","Indice total","Coefficient"];for(j=7;j<d.cols.length;j++)if(!rpHiddenPrintCol(d.cols[j])&&!rpZeroCol(d,j))keep.push(j); // hide update coefficient, indices and total deductions
+  /* feuilles du tresorier : le logement et les allocations familiales (non soumis a l impot ni a la cotisation) viennent en fin de tableau, juste avant le net */
+  function reorderKeep(kp){
+    var nd=d.nDisp||0,tail=[],head=[],netIdx=7+nd+3,q,jj,ix,kd,hasNet=false,res;
+    if(!nd||!d.dispKind)return kp;
+    for(q=0;q<kp.length;q++){
+      ix=kp[q];
+      if(ix===netIdx){hasNet=true;continue;}
+      if(ix>=7&&ix<7+nd){kd=d.dispKind[ix-7];if(kd==="gainH"||kd==="af"){tail.push(ix);continue;}}
+      head.push(ix);
+    }
+    res=head.concat(tail);if(hasNet)res.push(netIdx);
+    return res;
+  }
+  keep=reorderKeep(keep);
   var nc=keep.length;
   function hr(h,cells){cells.h=h;return cells;}
   function span(text,style,n,startCol){var cells=[X("S",text,style,null,startCol>1?startCol:undefined)],q;for(q=1;q<n;q++)cells.push(X("E","",style));return cells;}
@@ -1922,8 +2565,7 @@ function rpBuildSheets() {
     rows.push(hr(23.25,span(ENTETE1,"e2",b1,RTLX?1:n-b1+1)));
     rows.push(hr(23.25,span(ENTETE2,"e2",b2,RTLX?1:n-b2+1)));
   }
-  var TOPH=27.75*2+23.25*2+26.25+23.25+15,HDRH=51,ROWH=15,TOTH=18,FOOTH=18,PH=740;
-  function scaleFor(w){var t=0,q;for(q=0;q<w.length;q++)t+=w[q];return Math.max(30,Math.min(100,Math.floor(1154/(t*1.15)*100)));}
+  var HDRH=54,ROWH=18,TOTH=21,FOOTH=24; /* provisional heights: the band engine measures the real ones */
   /* period covered */
   var mn=null,mx=null,mm,pa,pb;
   for(i=0;i<d.rows.length;i++){
@@ -1949,8 +2591,8 @@ function rpBuildSheets() {
   var titleRend="\u0628\u064a\u0627\u0646 \u062a\u0643\u0645\u064a\u0644\u064a \u0644\u0645\u0646\u062d\u0629 \u0627\u0644\u0645\u0631\u062f\u0648\u062f\u064a\u0629 \u0627\u0644\u0646\u0627\u062c\u0645 \u0639\u0646 \u0627\u0644\u062a\u0631\u0642\u064a\u0629 \u0641\u064a \u0627\u0644\u062f\u0631\u062c\u0627\u062a"+(corpsTxt?(" "+corpsTxt):"")+yearTxt;
   function headBlock(n,ttl,rows,corner,periodOverride){
     entete(n,rows);
-    if(corner)rows.push(hr(26.25,span(ttl,"e7",n,1)));
-    else if(RTLX)rows.push(hr(26.25,span(ttl,"e3",n,1)));
+    if(corner)rows.push(hr(26.25,[X("S",ttl,"e7",n-1,1)]));
+    else if(RTLX)rows.push(hr(26.25,[X("S",ttl,"e3",n-1,1)]));
     else rows.push(hr(26.25,[X("S",ttl,"e3",null,Math.max(1,n-7))]));
     var shownPeriod=(periodOverride!==undefined)?periodOverride:periodTxt;
     if(shownPeriod)rows.push(hr(23.25,span(shownPeriod,"e4",n,1)));else rows.push(hr(23.25,[]));
@@ -1961,35 +2603,68 @@ function rpBuildSheets() {
   function hdrT(l){return arabMap["k"+l]?arabMap["k"+l]:T(l);}
   function sumTot(list,tcol){var s0=0,q;for(q=0;q<list.length;q++){var cc=list[q].tot[tcol];if(cc&&rt(cc)==="N")s0+=parseFloat(rv(cc));}return r2(s0);}
 
+  /* ---------- formules Excel : rubriques calculees (taux x base+IEP), totaux, rappel = (nouveau - ancien) x jours / 30 ---------- */
+  function jfxPlan(keepArr){
+    var P={keep:keepArr,disp:[],base:-1,iep:-1,days:keepArr.indexOf(5),gAll:[],gNoAF:[],gNoAFH:[],rets:[],tcol:[],nd:d.nDisp||0},jj,pp,kd,tt;
+    for(jj=0;jj<keepArr.length;jj++){if(keepArr[jj]>=7){var nl=rpNrm(d.cols[keepArr[jj]]);if(nl==="salairedebase"&&P.base<0)P.base=jj;if(/^indemnitedexperience/.test(nl)&&P.iep<0)P.iep=jj;}}
+    for(jj=0;jj<P.nd;jj++){
+      pp=keepArr.indexOf(7+jj);P.disp.push(pp);if(pp<0)continue;kd=(d.dispKind||[])[jj];
+      if(kd==="gain"){P.gAll.push(pp);P.gNoAF.push(pp);P.gNoAFH.push(pp);}
+      else if(kd==="gainH"){P.gAll.push(pp);P.gNoAF.push(pp);}
+      else if(kd==="af"){P.gAll.push(pp);}
+      else if(kd==="ret")P.rets.push(pp);
+    }
+    for(tt=0;tt<4;tt++)P.tcol.push(keepArr.indexOf(7+P.nd+tt));
+    return P;
+  }
+  function jfxRow(cells,src,P){
+    var nat=rv(src[2]),role=(nat==="ANCIEN SALAIRE")?"old":(nat==="NOUVEAU SALAIRE"?"new":(nat==="RAPPEL"?"rap":(rv(src[4])==="TOTAL EMPLOYE"?"tot":null))),jj,pp;
+    if(!role||!P.nd)return;
+    cells.role=role;
+    if(role==="old"||role==="new"){
+      if(P.base>=0&&src.dfx)for(jj=0;jj<P.nd;jj++){pp=P.disp[jj];if(pp>=0&&src.dfx[jj])cells[pp].f={k:"rate",p:src.dfx[jj],a:P.base,b:P.iep};}
+      if(src.cotf&&d.cotDisp>=0&&P.disp[d.cotDisp]>=0){
+        var cl2=[],cz;for(cz=0;cz<P.nd;cz++)if(d.dispCot[cz]&&P.disp[cz]>=0)cl2.push("["+P.disp[cz]+"]");
+        if(cl2.length)cells[P.disp[d.cotDisp]].f={k:"expr",t:"ROUND(0.09*("+cl2.join("+")+"),2)"};
+      }
+      if(P.tcol[0]>=0)cells[P.tcol[0]].f={k:"sum",c:P.gNoAF};
+      if(P.tcol[1]>=0)cells[P.tcol[1]].f={k:"sum",c:P.gNoAFH};
+      if(P.tcol[2]>=0)cells[P.tcol[2]].f={k:"sum",c:P.rets};
+      if(P.tcol[3]>=0)cells[P.tcol[3]].f={k:"sum",c:P.gAll,n:P.rets};
+    }else if(role==="rap"){
+      if(P.days>=0)for(pp=0;pp<P.keep.length;pp++)if(P.keep[pp]>=7)cells[pp].f={k:"rap",d:P.days};
+    }else if(role==="tot"){
+      for(pp=0;pp<P.keep.length;pp++)if(P.keep[pp]>=7)cells[pp].f={k:"agg"};
+    }
+  }
+  function jfxAgg(r,keepArr,role){r.role=role;var q;for(q=0;q<keepArr.length;q++)if(keepArr[q]>=7&&r[q]&&r[q].t==="N")r[q].f={k:"agg"};return r;}
   /* ---------- journal sheet ---------- */
   var w=[58,115,100,112,62];for(j=5;j<nc;j++)w.push(62);
-  var groups=[],gRows=[],gTot=null;
+  var groups=[],gRows=[],gTot=null,JP=jfxPlan(keep);
   for(i=0;i<d.rows.length;i++){
     bold=(rv(d.rows[i][4])==="TOTAL EMPLOYE");row=[];
-    if(d.rows[i].info){for(j=0;j<5;j++)row.push(xr(d.rows[i][keep[j]]));row.push(X("S",d.rows[i].info,"cxa",nc-6));row.h=ROWH;gRows.push(row);continue;}
-    for(j=0;j<nc;j++){c=keep[j]>=0?d.rows[i][keep[j]]:((d.rows[i].ixc||[])[-keep[j]-1]||"E");row.push(xr(c,bold?(rt(c)==="N"?"bn":"bf"):(keep[j]===-6&&rt(c)==="N"?"x6":undefined)));}
+    if(d.rows[i].info){row.push(xr(d.rows[i][0]));row.push(xr(d.rows[i][1]));row.push(X("S",d.rows[i].info,"cxa",nc-3));row.h=ROWH;gRows.push(row);continue;}
+    if(rv(d.rows[i][2])==="ANCIEN SALAIRE"){var pr=[X("S",T("Periode couverte")+" : "+rv(d.rows[i][4]),"cxa",nc-1)];pr.h=ROWH;gRows.push(pr);}
+    for(j=0;j<nc;j++){c=keep[j]>=0?d.rows[i][keep[j]]:((d.rows[i].ixc||[])[-keep[j]-1]||"E");row.push(xr(c,bold?(rt(c)==="N"?"bn":"bf"):undefined));}
+    if(rv(d.rows[i][2])==='NOUVEAU SALAIRE'||rv(d.rows[i][2])==='RAPPEL')row[1]=X("E","");
+    jfxRow(row,d.rows[i],JP);
     row.h=ROWH;gRows.push(row);
-    if(bold){groups.push({rows:gRows,tot:d.rows[i],h:gRows.length*ROWH});gRows=[];}
+    if(bold){groups.push({rows:gRows,tot:d.rows[i],h:gRows.length*ROWH,mat:rv(d.rows[i][0])});gRows=[];}
   }
   if(gRows.length)groups.push({rows:gRows,tot:d.rows[d.rows.length-1],h:gRows.length*ROWH});
-  var sc1=scaleFor(w);
   function jPageTotal(list,no,cnt){
     var r=[],q,kj;
     for(q=0;q<nc;q++){kj=keep[q];
-      if(kj===0)r.push(X("S",T("TOTAL PAGE"),"bf"));
-      else if(kj===2)r.push(X("S",no+" / "+cnt,"bf"));
+      if(kj===0)r.push(X("S",T("TOTAL PAGE")+"  "+no+" / "+cnt,"bf"));
       else if(kj<7)r.push(X("E","","bf"));
       else r.push(X("N",""+sumTot(list,kj),"bn"));
     }
-    r.h=TOTH;return r;
+    r.h=TOTH;return jfxAgg(r,keep,"pt");
   }
-  var footRow=[];for(j=0;j<nc;j++)footRow.push(keep[j]<0?X("E","","bf"):xr(d.foot[keep[j]],rt(d.foot[keep[j]])==="N"?"bn":"bf"));footRow.h=FOOTH;
-  var pg=rpPaged(groups,{capH:PH/(sc1/100),topH:TOPH,hdrH:HDRH,totH:TOTH,footH:FOOTH,pageTotal:jPageTotal,foot:footRow});
-  headBlock(nc,title,out);
-  row=[];for(i=0;i<nc;i++)row.push(X("S",keep[i]<0?T(IXK[-keep[i]-1]):hdrT(d.cols[keep[i]]),"h"));row.h=HDRH;out.push(row);
-  var headRow=out.length,off=out.length;
-  for(i=0;i<pg.rows.length;i++)out.push(pg.rows[i]);
-  var br1=[];for(i=0;i<pg.breaks.length;i++)br1.push(off+pg.breaks[i]);
+  var footRow=[];for(j=0;j<nc;j++)footRow.push(keep[j]<0?X("E","","bf"):xr(d.foot[keep[j]],rt(d.foot[keep[j]])==="N"?"bn":"bf"));footRow.h=FOOTH;jfxAgg(footRow,keep,"ft");
+  var jHdr=[];for(i=0;i<nc;i++)jHdr.push(X("S",keep[i]<0?T(IXK[-keep[i]-1]):hdrT(d.cols[keep[i]]),"h"));
+  var jSheet=rpBandSheet({name:T("Journal rappel"),label:T("Journal rappel"),nc:nc,idN:2,groups:groups,hdr:jHdr,head:function(nn,rows){headBlock(nn,title,rows);},pageTotal:jPageTotal,foot:footRow,signoff:true},prof);
+  RP_FORCE=jSheet.counts;RP_FORCE_MATS=jSheet.matPages; /* le journal fixe la pagination : les autres feuilles la suivent */
 
   /* ---------- rendement sheet: brut = rate x note/40 x (Base + IEP); C.S 9%; fixed IRG 10% on (brut - C.S) ---------- */
   var ib=-1,ie=-1;
@@ -2003,46 +2678,59 @@ function rpBuildSheets() {
     return /admin|commun|ouvrier|professionnel|chauffeur|securite|secretaire/i.test(corpsOf["k"+mat]||"")?30:35;
   }
   function cellN(v,st){return X("N",""+r2(v),st);}
-  var rw=[58,135,100,112,50,95,55,45,55,95,85,85,95],rnc=rw.length,rg=[],curRows=[],acc=[0,0,0,0,0];
-  var rcols=["Matricule","Nom et prenom","Nature","Periode couverte","Jours rappel (base 30j)","Salaire principal (Base + IEP)","Taux max %","Note /40","Taux effectif %","Prime de rendement","Retenue C.S 9%","IRG 10%","Net a payer"];
+  function rendSheet(srcR,nm,per,gross){
+  var rw=[58,135,50,45,45,50,50,95,55,45,55,95,85,85,95];if(gross)rw=rw.slice(0,12);var rnc=rw.length,rg=[],curRows=[],acc=[0,0,0,0,0];
+  var rcols=["Matricule","Nom et prenom","Jours rappel (base 30j)","Categorie","Echelon","Indice min","Points echelon","Salaire principal (Base + IEP)","Taux max %","Note /40","Taux effectif %","Prime de rendement","Retenue C.S 9%","IRG 10%","Net a payer"];if(gross)rcols=rcols.slice(0,12);
   function pv(r){var s1=0;if(ib>=0)s1+=parseFloat(rv(r[ib]))||0;if(ie>=0)s1+=parseFloat(rv(r[ie]))||0;return s1;}
   function amounts(brut){var cs=r2(brut*0.09),irg=r2((brut-cs)*0.10);return {cs:cs,irg:irg,net:r2(brut-cs-irg)};}
   function rendTot(l1,l2,v,st){
-    var r=[X("S",l1,"bf"),X("E","","bf"),X("S",l2,"bf"),X("E","","bf"),X("E","","bf"),cellN(v[0],"bn"),X("E","","bf"),X("E","","bf"),X("E","","bf"),cellN(v[1],"bn"),cellN(v[2],"bn"),cellN(v[3],"bn"),cellN(v[4],"bn")];
+    var r=[X("S",l1+(l2&&l2!==l1&&l2!==T("TOTAL EMPLOYE")?"  "+l2:""),"bf"),X("E","","bf"),X("E","","bf"),X("E","","bf"),X("E","","bf"),X("E","","bf"),X("E","","bf"),cellN(v[0],"bn"),X("E","","bf"),X("E","","bf"),X("E","","bf"),cellN(v[1],"bn"),cellN(v[2],"bn"),cellN(v[3],"bn"),cellN(v[4],"bn")];
+    var ag=[7,11,12,13,14],az;for(az=0;az<ag.length;az++)r[ag[az]].f={k:"agg"};
+    if(gross)r=r.slice(0,12);
     r.h=ROWH;return r;
   }
-  for(i=0;i<d.detailRows.length;i++){
-    var dr=d.detailRows[i],nat=rv(dr[2]),mat=rv(dr[0]),eff=rateFor(mat)*note/40;
+  for(i=0;i<srcR.length;i++){
+    var dr=srcR[i],nat=rv(dr[2]),mat=rv(dr[0]),eff=rateFor(mat)*note/40;
     if(nat==="TOTAL EMPLOYE"){
       row=rendTot(rv(dr[0]),T("TOTAL EMPLOYE"),acc);
-      row[1]=X("S",rv(dr[1]),"bf");curRows.push(row);
-      var tr=[];tr[5]="N"+r2(acc[0]);tr[9]="N"+r2(acc[1]);tr[10]="N"+r2(acc[2]);tr[11]="N"+r2(acc[3]);tr[12]="N"+r2(acc[4]);
-      rg.push({rows:curRows,tot:tr,h:curRows.length*ROWH});curRows=[];acc=[0,0,0,0,0];continue;
+      row[1]=X("S",rv(dr[1]),"bf");row.role="tot";curRows.push(row);
+      var tr=[];tr[7]="N"+r2(acc[0]);tr[11]="N"+r2(acc[1]);tr[12]="N"+r2(acc[2]);tr[13]="N"+r2(acc[3]);tr[14]="N"+r2(acc[4]);
+      rg.push({rows:curRows,tot:tr,h:curRows.length*ROWH,mat:mat});curRows=[];acc=[0,0,0,0,0];continue;
     }
     if(nat!=="ANCIEN SALAIRE"&&nat!=="NOUVEAU SALAIRE"&&nat!=="RAPPEL")continue;
     var princ=pv(dr),prime=r2(princ*eff/100),am=amounts(prime);
     if(nat==="RAPPEL"){acc[0]+=princ;acc[1]+=prime;acc[2]+=am.cs;acc[3]+=am.irg;acc[4]+=am.net;}
-    row=[xr(dr[0]),xr(dr[1]),xr(dr[2]),xr(dr[4]),xr(dr[5]),cellN(princ,"n"),cellN(rateFor(mat),"n"),cellN(note,"n"),cellN(eff,"n"),cellN(prime,"n"),cellN(am.cs,"n"),cellN(am.irg,"n"),cellN(am.net,"n")];
-    row.h=ROWH;curRows.push(row);
+    if(nat==="ANCIEN SALAIRE"){var rpr=[X("S",T("Periode couverte")+" : "+rv(dr[4]),"cxa",rnc-1)];rpr.h=ROWH;curRows.push(rpr);}
+    row=[xr(dr[0]),(nat==="ANCIEN SALAIRE")?xr(dr[1]):X("E",""),xr(dr[5]),xr((dr.ixc||[])[0]||"E"),xr((dr.ixc||[])[1]||"E"),xr((dr.ixc||[])[2]||"E"),xr((dr.ixc||[])[3]||"E"),cellN(princ,"n"),cellN(rateFor(mat),"n"),cellN(note,"n"),cellN(eff,"n"),cellN(prime,"n"),cellN(am.cs,"n"),cellN(am.irg,"n"),cellN(am.net,"n")];
+    row.h=ROWH;row.role=(nat==="ANCIEN SALAIRE")?"old":(nat==="NOUVEAU SALAIRE"?"new":"rap");
+    row[10].f={k:"expr",t:"[8]*[9]/40"};row[11].f={k:"expr",t:"ROUND([7]*[8]*[9]/40/100,2)"};row[12].f={k:"expr",t:"ROUND([11]*0.09,2)"};row[13].f={k:"expr",t:"ROUND(([11]-[12])*0.1,2)"};row[14].f={k:"expr",t:"[11]-[12]-[13]"};
+    if(gross){var rs0=row.slice(0,12);rs0.h=row.h;rs0.role=row.role;row=rs0;}
+    curRows.push(row);
   }
   function rtot(list,col){var s0=0,q;for(q=0;q<list.length;q++){var cc=list[q].tot[col];if(cc)s0+=parseFloat(rv(cc));}return r2(s0);}
-  function rSums(list){return [rtot(list,5),rtot(list,9),rtot(list,10),rtot(list,11),rtot(list,12)];}
-  function rPageTotal(list,no,cnt){var r=rendTot(T("TOTAL PAGE"),no+" / "+cnt,rSums(list));r.h=TOTH;return r;}
-  var rfoot=rendTot(T("TOTAL GENERAL"),T("TOTAL GENERAL"),rSums(rg));rfoot.h=FOOTH;
-  var sc2=scaleFor(rw),pr=rpPaged(rg,{capH:PH/(sc2/100),topH:TOPH,hdrH:HDRH,totH:TOTH,footH:FOOTH,pageTotal:rPageTotal,foot:rfoot});
-  var rout=[];headBlock(rnc,titleRend,rout);
-  row=[];for(i=0;i<rnc;i++)row.push(X("S",T(rcols[i]),"h"));row.h=HDRH;rout.push(row);
-  var rHead=rout.length,roff=rout.length;
-  for(i=0;i<pr.rows.length;i++)rout.push(pr.rows[i]);
-  var br2=[];for(i=0;i<pr.breaks.length;i++)br2.push(roff+pr.breaks[i]);
+  function rSums(list){return [rtot(list,7),rtot(list,11),rtot(list,12),rtot(list,13),rtot(list,14)];}
+  function rPageTotal(list,no,cnt){var r=rendTot(T("TOTAL PAGE"),no+" / "+cnt,rSums(list));r.h=TOTH;r.role="pt";return r;}
+  var rfoot=rendTot(T("TOTAL GENERAL"),T("TOTAL GENERAL"),rSums(rg));rfoot.h=FOOTH;rfoot.role="ft";
+  var rHdr=[];for(i=0;i<rnc;i++)rHdr.push(X("S",T(rcols[i]),"h"));
+  return rpBandSheet({name:nm,label:nm,nc:rnc,idN:2,groups:rg,hdr:rHdr,head:function(nn,rows){headBlock(nn,titleRend,rows,null,per);},pageTotal:rPageTotal,foot:rfoot,signoff:true},prof);
+  }
 
   /* ---------- recap sheet ---------- */
-  var rkeep=[0,1,2,3,4,5,6,9,10,11],r2s=[];
-  entete(rkeep.length,r2s);
-  r2s.push(hr(21,[X("S",T("Recapitulatif par agent"),"e5")]));r2s.push(hr(10,[]));
-  row=[];for(i=0;i<rkeep.length;i++)row.push(X("S",T(d.rcols[rkeep[i]]),"h"));row.h=30;r2s.push(row);
-  var rcHead=r2s.length;
-  for(i=0;i<d.recap.length;i++){row=[];for(j=0;j<rkeep.length;j++)row.push(xr(d.recap[i][rkeep[j]]));r2s.push(row);}
+  var rkeep=[0,1,2,3,4,5,6,9,11];
+  var rcHdr=[];for(i=0;i<rkeep.length;i++)rcHdr.push(X("S",T(d.rcols[rkeep[i]]),"h"));
+  var rcGroups=[],rcGrand=[0,0];
+  for(i=0;i<d.recap.length;i++){
+    row=[];for(j=0;j<rkeep.length;j++)row.push(xr(d.recap[i][rkeep[j]]));
+    row.h=ROWH;row.role="tot";rcGroups.push({rows:[row],tot:d.recap[i],h:ROWH});
+    rcGrand[0]+=parseFloat(rv(d.recap[i][9]))||0;rcGrand[1]+=parseFloat(rv(d.recap[i][11]))||0;
+  }
+  function rcTotal(list,no,cnt){
+    var a=[X("S",T("TOTAL PAGE"),"bf"),X("E","","bf"),X("S",no+" / "+cnt,"bf"),X("E","","bf"),X("E","","bf"),X("E","","bf"),X("E","","bf"),X("N","0","bn"),X("N","0","bn")],q,v0=0,v1=0;
+    for(q=0;q<list.length;q++){v0+=parseFloat(rv(list[q].tot[9]))||0;v1+=parseFloat(rv(list[q].tot[11]))||0;}
+    a[7]=X("N",""+r2(v0),"bn");a[8]=X("N",""+r2(v1),"bn");a[7].f={k:"agg"};a[8].f={k:"agg"};a.role="pt";a.h=TOTH;return a;
+  }
+  var rcFoot=[X("S",T("TOTAL GENERAL"),"bf"),X("E","","bf"),X("E","","bf"),X("E","","bf"),X("E","","bf"),X("E","","bf"),X("E","","bf"),X("N",""+r2(rcGrand[0]),"bn"),X("N",""+r2(rcGrand[1]),"bn")];rcFoot.h=FOOTH;rcFoot.role="ft";rcFoot[7].f={k:"agg"};rcFoot[8].f={k:"agg"};
+  var rcSheet=rpBandSheet({name:T("Recap agents"),label:T("Recap agents"),nc:rkeep.length,idN:2,idCap:[120,200],groups:rcGroups,hdr:rcHdr,head:function(nn,rows){entete(nn,rows);rows.push(hr(21,[X("S",T("Recapitulatif par agent"),"e5",nn-1)]));rows.push(hr(10,[]));},pageTotal:rcTotal,foot:rcFoot,signoff:true},prof);
   /* file name from the contents */
   var fcodes=[],fseen={};
   for(i=0;i<rpEmployees.length;i++){ee=rpEmployees[i];if(mats["k"+ee.mat]&&ee.corpsCode&&!fseen["k"+ee.corpsCode]){fseen["k"+ee.corpsCode]=true;fcodes.push(ee.corpsCode);}}
@@ -2052,10 +2740,11 @@ function rpBuildSheets() {
   var etMap={};for(i=0;i<(d.empTotals||[]).length;i++)etMap["k"+d.empTotals[i].mat]=d.empTotals[i];
   function isContR(it){var c=rpNrm(it.code),l=String(it.lib||"").toLowerCase();return c.indexOf("icont")>=0||/contagieux/.test(l);}
   function defsFor(kind,mergeCont){
-    var o2=[],contDef=null,q;
+    var o2=[],contDef=null,paraDef=null,q;
     for(q=0;q<d.rubs.length;q++){
       if(d.rubKinds[q]!==kind)continue;
       if(mergeCont&&isContR(d.rubs[q])){if(!contDef){contDef={label:"I.Cont (Sec2 + Sec1/3 + Sec3/3)",idx:[]};o2.push(contDef);}contDef.idx.push(q);}
+      else if(mergeCont&&(/soutien/.test(rpNrm(d.rubs[q].lib))||/\u062f\u0639\u0645/.test(String(d.rubs[q].arab||d.rubs[q].lib||"")))){if(!paraDef){paraDef={label:"\u062a.\u062f\u0639\u0645 \u0646.\u0634.\u0637 (50%+55%)",idx:[]};o2.push(paraDef);}paraDef.idx.push(q);}
       else o2.push({label:d.rubs[q].lib,idx:[q]});
     }
     return o2;
@@ -2098,7 +2787,7 @@ function rpBuildSheets() {
         a=rg.a>periodStart?rg.a:periodStart;b=rg.b<periodEnd?rg.b:periodEnd;
         if(a>b)continue;
         originalDays=annualDays30(rg.a,rg.b);partDays=annualDays30(a,b);factor=originalDays>0?partDays/originalDays:0;
-        cp=src.slice(0);cp.raw=(src.raw||[]).slice(0);
+        cp=src.slice(0);cp.raw=(src.raw||[]).slice(0);cp.dfx=src.dfx;cp.cotf=src.cotf;
         cp[4]=annualDateFmt(a)+" - "+annualDateFmt(b);cp[5]="I"+partDays;cp.ixc=(src.ixc||[]).slice(0);
         if(kind==="RAPPEL"){
           for(jj=0;jj<cp.raw.length;jj++)cp.raw[jj]=r2(cp.raw[jj]*factor);
@@ -2129,63 +2818,83 @@ function rpBuildSheets() {
   function annualPeriod(year,fromRappelStart){return fromRappelStart?"الفترة من تاريخ بداية الاستدراك الفعلي لكل موظف إلى 31/12/"+year:"الفترة من 01/01/"+year+" إلى 31/12/"+year;}
   function famSheet(sheetName,corner,defs,source,periodLabel){
     var useRows=source?source.rows:srcRows;
-    var n=11+defs.length+1,ww=[58,115,100,112,62,62,62,62,62,62,62],q,z,gl=[],cur=[],sums=[],t0,v,rw0,cells,tt;
+    var n=7+defs.length+1,ww=[58,115,62,82,82,82,82],q,z,gl=[],cur=[],sums=[],t0,v,rw0,cells,tt;
     for(q=0;q<defs.length;q++)ww.push(88);ww.push(95);
     for(q=0;q<defs.length+1;q++)sums.push(0);
     function vals(raw){var vs=[],q2,z2,s;for(q2=0;q2<defs.length;q2++){s=0;for(z2=0;z2<defs[q2].idx.length;z2++)s+=(raw[defs[q2].idx[z2]]||0);vs.push(r2(s));}return vs;}
     for(i=0;i<useRows.length;i++){
       rw0=useRows[i];
-      if(rw0.info){cells=[];for(q=0;q<5;q++)cells.push(xr(rw0[[0,1,2,4,5][q]]));cells.push(X("S",rw0.info,"cxa",defs.length));cells.h=ROWH;cur.push(cells);continue;}
+      if(rw0.info){cells=[xr(rw0[0]),xr(rw0[1]),X("S",rw0.info,"cxa",n-3)];cells.h=ROWH;cur.push(cells);continue;}
       var isTot=(rv(rw0[4])==="TOTAL EMPLOYE"),vs=vals(rw0.raw||[]),tot0=0;
       for(q=0;q<vs.length;q++)tot0+=vs[q];tot0=r2(tot0);
       cells=[];
-      var cidx=[0,1,2,4,5];
-      for(q=0;q<5;q++)cells.push(xr(rw0[cidx[q]],isTot?"bf":undefined));
-      for(q=0;q<6;q++){var xc=(rw0.ixc||[])[q]||"E";cells.push(xr(xc,isTot?"bf":(q===5&&rt(xc)==="N"?"x6":undefined)));}
+      if(rv(rw0[2])==="ANCIEN SALAIRE"){var fpr=[X("S",T("Periode couverte")+" : "+rv(rw0[4]),"cxa",n-1)];fpr.h=ROWH;cur.push(fpr);}
+      var cidx=[0,1,5];
+      for(q=0;q<3;q++)cells.push(xr(rw0[cidx[q]],isTot?"bf":undefined));
+      for(q=0;q<6;q++){if(q===4||q===5)continue;var xc=(rw0.ixc||[])[q]||"E";cells.push(xr(xc,isTot?"bf":undefined));}
       for(q=0;q<vs.length;q++)cells.push(cellN(vs[q],isTot?"bn":"n"));
-      cells.push(cellN(tot0,"bn"));cells.h=ROWH;cur.push(cells);
+      cells.push(cellN(tot0,"bn"));cells.h=ROWH;
+      (function(){
+        var nt=rv(rw0[2]),rl=(nt==="ANCIEN SALAIRE")?"old":(nt==="NOUVEAU SALAIRE"?"new":(nt==="RAPPEL"?"rap":(isTot?"tot":null))),a0,lc0=[];
+        if(!rl)return;cells.role=rl;
+        for(a0=0;a0<defs.length;a0++)lc0.push(7+a0);
+        if(rl==="rap"){for(a0=7;a0<cells.length;a0++)cells[a0].f={k:"rap",d:2};}
+        else if(rl==="tot"){for(a0=7;a0<cells.length;a0++)cells[a0].f={k:"agg"};}
+        else cells[7+defs.length].f={k:"sum",c:lc0};
+      })();
+      if(rv(rw0[2])==="NOUVEAU SALAIRE"||rv(rw0[2])==="RAPPEL")cells[1]=X("E","");
+      cur.push(cells);
       if(isTot){
-        tt=[];for(q=0;q<vs.length;q++){tt[11+q]="N"+vs[q];sums[q]+=vs[q];}tt[11+vs.length]="N"+tot0;sums[vs.length]+=tot0;
-        gl.push({rows:cur,tot:tt,h:cur.length*ROWH});cur=[];
+        tt=[];for(q=0;q<vs.length;q++){tt[7+q]="N"+vs[q];sums[q]+=vs[q];}tt[7+vs.length]="N"+tot0;sums[vs.length]+=tot0;
+        gl.push({rows:cur,tot:tt,h:cur.length*ROWH,mat:rv(rw0[0])});cur=[];
       }
     }
     if(cur.length)gl.push({rows:cur,tot:[],h:cur.length*ROWH});
-    function sumRow(l1,l2,vs3){var r=[X("S",l1,"bf"),X("E","","bf"),X("S",l2,"bf"),X("E","","bf"),X("E","","bf"),X("E","","bf"),X("E","","bf"),X("E","","bf"),X("E","","bf"),X("E","","bf"),X("E","","bf")],z3;for(z3=0;z3<vs3.length;z3++)r.push(cellN(vs3[z3],"bn"));r.h=ROWH;return r;}
-    function pageSums(list){var vs4=[],z4,y,s0;for(z4=0;z4<defs.length+1;z4++){s0=0;for(y=0;y<list.length;y++){var c0=list[y].tot[11+z4];if(c0)s0+=parseFloat(rv(c0));}vs4.push(r2(s0));}return vs4;}
+    function sumRow(l1,l2,vs3){var r=[X("S",l1+(l2&&l2!==l1?"  "+l2:""),"bf"),X("E","","bf"),X("E","","bf"),X("E","","bf"),X("E","","bf"),X("E","","bf"),X("E","","bf")],z3;for(z3=0;z3<vs3.length;z3++){var cn3=cellN(vs3[z3],"bn");cn3.f={k:"agg"};r.push(cn3);}r.h=ROWH;return r;}
+    function pageSums(list){var vs4=[],z4,y,s0;for(z4=0;z4<defs.length+1;z4++){s0=0;for(y=0;y<list.length;y++){var c0=list[y].tot[7+z4];if(c0)s0+=parseFloat(rv(c0));}vs4.push(r2(s0));}return vs4;}
     var tg=[];for(z=0;z<sums.length;z++)tg.push(r2(sums[z]));
-    var fr=sumRow(T("TOTAL GENERAL"),T("TOTAL GENERAL"),tg);fr.h=FOOTH;
-    var sc=scaleFor(ww),pgx=rpPaged(gl,{capH:PH/(sc/100),topH:TOPH,hdrH:HDRH,totH:TOTH,footH:FOOTH,
-        pageTotal:function(list,no,cnt){var r=sumRow(T("TOTAL PAGE"),no+" / "+cnt,pageSums(list));r.h=TOTH;return r;},foot:fr});
-    var o4=[];headBlock(n,title,o4,corner,periodLabel);
-    var row2=[X("S",T("Matricule"),"h"),X("S",T("Nom et prenom"),"h"),X("S",T("Nature"),"h"),X("S",T("Periode couverte"),"h"),X("S",T("Jours rappel (base 30j)"),"h"),X("S",T("Categorie"),"h"),X("S",T("Echelon"),"h"),X("S",T("Indice min"),"h"),X("S",T("Points echelon"),"h"),X("S",T("Indice total"),"h"),X("S",T("Coefficient"),"h")];
-    for(q=0;q<defs.length;q++)row2.push(X("S",hdrT(defs[q].label),"h"));row2.push(X("S",T("Total"),"h"));row2.h=HDRH;o4.push(row2);
-    var hr2=o4.length,off2=o4.length,bk=[];
-    for(q=0;q<pgx.rows.length;q++)o4.push(pgx.rows[q]);
-    for(q=0;q<pgx.breaks.length;q++)bk.push(off2+pgx.breaks[q]);
-    return {rtl:true,name:T(sheetName),w:ww,rows:o4,land:true,top:"0.35",footer:true,printRow:hr2,plan:{scale:sc,breaks:bk}};
+    var fr=sumRow(T("TOTAL GENERAL"),T("TOTAL GENERAL"),tg);fr.h=FOOTH;fr.role="ft";
+    var row2=[X("S",T("Matricule"),"h"),X("S",T("Nom et prenom"),"h"),X("S",T("Jours rappel (base 30j)"),"h"),X("S",T("Categorie"),"h"),X("S",T("Echelon"),"h"),X("S",T("Indice min"),"h"),X("S",T("Points echelon"),"h")];
+    for(q=0;q<defs.length;q++)row2.push(X("S",hdrT(defs[q].label),"h"));row2.push(X("S",T("Total"),"h"));
+    return rpBandSheet({name:T(sheetName),label:T(sheetName),nc:n,idN:2,groups:gl,hdr:row2,head:function(nn,rows){headBlock(nn,title,rows,corner,periodLabel);},pageTotal:function(list,no,cnt){var r=sumRow(T("TOTAL PAGE"),no+" / "+cnt,pageSums(list));r.h=TOTH;r.role="pt";return r;},foot:fr,signoff:true},prof);
   }
   var d2=defsFor("lead",false),d3=defsFor("gain",true),d4=defsFor("af",false);
   function allIdx(defs){var o5=[],q,z;for(q=0;q<defs.length;q++)for(z=0;z<defs[q].idx.length;z++)o5.push(defs[q].idx[z]);return o5;}
   function paperNo(nn){return "\u0627\u0644\u0648\u0631\u0642\u0629 \u0631\u0642\u0645 "+nn;}
   var prevData=annualRows(previousYear,true),currData=annualRows(currentYear,false);
   var allDefs=[{label:"Total F2",idx:allIdx(d2)},{label:"Total F3",idx:allIdx(d3)},{label:"Total F4",idx:allIdx(d4)}];
-  var s2=famSheet("Feuille 2",paperNo(2),d2,prevData,annualPeriod(previousYear,true));
-  var s3=famSheet("Feuille 3",paperNo(3),d3,prevData,annualPeriod(previousYear,true));
-  var s4=famSheet("Feuille 4",paperNo(4),d4,prevData,annualPeriod(previousYear,true));
-  var s5=famSheet("Feuille 5",paperNo(5),allDefs,prevData,annualPeriod(previousYear,true));
+  /* feuilles 2-5 = ANNEE EN COURS ; feuille 6 = ANNEES PRECEDENTES (du debut du rappel au 31/12 de l annee precedente) */
+  var hasCur=currData.rows.length>0,hasPrev=prevData.rows.length>0;
+  var s2=hasCur?famSheet("Feuille 2",paperNo(2),d2,currData,annualPeriod(currentYear,false)):null;
+  var s3=hasCur?famSheet("Feuille 3",paperNo(3),d3,currData,annualPeriod(currentYear,false)):null;
+  var s4=hasCur?famSheet("Feuille 4",paperNo(4),d4,currData,annualPeriod(currentYear,false)):null;
+  var s5=hasCur?famSheet("Feuille 5",paperNo(5),allDefs,currData,annualPeriod(currentYear,false)):null;
   /* Feuille 6 = full كشف الاستدراك for the current year, with every salary rubrique. */
-  function annualJournalSheet(source,year){
-    var p6keep=[0,1,2,4,5,-4,-3,-2,-1],p6w=[58,115,100,112,62,82,82,58,58],p6nc,q,z,rr,bb,sc,pgj,jbreaks=[],ki,tv,jcur=[],jgroups=[],jtot={};
-    for(z=7;z<d.cols.length;z++){p6keep.push(z);p6w.push(62);}
-    p6nc=p6keep.length;
+  function annualJournalSheet(source,year,fromStart){
+    var p6keep=[0,1,5,-1,-2,-3,-4],p6w=[58,115,100,112,62,82,82],p6nc,q,z,rr,bb,sc,pgj,jbreaks=[],ki,tv,jcur=[],jgroups=[],jtot={};
+    var nd6=d.nDisp||0;
+    for(z=7;z<d.cols.length;z++){
+      if(rpHiddenPrintCol(d.cols[z])||rpZeroCol(d,z))continue;
+      /* controleur financier : gains seulement (logement inclus), sans allocations familiales, cotisation, IRG, retenues ni net ; derniere colonne = total des gains hors A.F */
+      if(nd6&&d.dispKind){
+        if(z<7+nd6){var k6=d.dispKind[z-7];if(k6!=="gain"&&k6!=="gainH")continue;}
+        else if(z!==7+nd6)continue;
+      }
+      p6keep.push(z);p6w.push(62);
+    }
+    p6nc=p6keep.length;var P6=jfxPlan(p6keep);
     for(q=0;q<source.rows.length;q++){
       rr=source.rows[q];bb=(rv(rr[4])==="TOTAL EMPLOYE");var cells=[];
       for(z=0;z<p6nc;z++){
         var pk=p6keep[z],original=pk>=0?rr[pk]:((rr.ixc||[])[-pk-1]||"E");
         cells.push(xr(original,bb?(rt(original)==="N"?"bn":"bf"):undefined));
       }
-      cells.h=ROWH;jcur.push(cells);
-      if(bb){jgroups.push({rows:jcur,tot:rr,h:jcur.length*ROWH});jcur=[];}
+      cells.h=ROWH;
+      if(rv(rr[2])==="NOUVEAU SALAIRE"||rv(rr[2])==="RAPPEL")cells[1]=X("E","");
+      jfxRow(cells,rr,P6);
+      if(rv(rr[2])==="ANCIEN SALAIRE"){var ppr=[X("S",T("Periode couverte")+" : "+rv(rr[4]),"cxa",p6nc-1)];ppr.h=ROWH;jcur.push(ppr);}
+      jcur.push(cells);
+      if(bb){jgroups.push({rows:jcur,tot:rr,h:jcur.length*ROWH,mat:rv(rr[0])});jcur=[];}
     }
     if(jcur.length)jgroups.push({rows:jcur,tot:jcur[jcur.length-1],h:jcur.length*ROWH});
     for(z=0;z<p6nc;z++){
@@ -2196,31 +2905,28 @@ function rpBuildSheets() {
     function annualPageTotal(list,no,cnt){
       var ar=[],q2,k2;
       for(q2=0;q2<p6nc;q2++){k2=p6keep[q2];
-        if(k2===0)ar.push(X("S",T("TOTAL PAGE"),"bf"));
-        else if(k2===2)ar.push(X("S",no+" / "+cnt,"bf"));
+        if(k2===0)ar.push(X("S",T("TOTAL PAGE")+"  "+no+" / "+cnt,"bf"));
         else if(k2<7)ar.push(X("E","","bf"));
         else ar.push(X("N",""+sumTot(list,k2),"bn"));
       }
-      ar.h=TOTH;return ar;
+      ar.h=TOTH;return jfxAgg(ar,p6keep,"pt");
     }
     var annualFoot=[];
     for(z=0;z<p6nc;z++){ki=p6keep[z];annualFoot.push(ki<0?X("E","","bf"):xr(jtot[ki]||"E",rt(jtot[ki]||"E")==="N"?"bn":"bf"));}
-    annualFoot.h=FOOTH;sc=scaleFor(p6w);
-    pgj=rpPaged(jgroups,{capH:PH/(sc/100),topH:TOPH,hdrH:HDRH,totH:TOTH,footH:FOOTH,pageTotal:annualPageTotal,foot:annualFoot});
-    var jo=[];headBlock(p6nc,title,jo,null,annualPeriod(year,false));
-    var p6Labels=["الصنف","الدرجة","الرقم الاستدلالي للصنف","الرقم الاستدلالي للدرجة"];
-    var jh=[];for(z=0;z<p6nc;z++){ki=p6keep[z];jh.push(X("S",ki<0?p6Labels[-ki-1]:hdrT(d.cols[ki]),"h"));}jh.h=HDRH;jo.push(jh);
-    var jhead=jo.length,joff=jo.length;
-    for(q=0;q<pgj.rows.length;q++)jo.push(pgj.rows[q]);
-    for(q=0;q<pgj.breaks.length;q++)jbreaks.push(joff+pgj.breaks[q]);
-    return {rtl:true,name:T("Feuille 6"),w:p6w,rows:jo,land:true,top:"0.35",footer:true,printRow:jhead,plan:{scale:sc,breaks:jbreaks}};
+    annualFoot.h=FOOTH;jfxAgg(annualFoot,p6keep,"ft");
+    var p6Labels=[T("Categorie"),T("Echelon"),T("Indice min"),T("Points echelon")];
+    var jh=[];for(z=0;z<p6nc;z++){ki=p6keep[z];jh.push(X("S",ki<0?p6Labels[-ki-1]:hdrT(d.cols[ki]),"h"));}
+    return rpBandSheet({name:T("Feuille 6"),label:T("Feuille 6"),nc:p6nc,idN:2,groups:jgroups,hdr:jh,head:function(nn,rows){headBlock(nn,title,rows,null,annualPeriod(year,!!fromStart));},pageTotal:annualPageTotal,foot:annualFoot,signoff:true},prof);
   }
-  var s6=annualJournalSheet(currData,currentYear);
-  var sheets=[{rtl:true,name:T("Journal rappel"),w:w,rows:out,land:true,top:"0.35",footer:true,printRow:headRow,plan:{scale:sc1,breaks:br1}},
-              s2,s3,s4,s5,s6,
-              {rtl:true,name:T("Rendement"),w:rw,rows:rout,land:true,top:"0.35",footer:true,printRow:rHead,plan:{scale:sc2,breaks:br2}},
-              {rtl:true,name:T("Recap agents"),w:recapW,rows:r2s,land:true,top:"0.35",footer:true,printRow:rcHead,plan:{scale:scaleFor(recapW),breaks:[]}}];
-  return {sheets:sheets,fbase:fbase,info:"A3: journal "+pg.pages+" page(s) (echelle "+sc1+"%), rendement "+pr.pages+" page(s). Chaque page se termine par son TOTAL PAGE; aucun agent n’est coupe entre deux pages."};
+  var s6=hasPrev?annualJournalSheet(prevData,previousYear,true):null;
+  var rCur=hasCur?rendSheet(currData.rows,T("Rendement")+" 2-5",annualPeriod(currentYear,false),true):null;
+  var rPrev=hasPrev?rendSheet(prevData.rows,T("Rendement")+" 6",annualPeriod(previousYear,true),true):null;
+  var sheets=[jSheet,s2,s3,s4,s5,rCur,s6,rPrev,rcSheet].filter(function(x){return !!x;}),infoT=[],warnT=[],si2,wi;
+  for(si2=0;si2<sheets.length;si2++){
+    infoT.push(esc(sheets[si2].name)+": "+sheets[si2].pages+" page(s), echelle "+sheets[si2].scale+"% (texte imprime ~"+sheets[si2].eff+" pt)");
+    for(wi=0;wi<sheets[si2].warns.length;wi++)warnT.push(sheets[si2].warns[wi]);
+  }
+  return {sheets:sheets,fbase:fbase,info:esc(prof.name)+" (police "+RP_FONT_SIZE+" pt) - "+infoT.join(" ; ")+". Chaque page porte son TOTAL PAGE, aucun agent n’est coupe entre deux pages. Controle des totaux : "+(warnT.length?'<b class="err">'+warnT.length+" avertissement(s)</b> ("+esc(warnT.slice(0,3).join(" | "))+")":"OK")+"."};
 }
 function rpReadLayoutSettings(){
   var f=parseFloat(trim($("rpFontSize")?$("rpFontSize").value:"10").replace(",",".")),
@@ -2228,33 +2934,28 @@ function rpReadLayoutSettings(){
       c=parseFloat(trim($("rpColSpacing")?$("rpColSpacing").value:"1").replace(",","."));
   if(isNaN(f)||f<6||f>18)f=10;
   if(isNaN(l)||l<0.5||l>2)l=1;
-  if(isNaN(c)||c<0.5||c>2)c=1;
+  if(isNaN(c)||c<0.5||c>3.5)c=1;
   RP_FONT_SIZE=f;
   return {font:f,line:l,col:c};
 }
-function rpApplyLayoutSettings(sheets){
-  var v=rpReadLayoutSettings(),factor=Math.max(v.font/10,v.col),i,j,sh,row;
-  for(i=0;i<sheets.length;i++){
-    sh=sheets[i];
-    for(j=0;j<sh.w.length;j++)sh.w[j]=r2(sh.w[j]*v.col);
-    for(j=0;j<sh.rows.length;j++){row=sh.rows[j];if(row.h)row.h=r2(row.h*v.line);}
-    if(sh.plan)sh.plan.scale=Math.max(20,Math.min(100,Math.round(sh.plan.scale/factor)));
-  }
+function rpPaperList() {
+  var v = $("rpPaper") ? $("rpPaper").value : "a3";
+  if (v === "both") return ["a3", "listing"];
+  return [v === "listing" ? "listing" : "a3"];
 }
 function rpExport() {
-  var oldLang=LANG;LANG="ar";
-  try{
-    var b=rpBuildSheets();if(!b)return;
-    rpApplyLayoutSettings(b.sheets);
-    var si,fi,fr;
-    for(si=0;si<b.sheets.length;si++){
-      b.sheets[si].rows.push([]);
-      fr=rpSignoffRows(b.sheets[si].w.length);
-      for(fi=0;fi<fr.length;fi++)b.sheets[si].rows.push(fr[fi]);
+  var oldLang = LANG; LANG = "ar";
+  try {
+    var list = rpPaperList(), li, prof, b, infos = [];
+    for (li = 0; li < list.length; li++) {
+      prof = RP_PROFILES[list[li]];
+      b = rpBuildSheets(prof); if (!b) return;
+      b.sheets.push(rpCalibSheet(prof));
+      exportXls(b.sheets, b.fbase + "_" + prof.suffix, "rpMsg", li > 0);
+      infos.push(b.info);
     }
-    exportXls(b.sheets,b.fbase,"rpMsg");
-    $("rpMsg").innerHTML+='<br><span class="muted">'+b.info+'</span>';
-  }finally{LANG=oldLang;}
+    $("rpMsg").innerHTML += '<br><span class="muted">' + infos.join("<br>") + '</span>';
+  } finally { LANG = oldLang; }
 }
 /* ===================== Bases de reference supplementaires ===================== */
 var refDbs=[],refDbPaths=[];
@@ -2418,6 +3119,32 @@ function rpCollectState(no){
     agents:ag
   };
 }
+/* ---- rapprochement par NOM (projets generes a partir des extraits de decisions : pas de matricule) ---- */
+function rpNKey(s){
+  s=String(s||"").replace(/[\u0640\u064b-\u0652\u200f\u200e]/g,"").replace(/[\u0623\u0625\u0622\u0671]/g,"\u0627").replace(/\u0649/g,"\u064a").replace(/\u0629/g,"\u0647").replace(/[\/\\\-_.,;:()]/g," ");
+  return s.replace(/\s+/g," ").replace(/^ | $/g,"");
+}
+function rpNToks(s){var t=rpNKey(s).split(" "),o=[],i,w;for(i=0;i<t.length;i++){w=t[i];if(w.length>3&&w.substr(0,2)==="\u0627\u0644")w=w.substr(2);if(w)o.push(w);}return o;}
+function rpLev(a,b){var m=a.length,n=b.length,p=[],i,j,c,t,prev;if(!m)return n;if(!n)return m;for(j=0;j<=n;j++)p[j]=j;for(i=1;i<=m;i++){prev=p[0];p[0]=i;for(j=1;j<=n;j++){t=p[j];c=(a.charAt(i-1)===b.charAt(j-1))?0:1;p[j]=Math.min(p[j]+1,p[j-1]+1,prev+c);prev=t;}}return p[n];}
+function rpRatio(a,b){var m=Math.max(a.length,b.length);return m?1-rpLev(a,b)/m:1;}
+/* 3 = memes mots (ordre libre) ; 2 = tres proche (1-2 lettres) ; 1 = un nom contient l autre ; 0 = rien */
+function rpNameTier(fa,db){
+  var A=rpNToks(fa),B=rpNToks(db),sa=A.slice(0).sort().join(""),sb=B.slice(0).sort().join(""),S,L,used={},i,j,bj,br,r,ok=0;
+  if(!A.length||!B.length)return 0;
+  if(sa===sb)return 3;
+  if(Math.max(rpRatio(A.join(""),B.join("")),rpRatio(sa,sb))>=0.88&&Math.min(A.length,B.length)>=2)return 2;
+  S=(A.length<=B.length)?A:B;L=(A.length<=B.length)?B:A;
+  if(S.length<2)return 0;
+  for(i=0;i<S.length;i++){bj=-1;br=0;for(j=0;j<L.length;j++){if(used[j])continue;r=rpRatio(S[i],L[j]);if(r>br){br=r;bj=j;}}if(bj>=0&&br>=0.85){used[bj]=1;ok++;}}
+  return ok===S.length?1:0;
+}
+/* {idx,tier} | {amb:[idx...]} | null */
+function rpMatchName(fileName,emps,taken){
+  var best=0,list=[],i,t;
+  for(i=0;i<emps.length;i++){if(taken[i])continue;t=rpNameTier(fileName,emps[i].name);if(t>best){best=t;list=[i];}else if(t===best&&t>0)list.push(i);}
+  if(!best)return null;
+  return (list.length===1)?{idx:list[0],tier:best}:{amb:list,tier:best};
+}
 /* puts a saved project back into every field of the Rappel tab; returns {ok, warns, calc} */
 function rpApplyState(st){
   var w=[],i,j,a,idx,f=st.filtres||{},lf=st.filtresListe||{corps:f.corps,matricules:f.matricules},g=st.grilles||{},c=st.calcul||{};
@@ -2442,17 +3169,29 @@ function rpApplyState(st){
   /* 2. per-agent values */
   var byMat={},seen={},missing=[],badRef=0,added=0,ags=st.agents||[];
   for(i=0;i<rpEmployees.length;i++)byMat["k"+rpEmployees[i].mat]=i;
+  var byName=[],approx=[],ambig=[],taken={};
+  for(j=0;j<ags.length;j++){a=ags[j];if(a.mat!==undefined&&a.mat!==""&&byMat["k"+a.mat]!==undefined)taken[byMat["k"+a.mat]]=true;}
+  var nmv={},ncnt={};
+  for(j=0;j<ags.length;j++){a=ags[j];if((a.mat===undefined||a.mat===""||byMat["k"+a.mat]===undefined)&&a.nom){nmv[j]=rpMatchName(a.nom,rpEmployees,taken);if(nmv[j]&&!nmv[j].amb)ncnt[nmv[j].idx]=(ncnt[nmv[j].idx]||0)+1;}}
   for(j=0;j<ags.length;j++){
-    a=ags[j];idx=byMat["k"+a.mat];
-    if(idx===undefined){missing.push(a.mat);continue;}
+    a=ags[j];idx=(a.mat!==undefined&&a.mat!=="")?byMat["k"+a.mat]:undefined;
+    var viaName=false,uncheck=false;if(!seen.__n)seen.__n=0;
+    if(idx===undefined&&a.nom){
+      var mm=nmv[j];
+      if(mm&&(mm.amb||ncnt[mm.idx]>1)){ambig.push(a.nom);continue;}
+      if(mm){idx=mm.idx;taken[idx]=true;viaName=true;seen.__n++;if(mm.tier<3){uncheck=true;approx.push(a.nom+" = "+rpEmployees[idx].name+" ("+rpEmployees[idx].mat+")");}}
+    }
+    if(idx===undefined){missing.push(a.mat||a.nom);continue;}
     seen[idx]=true;
-    $("rps_"+idx).checked=!!a.inclure;
+    $("rps_"+idx).checked=!!a.inclure&&!uncheck;
     setVal("rpn_"+idx,a.nouvelEch);setVal("rpd_"+idx,a.dateEffet);setVal("rpe_"+idx,a.fin);
     setVal("rpn2_"+idx,a.ech2);setVal("rpd2_"+idx,a.date2);
     if(a.bulletinRef&&!rpSetSelVal("rpb_"+idx,a.bulletinRef))badRef++;
   }
   for(i=0;i<rpEmployees.length;i++)if(!seen[i]){$("rps_"+i).checked=false;added++;}
   if(missing.length)w.push(missing.length+" agent(s) du projet absent(s) de la base : "+missing.slice(0,8).join(", ")+(missing.length>8?"...":""));
+  if(approx.length)w.push(approx.length+" agent(s) rapproche(s) par un nom APPROCHANT, laisses decoches : verifiez puis cochez - "+approx.slice(0,12).join(" ; ")+(approx.length>12?"...":""));
+  if(ambig.length)w.push(ambig.length+" nom(s) ambigu(s) (plusieurs agents possibles), ignores : "+ambig.slice(0,8).join(", ")+(ambig.length>8?"...":""));
   if(added)w.push(added+" agent(s) de la base ne figuraient pas dans le projet : decoches.");
   if(badRef)w.push(badRef+" bulletin(s) de reference individuel(s) introuvable(s) : remis en (global / auto).");
   /* 3. fields as they were on screen when the project was saved */
@@ -2463,7 +3202,7 @@ function rpApplyState(st){
   setVal("rpRendRate",c.rendTaux);setVal("rpRendNote",c.rendNote);setVal("rpTitle",c.titreEtat);
   rpLastFilter={corps:lf.corps||"",matricules:lf.matricules||""};
   rpUpdateSelCount();
-  return {ok:true,warns:w,calc:!!st.calcule};
+  return {ok:true,warns:w,calc:!!st.calcule,byName:seen.__n||0};
 }
 function rpOpenProject(no){
   no=trim(no===undefined?$("rpProjNo").value:no);
@@ -2481,7 +3220,7 @@ function rpOpenProject(no){
   try{r=rpApplyState(st);}catch(e2){msg.innerHTML='<span class="err">Ouverture impossible : '+esc(errText(e2))+'</span>';return;}
   if(!r.ok){msg.innerHTML='<span class="err">'+esc(r.msg)+'</span>'+(r.warns.length?'<br><span class="muted">'+esc(r.warns.join(" | "))+'</span>':'');return;}
   rpCurrentProject=no;rpSetSelVal("rpProjSel",no);
-  msg.innerHTML='<span class="ok">Projet '+esc(no)+' charge ('+st.agents.length+' agent(s)).</span>'+(r.calc?' <span class="muted">Recalcul en cours...</span>':' <span class="muted">Vous pouvez continuer.</span>')+
+  msg.innerHTML='<span class="ok">Projet '+esc(no)+' charge ('+st.agents.length+' agent(s)'+(r.byName?', '+r.byName+' rapproche(s) par nom':'')+').</span>'+(r.calc?' <span class="muted">Recalcul en cours...</span>':' <span class="muted">Vous pouvez continuer.</span>')+
     (r.warns.length?'<br><span class="err">A verifier : '+esc(r.warns.join(" | "))+'</span>':'');
   if(r.calc)rpRun();                                        // the project was saved with results on screen: rebuild them
 }
@@ -2537,8 +3276,8 @@ function rpPrintSignoffHtml() {
     '<div>المدير:</div>' +
     '</div>';
 }
-function sheetsToHtml(sheets) {
-  var o=['<!DOCTYPE html><html'+(LANG==="ar"?' dir="rtl"':'')+'><head><meta charset="utf-8"><title>Rappel d’echelon</title><style>@page{size:A3 landscape;margin:8mm}body{font-family:Arial,sans-serif;margin:0}.bar{padding:8px 12px;background:#dfe6f0;font-size:13px}table{border-collapse:collapse;table-layout:fixed}td{font-size:8pt;padding:1px 3px;white-space:nowrap;overflow:hidden;border:1px solid #000;vertical-align:middle}td.nb{border:0}.s_h{background:#dce6f1;font-weight:bold;text-align:center;white-space:normal}.s_bf,.s_bn,.s_b{background:#eef3fa;font-weight:bold}.num{text-align:right}.s_e1{font-size:20pt;font-weight:bold;text-align:center}.s_e2,.s_e4{font-size:13pt;font-weight:bold;text-align:center}.s_e3{font-size:14pt;font-weight:bold;text-align:right}.s_e5,.s_t{font-size:13pt;font-weight:bold}.s_e6{font-size:14pt;font-weight:bold;text-align:left}.s_e7{font-size:15pt;font-weight:bold;text-align:center}.s_cxa{background:#f7f7f2}.pg{page-break-after:always;padding:4px}.signoff{margin:14px 4px 2px;padding:0;font-size:12pt;direction:ltr;text-align:left;border:0}.signoff div{margin:5px 0;text-align:left;border:0}@media print{.bar{display:none}}</style></head><body><div class="bar"><button onclick="window.print()" style="font-size:14px;padding:4px 14px">Imprimer</button> &nbsp; Choisissez le format A3 et l’orientation paysage dans la fenetre d’impression (ou &laquo; Enregistrer en PDF &raquo;).</div>'];
+function sheetsToHtml(sheets, prof) {
+  var o=['<!DOCTYPE html><html'+(LANG==="ar"?' dir="rtl"':'')+'><head><meta charset="utf-8"><title>Rappel d’echelon</title><style>@page{'+(prof?prof.css:"size:A3 landscape;margin:8mm")+'}body{font-family:Arial,sans-serif;margin:0}.bar{padding:8px 12px;background:#dfe6f0;font-size:13px}table{border-collapse:collapse;table-layout:fixed}td{font-size:8pt;padding:2px 3px;white-space:normal;overflow:visible;overflow-wrap:break-word;word-wrap:break-word;border:1px solid #000;vertical-align:middle}td.nb,td.s_pad{border:0}.s_h{background:#dce6f1;font-weight:bold;text-align:center;white-space:normal}.s_bf,.s_bn,.s_b{background:#eef3fa;font-weight:bold}.num{text-align:right}.s_e1{font-size:20pt;font-weight:bold;text-align:center}.s_e2,.s_e4{font-size:13pt;font-weight:bold;text-align:center}.s_e3{font-size:14pt;font-weight:bold;text-align:center}.s_e5,.s_t{font-size:13pt;font-weight:bold;text-align:center}.s_e6{font-size:14pt;font-weight:bold;text-align:left}.s_e7{font-size:15pt;font-weight:bold;text-align:center}.s_cxa{background:#f7f7f2}.pg{page-break-after:always;padding:4px}.signoff{margin:14px 4px 2px;padding:0;font-size:12pt;direction:ltr;text-align:left;border:0}.signoff div{margin:5px 0;text-align:left;border:0}@media print{.bar{display:none}}</style></head><body><div class="bar"><button onclick="window.print()" style="font-size:14px;padding:4px 14px">Imprimer</button> &nbsp; Choisissez le format A3 et l’orientation paysage dans la fenetre d’impression (ou &laquo; Enregistrer en PDF &raquo;).</div>'];
   var si,pi,ri,ci;
   function trHtml(row,isHead){
     var h=['<tr'+(row.h?' style="height:'+row.h+'pt"':'')+'>'],k=0,col=1,cell,st,sp,cls,txt,nb;
@@ -2561,12 +3300,12 @@ function sheetsToHtml(sheets) {
     bounds.push(rows.length);
     for(ci=0;ci<sh2.w.length;ci++){tw+=sh2.w[ci];cols.push('<col style="width:'+sh2.w[ci]+'pt">');}
     for(pi=0;pi<bounds.length-1;pi++){
-      var t=['<div class="pg"><div style="zoom:'+(sh2.plan.scale/100)+'"><table'+(LANG==="ar"?' dir="rtl"':'')+' style="width:'+tw+'pt">'+cols.join("")];
+      var t=['<div class="pg"><div style="zoom:'+((sh2.plan.scale||100)/100)+'"><table'+(LANG==="ar"?' dir="rtl"':'')+' style="width:'+tw+'pt">'+cols.join("")];
       if(pi===0)for(ri=0;ri<hi;ri++)t.push(trHtml(rows[ri]));
-      t.push(trHtml(rows[hi],true));
+      if(!sh2.banded)t.push(trHtml(rows[hi],true));
       for(ri=bounds[pi];ri<bounds[pi+1];ri++)t.push(trHtml(rows[ri]));
       t.push('</table></div>');
-      if(pi===bounds.length-2)t.push(rpPrintSignoffHtml());
+      if(pi===bounds.length-2&&!sh2.banded)t.push(rpPrintSignoffHtml());
       t.push('</div>');o.push(t.join(""));
     }
   }
@@ -2577,14 +3316,14 @@ function rpPrint() {
   try{rpPrintInner();}finally{LANG=oldLang;}
 }
 function rpPrintInner() {
-  var b=rpBuildSheets();if(!b)return;
-  rpApplyLayoutSettings(b.sheets);
-  try{
-    var dt=new Date(),stamp=dt.getFullYear()+rpPad(dt.getMonth()+1)+rpPad(dt.getDate())+"-"+rpPad(dt.getHours())+rpPad(dt.getMinutes())+rpPad(dt.getSeconds());
-    var path=saveFile(String(b.fbase).replace(/[\\/:*?"<>|\s]+/g,"_")+"_impression_"+stamp+".html",sheetsToHtml(b.sheets));
-    $("rpMsg").innerHTML='<span class="ok">Version imprimable creee: '+esc(path)+'</span> <span class="muted">(ouverte dans le navigateur; cliquez Imprimer, format A3 paysage)</span>';
-    try{sh.Run('"'+path+'"',1,false);}catch(x){}
-  }catch(e){$("rpMsg").innerHTML='<span class="err">Impression impossible: '+esc(errText(e))+'</span>';}
+  var prof = RP_PROFILES[rpPaperList()[0]], b = rpBuildSheets(prof);
+  if (!b) return;
+  try {
+    var dt = new Date(), stamp = dt.getFullYear() + rpPad(dt.getMonth() + 1) + rpPad(dt.getDate()) + "-" + rpPad(dt.getHours()) + rpPad(dt.getMinutes()) + rpPad(dt.getSeconds());
+    var path = saveFile(String(b.fbase).replace(/[\\/:*?"<>|\s]+/g, "_") + "_impression_" + prof.suffix + "_" + stamp + ".html", sheetsToHtml(b.sheets, prof));
+    $("rpMsg").innerHTML = '<span class="ok">Version imprimable creee: ' + esc(path) + '</span> <span class="muted">(ouverte dans le navigateur; cliquez Imprimer, papier: ' + esc(prof.name) + ', echelle 100%)</span><br><span class="muted">' + b.info + '</span>';
+    try { sh.Run('"' + path + '"', 1, false); } catch (x) { }
+  } catch (e) { $("rpMsg").innerHTML = '<span class="err">Impression impossible: ' + esc(errText(e)) + '</span>'; }
 }
 
 /* ===================== Cartes d'engagement : registre JSON par annee financiere =====================
@@ -3777,10 +4516,10 @@ function init() {
   &nbsp; Forcer CALCULEES (codes): <input type="text" id="rpCalc" size="16">
   <label><input type="checkbox" id="rpInt"> afficher les rubriques intermediaires</label>
   &nbsp; <button onclick="rpRun()">Calculer le rappel</button>
-   تنسيق الجداول / Mise en forme: حجم الخط <input type="text" id="rpFontSize" size="3" value="10" title="6 à 18 pt"> pt
+   تنسيق الجداول / Mise en forme: حجم الخط <input type="text" id="rpFontSize" size="3" value="16" title="6 à 18 pt"> pt
    ارتفاع الصفوف <input type="text" id="rpLineSpacing" size="4" value="1.0" title="0.5 إلى 2.0؛ 1.0 = عادي">
-   عرض الأعمدة <input type="text" id="rpColSpacing" size="4" value="1.0" title="0.5 إلى 2.0؛ 1.0 = عادي"> &nbsp;
-  Rendement: taux max % <input type="text" id="rpRendRate" size="4" title="vide = automatique selon le corps (35 / 30)"> note /40 <input type="text" id="rpRendNote" size="3" value="40"> &nbsp; Titre de l’etat (optionnel): <input type="text" id="rpTitle" size="46" dir="auto"> <button onclick="rpExport()">Exporter Excel 2003 (.xls)</button> <button onclick="rpPrint()">Imprimer / PDF (A3)</button> <span id="rpMsg"></span>
+   عرض الأعمدة <input type="text" id="rpColSpacing" size="4" value="1.0" title="0.5 إلى 3.5؛ 1.0 = عادي"> &nbsp;
+  Rendement: taux max % <input type="text" id="rpRendRate" size="4" title="vide = automatique selon le corps (35 / 30)"> note /40 <input type="text" id="rpRendNote" size="3" value="40"> &nbsp; Titre de l’etat (optionnel): <input type="text" id="rpTitle" size="46" dir="auto"> Papier: <select id="rpPaper"><option value="a3">A3 paysage</option><option value="listing">Listing 14 7/8 x 11 in (132 col.)</option><option value="both">A3 + Listing (2 fichiers)</option></select> <button onclick="rpExport()">Exporter Excel 2003 (.xls)</button> <button onclick="rpPrint()">Imprimer / PDF</button> <span id="rpMsg"></span>
   <p class="muted"><b>Regles appliquees (promotion d echelon) :</b> seule l IEP change (points d echelon x 45 DA). Le Salaire de Base (indice minimum x 45 DA) est INCHANGE — son rappel vaut toujours 0. Chaque indemnite calculee est refaite avec SON POURCENTAGE de (base + IEP), le taux etant lu sur le bulletin de reference de la MEME grille que la periode ; les rubriques fixes et I.Cont restent inchangees (rappel 0). Prorata en jours (30 jours par mois). Le bulletin de reference de chaque periode est choisi automatiquement parmi TOUTES les bases ajoutees : un bulletin d une autre grille (2022 pour 2023) est ecarte, sinon avertissement. Sauvegarde de projet : un fichier .json par projet (filtres, agents coches, echelons, dates, parametres) dans le dossier projets ; « Ouvrir le projet » recharge toute l’interface pour poursuivre le travail. Export Excel A3 paysage. Les dates d’application des grilles doivent etre confirmees avec les textes officiels avant validation comptable. La base Access est en lecture seule.</p>
   </div>
   <div id="rpOut"></div>
