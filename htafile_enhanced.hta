@@ -1703,12 +1703,12 @@ function doRappel() {
   var CORPS_RULES={
     "1000":[{code:"I.S.S.M.E40%",alt:["I.S.S.M.E40"],lib:"\u062a.\u062f.\u0635.\u0623.\u0637 40",rate:40,reg:"new",sup:["I.S.S.M.E25"]},
             {code:"I.A.S.O.S.R35%",alt:["I.A.S.O.S.R35"],lib:"\u062a.\u0625.\u0639.\u062a.\u0635.\u0625 35",rate:35,reg:"new",sup:["I.A.S.O.S.R25"]},
-            {code:"I.TECHNI 25%",alt:["I.TECHNI 25"],lib:"I.TECHNI 25%",rate:25,reg:"new",sup:["I.TECHNI 10"]},
-            {code:"ISP 30 %",lib:"I.S.P 30 %",rate:30,all:true,minCat:11,sup:[]}],
+            {code:"I.TECHNI 25",alt:["I.TECHNI 25%"],lib:"I.TECHNI 25",rate:25,reg:"new",sup:["I.TECHNI 10"]},
+            {code:"ISP 30 %",lib:"I.S.P 30 %",rate:30,all:true,minCat:11,sup:["ISP"],supAll:true}],
     "1100":[{code:"I.S.A.A.R40%",alt:["I.S.A.A.R40"],lib:"I.S.A.A.R 40%",rate:40,reg:"new",sup:["I.S.A.A.R25"]},
             {code:"I.A.A.A.R35%",alt:["I.A.A.A.R35"],lib:"I.A.A.A.R 35%",rate:35,reg:"new",sup:["I.A.A.A.R25"]},
-            {code:"I.TECHNI 25%",alt:["I.TECHNI 25"],lib:"I.TECHNI 25%",rate:25,reg:"new",sup:["I.TECHNI 10"]},
-            {code:"ISP 30 %",lib:"I.S.P 30 %",rate:30,all:true,minCat:11,sup:[]}],
+            {code:"I.TECHNI25",alt:["I.TECHNI25%"],lib:"I.TECHNI25",rate:25,reg:"new",sup:["I.TECHNI 10"]},
+            {code:"ISP 30 %",lib:"I.S.P 30 %",rate:30,all:true,minCat:11,sup:["ISP"],supAll:true}],
     /* paramedicaux : obligation 25% -> 40% ; soutien 30% (cat<=10) / 25% (cat>=11) -> 55% (cat<=11) / 50% (cat>=12) ; technicite 10% (cat>=12) ; ISP 30% (cat>=11) */
     "200":[{code:"P.A.PM%",lib:"P.A.PM%",rateOld:25,rate:40,all:true,sup:["P.A.PM"],supAll:true},
            {code:"I.S.A.PM 30 %",lib:"\u062a.\u062f\u0639\u0645 \u0646.\u0634.\u0637 30%",rate:30,reg:"old",all:true,maxCat:10,sup:[]},
@@ -1716,11 +1716,11 @@ function doRappel() {
            {code:"I.S.A.PM 55 %",lib:"\u062a.\u062f\u0639\u0645 \u0646.\u0634.\u0637 55%",rate:55,reg:"new",all:true,maxCat:11,sup:[]},
            {code:"I.S.A.PM 50%",lib:"\u062a.\u062f\u0639\u0645 \u0646.\u0634.\u0637 50%",rate:50,reg:"new",all:true,minCat:12,sup:[]},
            {code:"I.TECHNI 10%",lib:"I.TECHNI 10%",rate:10,all:true,minCat:12,sup:[]},
-           {code:"ISP 30 %",lib:"I.S.P 30 %",rate:30,all:true,minCat:11,sup:[]}]
+           {code:"ISP 30 %",lib:"I.S.P 30 %",rate:30,all:true,minCat:11,sup:["ISP"],supAll:true}]
   };
   var corpsHasRules={};
   /* cle de rubrique : sans espaces ni points ni _ ; le % est conserve (P.A.PM et P.A.PM% sont deux rubriques distinctes) */
-  function nkRule(c){return String(c||"").toLowerCase().replace(/[\s._]+/g,"");}
+  function nkRule(c){return String(c||"").toLowerCase().replace(/[._]+/g,"").replace(/\s+%/g,"%").replace(/\s+/g," ").replace(/^\s|\s$/g,"");}
   function nkSup(c){return nkRule(c).replace(/%/g,"");}
   var RULE_FROM_YEAR=2025,ruleByKey={},ruleSup={},ruleWarn=[],ruleSlots=[];
   (function(){
@@ -1748,8 +1748,14 @@ function doRappel() {
     known[key0]=true;if(excl[key0]||(!corpRubSet[key0]&&lr<0&&!ruleHit)||isAlwaysOut(code,lib))continue;
     var it={key:key0,code:code,lib:lib,mode:rv(meta.rows[i][4]),automatic:rv(meta.rows[i][5]),bareme:rv(meta.rows[i][6]),base:rv(meta.rows[i][7]),taux:rv(meta.rows[i][8]),imposable:(rv(meta.rows[i][9])==="Oui"),cotisable:(rv(meta.rows[i][10])==="Oui"),arab:(meta.rows[i].length>11?trim(rv(meta.rows[i][11])):"")};
     it.calculated=isCalculatedRubrique(it);
-    if(ruleHit){it.rule=ruleHit;it.calculated=true;ruleHit.slot.used=true;}
-    if(ruleSup[nkSup(code)]||ruleSup[nkSup(lib)])it.sup=ruleSup[nkSup(code)]||ruleSup[nkSup(lib)];
+    if(ruleHit){
+      if(ruleHit.slot.claimed&&ruleHit.slot.claimed!==key0){
+        /* une seule rubrique par regle : toute autre rubrique du meme sens est mise a zero (pas de doublon) */
+        var dupSup={},dc;for(dc in ruleHit.corps)if(ruleHit.corps.hasOwnProperty(dc))dupSup[dc]="all";
+        it.sup=dupSup;ruleHit=null;if(!corpRubSet[key0]&&lr<0)continue;
+      }else{it.rule=ruleHit;it.calculated=true;ruleHit.slot.used=true;ruleHit.slot.claimed=key0;}
+    }
+    if(!it.sup&&(ruleSup[nkSup(code)]||ruleSup[nkSup(lib)]))it.sup=ruleSup[nkSup(code)]||ruleSup[nkSup(lib)];
     if(isAFRubrique(it))it.calculated=false;               // allocations familiales / M.I.F.R. / salaire unique: fixed amounts
     if(isContagieuxRubrique(it))it.calculated=false;      // I.Cont is always fixed
     if(forceFixed[key0])it.calculated=false;
@@ -2921,7 +2927,8 @@ function rpBuildSheetsAt(prof) {
   var s6=hasPrev?annualJournalSheet(prevData,previousYear,true):null;
   var rCur=hasCur?rendSheet(currData.rows,T("Rendement")+" 2-5",annualPeriod(currentYear,false),true):null;
   var rPrev=hasPrev?rendSheet(prevData.rows,T("Rendement")+" 6",annualPeriod(previousYear,true),true):null;
-  var sheets=[jSheet,s2,s3,s4,s5,rCur,s6,rPrev,rcSheet].filter(function(x){return !!x;}),infoT=[],warnT=[],si2,wi;
+  var rTres=rendSheet(srcRows,T("Rendement")+" \u0627\u0644\u062e\u0632\u064a\u0646\u0629",periodTxt,false);
+  var sheets=[jSheet,rTres,s2,s3,s4,s5,rCur,s6,rPrev,rcSheet].filter(function(x){return !!x;}),infoT=[],warnT=[],si2,wi;
   for(si2=0;si2<sheets.length;si2++){
     infoT.push(esc(sheets[si2].name)+": "+sheets[si2].pages+" page(s), echelle "+sheets[si2].scale+"% (texte imprime ~"+sheets[si2].eff+" pt)");
     for(wi=0;wi<sheets[si2].warns.length;wi++)warnT.push(sheets[si2].warns[wi]);
