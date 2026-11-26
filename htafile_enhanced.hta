@@ -2872,8 +2872,17 @@ function rpBuildSheetsAt(prof) {
   /* Feuille 6 = full كشف الاستدراك for the current year, with every salary rubrique. */
   function annualJournalSheet(source,year,fromStart){
     var p6keep=[0,1,5,-1,-2,-3,-4],p6w=[58,115,100,112,62,82,82],p6nc,q,z,rr,bb,sc,pgj,jbreaks=[],ki,tv,jcur=[],jgroups=[],jtot={};
-    for(z=7;z<d.cols.length;z++)if(!rpHiddenPrintCol(d.cols[z])&&!rpZeroCol(d,z)){p6keep.push(z);p6w.push(62);}
-    p6keep=reorderKeep(p6keep);p6nc=p6keep.length;var P6=jfxPlan(p6keep);
+    var nd6=d.nDisp||0;
+    for(z=7;z<d.cols.length;z++){
+      if(rpHiddenPrintCol(d.cols[z])||rpZeroCol(d,z))continue;
+      /* controleur financier : gains seulement (logement inclus), sans allocations familiales, cotisation, IRG, retenues ni net ; derniere colonne = total des gains hors A.F */
+      if(nd6&&d.dispKind){
+        if(z<7+nd6){var k6=d.dispKind[z-7];if(k6!=="gain"&&k6!=="gainH")continue;}
+        else if(z!==7+nd6)continue;
+      }
+      p6keep.push(z);p6w.push(62);
+    }
+    p6nc=p6keep.length;var P6=jfxPlan(p6keep);
     for(q=0;q<source.rows.length;q++){
       rr=source.rows[q];bb=(rv(rr[4])==="TOTAL EMPLOYE");var cells=[];
       for(z=0;z<p6nc;z++){
@@ -2911,7 +2920,7 @@ function rpBuildSheetsAt(prof) {
   }
   var s6=hasPrev?annualJournalSheet(prevData,previousYear,true):null;
   var rCur=hasCur?rendSheet(currData.rows,T("Rendement")+" 2-5",annualPeriod(currentYear,false),true):null;
-  var rPrev=hasPrev?rendSheet(prevData.rows,T("Rendement")+" 6",annualPeriod(previousYear,true)):null;
+  var rPrev=hasPrev?rendSheet(prevData.rows,T("Rendement")+" 6",annualPeriod(previousYear,true),true):null;
   var sheets=[jSheet,s2,s3,s4,s5,rCur,s6,rPrev,rcSheet].filter(function(x){return !!x;}),infoT=[],warnT=[],si2,wi;
   for(si2=0;si2<sheets.length;si2++){
     infoT.push(esc(sheets[si2].name)+": "+sheets[si2].pages+" page(s), echelle "+sheets[si2].scale+"% (texte imprime ~"+sheets[si2].eff+" pt)");
